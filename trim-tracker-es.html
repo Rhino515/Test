@@ -236,13 +236,13 @@
 
       
       const noteCell = document.createElement('td');
-      const 
+      const noteInput = document.createElement('textarea');
       
-      
-      
-      
-      
-      noteCell.appendChild(
+      noteInput.placeholder = 'Notas';
+      noteInput.value = data.note || '';
+      noteInput.className = 'note-input';
+      noteInput.oninput = debounceSave;
+      noteCell.appendChild(noteInput);
       row.appendChild(noteCell);
     
 
