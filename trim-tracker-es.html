@@ -94,7 +94,7 @@
 
 
 
-.note-input {
+.-input {
   width: 120px;
   min-height: 144px;
   max-height: 200px;
@@ -120,6 +120,11 @@
 <p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
 <strong>Nota:</strong>Tus datos se guardan localmente en tu navegador y permanecerán disponibles a menos que borres la caché o cambies de dispositivo o navegador. Asegúrate de usar la aplicación en tu idioma preferido, ya que los datos se almacenan por separado para cada versión del idioma. Aunque esta herramienta ayuda a rastrear datos, recomendamos hacer una copia de seguridad para evitar pérdidas.
   </p>
+
+<div style="margin-top: 1em;">
+  <button onclick="exportCSV()" style="background-color:#28a745;color:white;padding:0.5em 1.2em;border:none;border-radius:4px;cursor:pointer;">Exportar CSV</button>
+</div>
+
 <table id="sessionTable">
 <thead>
 <tr>
@@ -127,7 +132,7 @@
 <th>Variedad</th>
 <th>Gramos</th>
 <th>Total</th>
-<th>Notas</th><th>Acciones</th>
+<th>Acciones</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -235,15 +240,15 @@
       updateTotal();
 
       
-      const noteCell = document.createElement('td');
-      const noteInput = document.createElement('textarea');
+      const  = document.createElement('td');
+      const 
       
-      noteInput.placeholder = 'Notas';
-      noteInput.value = data.note || '';
-      noteInput.className = 'note-input';
-      noteInput.oninput = debounceSave;
-      noteCell.appendChild(noteInput);
-      row.appendChild(noteCell);
+      
+      
+      
+      
+      .appendChild(
+      row.appendChild();
     
 
 const actionCell = document.createElement('td');
@@ -260,7 +265,7 @@ const actionCell = document.createElement('td');
       actionCell.appendChild(delBtn);
       row.appendChild(actionCell);
 
-      tbody.appendChild(row);
+      tbody.insertBefore(row, tbody.firstChild);
     }
 
     function clearAllRows() {
@@ -279,8 +284,8 @@ const actionCell = document.createElement('td');
         const date = row.querySelector('input[type="date"]')?.value || '';
         const strain = row.querySelector('input[type="text"]')?.value || '';
         const grams = Array.from(row.querySelectorAll('td:nth-child(3) input[type="number"]')).map(input => input.value);
-        const note = row.querySelector('textarea')?.value || '';
-        return { date, strain, grams, note };
+        const 
+        return { date, strain, grams,  };
       });
       localStorage.setItem(storageKey, JSON.stringify(data));
     }
@@ -307,8 +312,8 @@ const actionCell = document.createElement('td');
         const grams = Array.from(gramInputs).map(input => input.value).join(';');
         const total = cells[3].innerText;
         
-        const note = cells[4].querySelector('textarea')?.value || '';
-        csvContent += `"${date}","${strain}","${grams}","${note}","${total}"\n`;
+        const 
+        csvContent += `"${date}","${strain}","${grams}","${total}"\n`;
     
       });
 

@@ -195,7 +195,7 @@ function addMoveButtons(row) {
 
 
 
-.note-input {
+.-input {
   width: 120px;
   min-height: 144px;
   max-height: 200px;
@@ -218,7 +218,7 @@ function addMoveButtons(row) {
 <button class="lang-toggle" onclick="toggleLanguage()">Español</button>
 <img alt="Trim Tracker Banner" class="banner" src="trim-tracker-banner.PNG"/>
 <p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
-<strong>Note:</strong>Your data is saved locally in your browser and will remain available unless you clear your cache or switch devices or browsers. Please make sure to use the app in your preferred language, as data is stored separately for each language version. While this tool helps track data, we recommend backing up your information to avoid loss.
+<strong>:</strong>Your data is saved locally in your browser and will remain available unless you clear your cache or switch devices or browsers. Please make sure to use the app in your preferred language, as data is stored separately for each language version. While this tool helps track data, we recommend backing up your information to avoid loss.
   </p>
 
 <button id="sortDateBtn" onclick="toggleDateSort()">Sort by Date: Newest First</button>
@@ -337,14 +337,7 @@ function addMoveButtons(row) {
       updateTotal();
 
       
-      const noteCell = document.createElement('td');
-      const noteInput = document.createElement('textarea');
-      noteInput.placeholder = 'Notes';
-      noteInput.value = data.note || '';
-      noteInput.className = 'note-input';
-      noteInput.addEventListener('input', debounceSave);
-      noteCell.appendChild(noteInput);
-      row.insertBefore(noteCell, row.children[4]); // Insert after Grams before Total
+      // Insert after Grams before Total
     
 
 const actionCell = document.createElement('td');
@@ -361,7 +354,7 @@ const actionCell = document.createElement('td');
       actionCell.appendChild(delBtn);
       row.appendChild(actionCell);
 
-      tbody.appendChild(row);
+      tbody.insertBefore(row, tbody.firstChild);
 
   // Add move buttons
   addMoveButtons(row);
@@ -379,12 +372,12 @@ const actionCell = document.createElement('td');
     function saveData() {
       const rows = document.querySelectorAll('#tableBody tr');
       const data = Array.from(rows).map(row => {
-        const [dateCell, strainCell, gramsCell, noteCell, totalCell, actionCell] = row.querySelectorAll('td');
+        const [dateCell, strainCell, gramsCell, , totalCell, actionCell] = row.querySelectorAll('td');
         const date = dateCell.querySelector('input').value;
         const strain = strainCell.querySelector('input').value;
         const grams = Array.from(gramsCell.querySelectorAll('input')).map(input => input.value);
         
-        return { date, strain, grams, noteCell.querySelector('textarea')?.value || '' };
+        return { date, strain, grams, .querySelector('textarea')?.value || '' };
       });
       localStorage.setItem(storageKey, JSON.stringify(data));
     }
@@ -401,7 +394,7 @@ const actionCell = document.createElement('td');
 
     function exportCSV() {
       const rows = document.querySelectorAll('#tableBody tr');
-      let csvContent = "Date,Strain,Grams (semicolon separated),Note,Total\n";
+      let csvContent = "Date,Strain,Grams (semicolon separated),,Total\n";
 
       rows.forEach(row => {
         const cells = row.querySelectorAll('td');
@@ -411,8 +404,8 @@ const actionCell = document.createElement('td');
         const grams = Array.from(gramInputs).map(input => input.value).join(';');
         const total = cells[3].innerText;
         
-        const note = cells[3].querySelector('input')?.value || '';
-        csvContent += `"${date}","${strain}","${grams}","${note}","${total}"\n`;
+        const 
+        csvContent += `"${date}","${strain}","${grams}","${total}"\n`;
     
       });
 
