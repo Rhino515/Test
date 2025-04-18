@@ -69,21 +69,6 @@ addRow = function(data) {
   const newRow = tbody.lastElementChild;
   addMoveButtons(newRow);
 }
-
-function addMoveButtons(row) {
-  const actionCell = row.querySelector('td:last-child');
-
-  const upBtn = document.createElement('button');
-  upBtn.textContent = '↑';
-  upBtn.style.backgroundColor = '#28a745';
-  upBtn.style.color = 'white';
-  upBtn.style.marginRight = '5px';
-  upBtn.onclick = () => {
-    const prev = row.previousElementSibling;
-    if (prev) {
-      row.parentNode.insertBefore(row, prev);
-      debounceSave();
-    }
   };
 
   const downBtn = document.createElement('button');
@@ -195,7 +180,7 @@ function addMoveButtons(row) {
 
 
 
-.note-input {
+.-input {
   width: 120px;
   min-height: 144px;
   max-height: 200px;
@@ -215,11 +200,10 @@ function addMoveButtons(row) {
 </style>
 </head>
 <body>
-<img src="trim-tracker-logo.png" alt="Trim Tracker Logo" style="display: block; margin: 0 auto 20px; max-width: 250px;" />
 <button class="lang-toggle" onclick="toggleLanguage()">Español</button>
-
+<img alt="Trim Tracker Banner" class="banner" src="trim-tracker-banner.PNG"/>
 <p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
-<strong>Note:</strong>Your data is saved locally in your browser and will remain available unless you clear your cache or switch devices or browsers. Please make sure to use the app in your preferred language, as data is stored separately for each language version. While this tool helps track data, we recommend backing up your information to avoid loss.
+<strong>:</strong>Your data is saved locally in your browser and will remain available unless you clear your cache or switch devices or browsers. Please make sure to use the app in your preferred language, as data is stored separately for each language version. While this tool helps track data, we recommend backing up your information to avoid loss.
   </p>
 
 <button id="sortDateBtn" onclick="toggleDateSort()">Sort by Date: Newest First</button>
@@ -228,13 +212,18 @@ function addMoveButtons(row) {
 <tr>
 <th>Date</th>
 <th>Strain</th>
-<th>Grams</th><th>Notes</th>
+<th>Grams</th>
 <th>Total</th>
 <th>Actions</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
 </table>
+<div style="margin-top: 1em;">
+  <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+  <button onclick="document.getElementById('csvInput').click()" style="background-color:#28a745;color:white;padding:0.5em 1.2em;border:none;border-radius:4px;cursor:pointer;">Import CSV</button>
+</div>
+
 <button onclick="addRow()">Add Row</button>
 <button class="clear-all" onclick="clearAllRows()">Clear All</button>
 <button onclick="exportCSV()">Export CSV</button>
@@ -333,14 +322,7 @@ function addMoveButtons(row) {
       updateTotal();
 
       
-      const 
-      const noteInput = document.createElement('textarea');
-      noteInput.placeholder = 'Notes';
-      noteInput.value = data.note || '';
-      noteInput.className = 'note-input';
-      noteInput.addEventListener('input', debounceSave);
-      
-      row.insertBefore( // Insert after Grams before Total
+      // Insert after Grams before Total
     
 
 const actionCell = document.createElement('td');
@@ -357,7 +339,7 @@ const actionCell = document.createElement('td');
       actionCell.appendChild(delBtn);
       row.appendChild(actionCell);
 
-      tbody.appendChild(row);
+      tbody.insertBefore(row, tbody.firstChild);
 
   // Add move buttons
   addMoveButtons(row);
@@ -375,12 +357,12 @@ const actionCell = document.createElement('td');
     function saveData() {
       const rows = document.querySelectorAll('#tableBody tr');
       const data = Array.from(rows).map(row => {
-        const [dateCell, strainCell, gramsCell, 
+        const [dateCell, strainCell, gramsCell, , totalCell, actionCell] = row.querySelectorAll('td');
         const date = dateCell.querySelector('input').value;
         const strain = strainCell.querySelector('input').value;
         const grams = Array.from(gramsCell.querySelectorAll('input')).map(input => input.value);
         
-        return { date, strain, grams, 
+        return { date, strain, grams };
       });
       localStorage.setItem(storageKey, JSON.stringify(data));
     }
@@ -397,7 +379,7 @@ const actionCell = document.createElement('td');
 
     function exportCSV() {
       const rows = document.querySelectorAll('#tableBody tr');
-      let csvContent = "Date,Strain,Grams (semicolon separated),Note,Total\n";
+      let csvContent = "Date,Strain,Grams (semicolon separated),,Total\n";
 
       rows.forEach(row => {
         const cells = row.querySelectorAll('td');
@@ -407,8 +389,7 @@ const actionCell = document.createElement('td');
         const grams = Array.from(gramInputs).map(input => input.value).join(';');
         const total = cells[3].innerText;
         
-        const 
-        csvContent += `"${date}","${strain}","${grams}","${note}","${total}"\n`;
+        
     
       });
 
@@ -498,42 +479,80 @@ function addMoveButtons(row) {
   actionCell.insertBefore(upBtn, actionCell.firstChild);
 }
 </script>
-</body>
-</html>
+
 <script>
-    // Update totals whenever any input changes
-    document.addEventListener('input', updateDailyTotals);
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const lines = e.target.result.split('\n').slice(1);
+    let entries = JSON.parse(localStorage.getItem('trimTrackerEntries') || "[]");
 
-function addMoveButtons(row) {
-  const actionCell = row.querySelector('td:last-child');
+    lines.forEach(line => {
+      const [date, grams, bonus] = line.split(',');
+      if (!date || isNaN(parseFloat(grams)) || isNaN(parseFloat(bonus))) return;
+      entries.push({ date: date.trim(), grams: parseFloat(grams), bonusPay: parseFloat(bonus).toFixed(2) });
+    });
 
-  const upBtn = document.createElement('button');
-  upBtn.textContent = '↑';
-  upBtn.style.backgroundColor = '#28a745';
-  upBtn.style.color = 'white';
-  upBtn.style.marginRight = '5px';
-  upBtn.onclick = () => {
-    const prev = row.previousElementSibling;
-    if (prev) {
-      row.parentNode.insertBefore(row, prev);
-      debounceSave();
-    }
+    localStorage.setItem('trimTrackerEntries', JSON.stringify(entries));
+    updateTable();
+    alert("Import successful");
   };
-
-  const downBtn = document.createElement('button');
-  downBtn.textContent = '↓';
-  downBtn.style.backgroundColor = '#28a745';
-  downBtn.style.color = 'white';
-  downBtn.style.marginRight = '5px';
-  downBtn.onclick = () => {
-    const next = row.nextElementSibling;
-    if (next) {
-      row.parentNode.insertBefore(next, row);
-      debounceSave();
-    }
-  };
-
-  actionCell.insertBefore(downBtn, actionCell.firstChild);
-  actionCell.insertBefore(upBtn, actionCell.firstChild);
+  reader.readAsText(file);
 }
 </script>
+
+
+<script>
+function updateTable() {
+  const entries = JSON.parse(localStorage.getItem('trimTrackerEntries') || "[]");
+  const tbody = document.querySelector("table tbody");
+  tbody.innerHTML = "";
+
+  entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  entries.forEach((entry, index) => {
+    const row = document.createElement("tr");
+
+    const dateCell = document.createElement("td");
+    dateCell.textContent = entry.date;
+    row.appendChild(dateCell);
+
+    const strainCell = document.createElement("td");
+    strainCell.textContent = entry.strain || '';
+    row.appendChild(strainCell);
+
+    const gramsCell = document.createElement("td");
+    gramsCell.textContent = entry.grams;
+    row.appendChild(gramsCell);
+
+    const bonusCell = document.createElement("td");
+    bonusCell.textContent = entry.bonusPay || '';
+    row.appendChild(bonusCell);
+
+    const actionCell = document.createElement("td");
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.onclick = () => {
+      entries.splice(index, 1);
+      localStorage.setItem("trimTrackerEntries", JSON.stringify(entries));
+      updateTable();
+    };
+    actionCell.appendChild(deleteBtn);
+    row.appendChild(actionCell);
+
+    tbody.appendChild(row);
+  });
+}
+</script>
+
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  if (typeof updateTable === 'function') updateTable();
+});
+</script>
+
+</body>
+</html>

@@ -3,6 +3,11 @@
 <html lang="en">
 <head>
 <script>
+  if (window.location.pathname.endsWith('trim-tracker.html')) {
+    window.location.replace('trim-tracker-en.html');
+  }
+</script>
+<script>
   const userLang = navigator.language || navigator.userLanguage;
   if (userLang.startsWith('es') && !window.location.href.includes('index-es.html') && !window.location.href.includes('trim-tracker-es.html')) {
     if (window.location.href.includes('trim-tracker')) {
@@ -134,7 +139,7 @@
 <button onclick="calculate()">Calculate</button>
 <p id="result"></p>
 <div class="install-links">
-<a href="trim-tracker.html">Go to Trim Tracker</a>
+<a href="trim-tracker-en.html">Go to Trim Tracker</a>
 <a class="nav-button" href="help.html">How to Use the App</a>
 </div>
 <div style="margin-top: 0.6em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
@@ -160,16 +165,6 @@
 </tr>
 </tfoot>
 </table>
-<div style="margin-top: 1.5em; display: flex; justify-content: center;">
-  <div style="position: relative; display: flex; align-items: center; width: 90%; max-width: 450px;">
-    <div style="flex-grow: 1; background: linear-gradient(to right, #25c025, #0a660a); height: 30px; border-radius: 25px; position: relative;">
-      <div id="bonusProgressBar" style="background-color: #25c025; height: 100%; width: 0%; border-radius: 25px 0 0 25px;"></div>
-      <div id="bonusProgressLabel" style="position: absolute; width: 100%; top: 3px; text-align: center; font-size: 1.1em; font-weight: bold; color: white;"></div>
-    </div>
-    <img id="badgeImage" src="" alt="" style="display: none; margin-left: 10px; height: 55px; width: auto;" />
-  </div>
-</div>
-
 <div style="margin-top: 0.6em;">
   <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
   <button onclick="document.getElementById('csvInput').click()" style='background-color:#28a745;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;'>Import CSV</button>
@@ -333,20 +328,6 @@ function updateSessionTable() {
       };
       actionCell.appendChild(deleteBtn);
 
-      const upBtn = document.createElement('button');
-      upBtn.textContent = '↑';
-      upBtn.style.marginLeft = '5px';
-      upBtn.style.color = 'lime';
-      upBtn.onclick = function () { moveEntry(index, -1); };
-      actionCell.appendChild(upBtn);
-
-      const downBtn = document.createElement('button');
-      downBtn.textContent = '↓';
-      downBtn.style.marginLeft = '5px';
-      downBtn.style.color = 'lime';
-      downBtn.onclick = function () { moveEntry(index, 1); };
-      actionCell.appendChild(downBtn);
-
       row.appendChild(actionCell);
       tbody.appendChild(row);
       totalBonusPay += parseFloat(entry.bonusPay);
@@ -392,16 +373,7 @@ function calculateAverages() {
 </script>
 
 <script>
-function moveEntry(index, direction) {
-  const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  const newIndex = index + direction;
-  if (newIndex < 0 || newIndex >= history.length) return;
-  const temp = history[index];
-  history[index] = history[newIndex];
-  history[newIndex] = temp;
-  localStorage.setItem('trimHistory', JSON.stringify(history));
-  updateSessionTable();
-}
+
 
 
 
@@ -549,20 +521,6 @@ Object.values(grouped).forEach((week, groupIndex) => {
         }
       };
       actionCell.appendChild(deleteBtn);
-
-      const upBtn = document.createElement('button');
-      upBtn.textContent = '↑';
-      upBtn.style.marginLeft = '5px';
-      upBtn.style.color = 'lime';
-      upBtn.onclick = function () { moveEntry(index, -1); };
-      actionCell.appendChild(upBtn);
-
-      const downBtn = document.createElement('button');
-      downBtn.textContent = '↓';
-      downBtn.style.marginLeft = '5px';
-      downBtn.style.color = 'lime';
-      downBtn.onclick = function () { moveEntry(index, 1); };
-      actionCell.appendChild(downBtn);
 
       row.appendChild(actionCell);
       tbody.appendChild(row);
@@ -743,48 +701,6 @@ function importCSV(event) {
   };
   reader.readAsText(file);
 }
-</script>
-
-
-<script>
-function updateYearlyBonusTotal() {
-  const history = JSON.parse(localStorage.getItem("trimHistory")) || [];
-  const currentYear = new Date().getFullYear();
-  const total = history.reduce((sum, entry) => {
-    const entryYear = new Date(entry.date).getFullYear();
-    return entryYear === currentYear ? sum + parseFloat(entry.bonusPay || 0) : sum;
-  }, 0);
-
-  const progress = document.getElementById("bonusProgressBar");
-  const label = document.getElementById("bonusProgressLabel");
-  const badge = document.getElementById("badgeImage");
-
-  const thresholds = [2000, 5000, 8000, 11500, 20000];
-  const images = ["badge1.png", "badge2.png", "badge3.png", "badge4.png"];
-
-  let img = "", unlocked = false;
-  for (let i = thresholds.length - 2; i >= 0; i--) {
-    if (total >= thresholds[i]) {
-      img = images[i];
-      unlocked = true;
-      break;
-    }
-  }
-
-  const maxTarget = thresholds[thresholds.length - 1];
-  const percent = Math.min(100, (total / maxTarget) * 100);
-  progress.style.width = percent + "%";
-  label.textContent = "${total.toLocaleString()} / ${maxTarget.toLocaleString()}";
-
-  if (unlocked) {
-    badge.src = img;
-    badge.style.display = "block";
-  } else {
-    badge.style.display = "none";
-  }
-}
-
-window.addEventListener("load", updateYearlyBonusTotal);
 </script>
 
 </body>
