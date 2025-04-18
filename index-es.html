@@ -289,16 +289,7 @@ function updateSessionTable() {
 </script>
 
 <script>
-function moveEntry(index, direction) {
-  const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  const newIndex = index + direction;
-  if (newIndex < 0 || newIndex >= history.length) return;
-  const temp = history[index];
-  history[index] = history[newIndex];
-  history[newIndex] = temp;
-  localStorage.setItem('trimHistory', JSON.stringify(history));
-  updateSessionTable();
-}
+
 
 
 
@@ -434,20 +425,6 @@ Object.values(grouped).forEach((week, groupIndex) => {
         }
       };
       actionCell.appendChild(deleteBtn);
-
-      const upBtn = document.createElement('button');
-      upBtn.textContent = '↑';
-      upBtn.style.marginLeft = '5px';
-      upBtn.style.color = 'lime';
-      upBtn.onclick = function () { moveEntry(index, -1); };
-      actionCell.appendChild(upBtn);
-
-      const downBtn = document.createElement('button');
-      downBtn.textContent = '↓';
-      downBtn.style.marginLeft = '5px';
-      downBtn.style.color = 'lime';
-      downBtn.onclick = function () { moveEntry(index, 1); };
-      actionCell.appendChild(downBtn);
 
       row.appendChild(actionCell);
       tbody.appendChild(row);
