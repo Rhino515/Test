@@ -115,8 +115,9 @@
         
 </head>
 <body>
+<img src="trim-tracker-logo.png" alt="Trim Tracker Logo" style="display: block; margin: 0 auto 20px; max-width: 250px;" />
 <button class="lang-toggle" onclick="toggleLanguage()">Inglés</button>
-<img alt="Registro de Recorte Banner" class="banner" src="trim-tracker-banner.PNG"/>
+
 <p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
 <strong>Nota:</strong>Tus datos se guardan localmente en tu navegador y permanecerán disponibles a menos que borres la caché o cambies de dispositivo o navegador. Asegúrate de usar la aplicación en tu idioma preferido, ya que los datos se almacenan por separado para cada versión del idioma. Aunque esta herramienta ayuda a rastrear datos, recomendamos hacer una copia de seguridad para evitar pérdidas.
   </p>
@@ -178,7 +179,7 @@
       const dateCell = document.createElement('td');
       const dateInput = document.createElement('input');
       dateInput.type = 'date';
-      dateInput.value = data.date || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+      dateInput.value = data.date || new Date().toLocaleDateString('en-CA');
       dateInput.oninput = () => { debounceSave(); updateDailyTotals(); };
       dateCell.appendChild(dateInput);
       row.appendChild(dateCell);
@@ -230,15 +231,15 @@
       updateTotal();
 
       
-      const noteCell = document.createElement('td');
+      const 
       const noteInput = document.createElement('textarea');
       
       noteInput.placeholder = 'Notas';
       noteInput.value = data.note || '';
       noteInput.className = 'note-input';
       noteInput.oninput = debounceSave;
-      noteCell.appendChild(noteInput);
-      row.appendChild(noteCell);
+      
+      row.appendChild(
     
 
 const actionCell = document.createElement('td');
@@ -274,7 +275,7 @@ const actionCell = document.createElement('td');
         const date = row.querySelector('input[type="date"]')?.value || '';
         const strain = row.querySelector('input[type="text"]')?.value || '';
         const grams = Array.from(row.querySelectorAll('td:nth-child(3) input[type="number"]')).map(input => input.value);
-        const note = row.querySelector('textarea')?.value || '';
+        const 
         return { date, strain, grams, note };
       });
       localStorage.setItem(storageKey, JSON.stringify(data));
@@ -302,7 +303,7 @@ const actionCell = document.createElement('td');
         const grams = Array.from(gramInputs).map(input => input.value).join(';');
         const total = cells[3].innerText;
         
-        const note = cells[4].querySelector('textarea')?.value || '';
+        const 
         csvContent += `"${date}","${strain}","${grams}","${note}","${total}"\n`;
     
       });
@@ -335,7 +336,7 @@ const actionCell = document.createElement('td');
 
       
       // Save today's total to localStorage for use in Calculator
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+      const today = new Date().toLocaleDateString('en-CA');
       if (totalsMap[today]) {
         localStorage.setItem('trimTrackerDailyTotal', totalsMap[today].toFixed(2));
       } else {
