@@ -161,19 +161,21 @@
 </tfoot>
 </table>
 <div style="margin-top: 2em;">
+  <button onclick="downloadCSV()" style='background-color:green;color:white;padding:0.7em 1.5em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;'>Export CSV</button>
+</div>
+
+
+
+
+
+<div style="margin-top: 2em;">
   <button onclick="clearCurrentPayPeriod()" style='background-color:red;color:white;padding:0.7em 1.5em;border:none;border-radius:4px;cursor:pointer;'>Clear Current Pay Period</button>
 </div>
 
 <!-- 
 
     Export CSV Button -->
-<div style="margin-top: 1em;">
-<button onclick="exportCSV()">
 
-    Export CSV</button>
-
-
-</div>
 <div style="margin-top: 3em; border-top: 1px solid #444; padding-top: 1em;">
 <h2 onclick="togglePayCalc()" style="color:#0f0; cursor:pointer;">Hourly &amp; Pay Averages ▼</h2>
 <div id="payCalcSection" style="display:none;">
@@ -665,6 +667,32 @@ function clearCurrentPayPeriod() {
   });
   localStorage.setItem('trimHistory', JSON.stringify(history));
   updateSessionTable();
+}
+</script>
+
+
+<script>
+function downloadCSV() {
+  const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  if (history.length === 0) {
+    alert(document.documentElement.lang === 'es' ? "No hay datos para exportar." : "No data to export.");
+    return;
+  }
+
+  const headers = ["Date", "Grams", "Bonus"];
+  const rows = history.map(entry => [entry.date, entry.grams, entry.bonusPay]);
+
+  let csvContent = "data:text/csv;charset=utf-8," 
+    + headers.join(",") + "\n" 
+    + rows.map(e => e.join(",")).join("\n");
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "trim_data.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 </script>
 
