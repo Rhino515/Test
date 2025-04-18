@@ -591,6 +591,49 @@ function downloadCSV() {
 }
 </script>
 
+
+<script>
+function calculateAverages() {
+  const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
+  const overtimeHours = parseFloat(document.getElementById("overtimeHours").value);
+  const totalHours = parseFloat(document.getElementById("totalHours").value);
+  const startDate = new Date(document.getElementById("startDate").value);
+  const endDate = new Date(document.getElementById("endDate").value);
+
+  if (isNaN(hourlyRate) || isNaN(overtimeHours) || isNaN(totalHours) || isNaN(startDate) || isNaN(endDate)) {
+    alert("Por favor completa todos los campos.");
+    return;
+  }
+
+  const history = JSON.parse(localStorage.getItem("trimHistory")) || [];
+  const filtered = history.filter(entry => {
+    const entryDate = new Date(entry.date);
+    return entryDate >= startDate && entryDate <= endDate;
+  });
+
+  const bonusTotal = filtered.reduce((sum, entry) => sum + parseFloat(entry.bonusPay || 0), 0);
+  const regularPay = hourlyRate * totalHours;
+  const overtimePay = hourlyRate * 1.5 * overtimeHours;
+  const hourlyTotal = regularPay + overtimePay;
+  const totalPay = bonusTotal + hourlyTotal;
+  const dayDiff = Math.max(1, (endDate - startDate) / (1000 * 60 * 60 * 24) + 1);
+
+  const results = `
+    <p><strong>Total Pago Extra:</strong> $${bonusTotal.toFixed(2)}</p>
+    <p><strong>Pago Regular:</strong> $${regularPay.toFixed(2)}</p>
+    <p><strong>Pago por Horas Extra:</strong> $${overtimePay.toFixed(2)}</p>
+    <p><strong>Pago Total por Hora:</strong> $${hourlyTotal.toFixed(2)}</p>
+    <p><strong>Pago Total:</strong> $${totalPay.toFixed(2)}</p>
+    <p><strong>Pago Diario Promedio:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
+    <p><strong>Promedio Semanal:</strong> $${(totalPay / 7).toFixed(2)}</p>
+    <p><strong>Promedio Quincenal:</strong> $${(totalPay / 14).toFixed(2)}</p>
+    <p><strong>Promedio por Hora (con bonificación):</strong> $${(totalPay / (totalHours + overtimeHours)).toFixed(2)}</p>
+  `;
+
+  document.getElementById("averageResults").innerHTML = results;
+}
+</script>
+
 </body>
 </html>
 
