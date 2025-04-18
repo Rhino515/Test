@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trim Tracker</title>
+<style>
+body {
+  background-color: #111;
+  color: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  text-align: center;
+}
+.lang-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #777;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+img.banner {
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 30px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: bold;
+}
+th, td {
+  border: 1px solid #444;
+  padding: 12px;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+th {
+  cursor: pointer;
+}
+tbody tr:nth-child(even) { background-color: #1a1a1a; }
+tbody tr:hover { background-color: #2a2a2a; }
+input[type="text"], input[type="number"], input[type="date"] {
+  width: 100%;
+  padding: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #222;
+  color: #fff;
+  border: 1px solid #555;
+}
+.note-input {
+  width: 120px;
+  min-height: 144px;
+  font-size: 15px;
+  padding: 8px;
+  background-color: #222;
+  color: white;
+  border: 1px solid #555;
+  resize: vertical;
+}
+button {
+  padding: 8px 12px;
+  margin: 10px 5px;
+  background-color: #28a745;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+button:hover { background-color: #218838; }
+button.delete-row { background-color: #dc3545; }
+button.delete-row:hover { background-color: #c82333; }
+button.clear-all { background-color: #ffc107; color: #111; }
+button.clear-all:hover { background-color: #e0a800; }
+a.back-link {
+  display: inline-block;
+  margin-top: 30px;
+  color: #0af;
+  text-decoration: none;
+}
+</style>
+</head>
+<body>
+<button class="lang-toggle" onclick="toggleLanguage()">Español</button>
+<img alt="Banner" class="banner" src="trim-tracker-banner.PNG"/>
+<p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;"><strong>Note:</strong>Your data is saved locally in your browser and will remain available unless you clear your cache or switch devices or browsers.</p>
+<table id="sessionTable">
+<thead>
+<tr>
+<th onclick="sortTableByDate()">Date <span id="sortArrow">↑</span></th>
+<th>Strain</th>
+<th>Grams</th>
+<th>Total</th>
+<th>Notes</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+<button onclick="addRow()">Add Row</button>
+<button class="clear-all" onclick="clearAllRows()">Clear All</button>
+<button onclick="exportCSV()">Export CSV</button>
+<a class="back-link" id="backLink">← Back to Calculator</a>
+<div id="dailyTotals" style="margin-top: 30px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
+<h3>Daily Totals</h3>
+<ul id="totalsList" style="list-style: none; padding: 0;"></ul>
+</div>
+<script>
+let sortAsc = true;
+function sortTableByDate() {
+  const tbody = document.getElementById('tableBody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+  rows.sort((a, b) => {
+    const dateA = new Date(a.querySelector('input[type="date"]').value);
+    const dateB = new Date(b.querySelector('input[type="date"]').value);
+    return sortAsc ? dateA - dateB : dateB - dateA;
+  });
+  rows.forEach(row => tbody.appendChild(row));
+  sortAsc = !sortAsc;
+  document.getElementById('sortArrow').textContent = sortAsc ? '↑' : '↓';
+}
+function toggleLanguage() {
+  window.location.href = 'trim-tracker-es.html';
+}
+
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const lines = e.target.result.split('\n').slice(1); // Skip header
+    lines.forEach(line => {
+      if (line.trim() === '') return;
+      const [date, strain, gramsStr, note] = line.split(',').map(x => x.replace(/^"|"$|\r/g, '').trim());
+      const grams = (gramsStr || '').split(';').map(g => g.trim()).filter(g => g !== '');
+      addRow({ date, strain, grams, note });
+    });
+    debounceSave();
+    updateDailyTotals();
+  };
+  reader.readAsText(file);
+}
+
+</script>
+</body>
+</html>
