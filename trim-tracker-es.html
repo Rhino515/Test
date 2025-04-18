@@ -241,17 +241,7 @@
 
       
       
-      const 
-      
-      
-      
-      
-      
-      .appendChild(
-      row.appendChild();
-    
-
-const actionCell = document.createElement('td');
+      const actionCell = document.createElement('td');
       const delBtn = document.createElement('button');
       delBtn.textContent = 'Eliminar';
       delBtn.className = 'delete-row';
@@ -279,14 +269,16 @@ const actionCell = document.createElement('td');
 
     
     function saveData() {
-      const rows = document.querySelectorAll('#tableBody tr');
-      const data = Array.from(rows).map(row => {
-        const date = row.querySelector('input[type="date"]')?.value || '';
-        const strain = row.querySelector('input[type="text"]')?.value || '';
-        const grams = Array.from(row.querySelectorAll('td:nth-child(3) input[type="number"]')).map(input => input.value);
-        
-      });
-      localStorage.setItem(storageKey, JSON.stringify(data));
+  const rows = document.querySelectorAll('#tableBody tr');
+  const data = Array.from(rows).map(row => {
+    const date = row.querySelector('input[type="date"]').value;
+    const strain = row.querySelector('input[type="text"]').value;
+    const grams = Array.from(row.querySelectorAll('td:nth-child(3) input')).map(input => input.value);
+    return { date, strain, grams };
+  });
+  localStorage.setItem('trimTrackerData-es', JSON.stringify(data));
+}
+localStorage.setItem(storageKey, JSON.stringify(data));
     }
 
     function loadData() {
@@ -396,43 +388,9 @@ function importCSV(event) {
 <script>
 function updateTable() {
   const entries = JSON.parse(localStorage.getItem('trimTrackerData-es') || "[]");
-  const tbody = document.querySelector("table tbody");
+  const tbody = document.getElementById("tableBody");
   tbody.innerHTML = "";
-
-  entries.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  entries.forEach((entry, index) => {
-    const row = document.createElement("tr");
-
-    const dateCell = document.createElement("td");
-    dateCell.textContent = entry.date;
-    row.appendChild(dateCell);
-
-    const strainCell = document.createElement("td");
-    strainCell.textContent = entry.strain || '';
-    row.appendChild(strainCell);
-
-    const gramsCell = document.createElement("td");
-    gramsCell.textContent = entry.grams;
-    row.appendChild(gramsCell);
-
-    const bonusCell = document.createElement("td");
-    bonusCell.textContent = entry.bonusPay || '';
-    row.appendChild(bonusCell);
-
-    const actionCell = document.createElement("td");
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "Delete";
-    deleteBtn.onclick = () => {
-      entries.splice(index, 1);
-      localStorage.setItem('trimTrackerData-es', JSON.stringify(entries));
-      updateTable();
-    };
-    actionCell.appendChild(deleteBtn);
-    row.appendChild(actionCell);
-
-    tbody.appendChild(row);
-  });
+  entries.forEach(entry => addRow(entry));
 }
 </script>
 
