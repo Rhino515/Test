@@ -118,7 +118,7 @@
 <button class="lang-toggle" onclick="toggleLanguage()">Inglés</button>
 <img alt="Registro de Recorte Banner" class="banner" src="trim-tracker-banner.PNG"/>
 <p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
-<strong>Nota:</strong>Tus datos se guardan localmente en tu navegador y permanecerán disponibles a menos que borres la caché o cambies de dispositivo o navegador. Asegúrate de usar la aplicación en tu idioma preferido, ya que los datos se almacenan por separado para cada versión del idioma. Aunque esta herramienta ayuda a rastrear datos, recomendamos hacer una copia de seguridad para evitar pérdidas.
+<strong>:</strong>Tus datos se guardan localmente en tu navegador y permanecerán disponibles a menos que borres la caché o cambies de dispositivo o navegador. Asegúrate de usar la aplicación en tu idioma preferido, ya que los datos se almacenan por separado para cada versión del idioma. Aunque esta herramienta ayuda a rastrear datos, recomendamos hacer una copia de seguridad para evitar pérdidas.
   </p>
 
 <div style="margin-top: 1em;">
@@ -240,7 +240,7 @@
       updateTotal();
 
       
-      const  = document.createElement('td');
+      
       const 
       
       
@@ -284,8 +284,7 @@ const actionCell = document.createElement('td');
         const date = row.querySelector('input[type="date"]')?.value || '';
         const strain = row.querySelector('input[type="text"]')?.value || '';
         const grams = Array.from(row.querySelectorAll('td:nth-child(3) input[type="number"]')).map(input => input.value);
-        const 
-        return { date, strain, grams,  };
+        
       });
       localStorage.setItem(storageKey, JSON.stringify(data));
     }
@@ -302,7 +301,7 @@ const actionCell = document.createElement('td');
 
     function exportCSV() {
       const rows = document.querySelectorAll('#tableBody tr');
-      let csvContent = "Fecha,Variedad,Gramos (semicolon separated),Nota,Total\n";
+      let csvContent = "Fecha,Variedad,Gramos (semicolon separated),Total\n";
 
       rows.forEach(row => {
         const cells = row.querySelectorAll('td');
@@ -312,8 +311,7 @@ const actionCell = document.createElement('td');
         const grams = Array.from(gramInputs).map(input => input.value).join(';');
         const total = cells[3].innerText;
         
-        const 
-        csvContent += `"${date}","${strain}","${grams}","${total}"\n`;
+        
     
       });
 
@@ -392,6 +390,57 @@ function importCSV(event) {
   };
   reader.readAsText(file);
 }
+</script>
+
+
+<script>
+function updateTable() {
+  const entries = JSON.parse(localStorage.getItem('trimTrackerEntries') || "[]");
+  const tbody = document.querySelector("table tbody");
+  tbody.innerHTML = "";
+
+  entries.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  entries.forEach((entry, index) => {
+    const row = document.createElement("tr");
+
+    const dateCell = document.createElement("td");
+    dateCell.textContent = entry.date;
+    row.appendChild(dateCell);
+
+    const strainCell = document.createElement("td");
+    strainCell.textContent = entry.strain || '';
+    row.appendChild(strainCell);
+
+    const gramsCell = document.createElement("td");
+    gramsCell.textContent = entry.grams;
+    row.appendChild(gramsCell);
+
+    const bonusCell = document.createElement("td");
+    bonusCell.textContent = entry.bonusPay || '';
+    row.appendChild(bonusCell);
+
+    const actionCell = document.createElement("td");
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "Delete";
+    deleteBtn.onclick = () => {
+      entries.splice(index, 1);
+      localStorage.setItem("trimTrackerEntries", JSON.stringify(entries));
+      updateTable();
+    };
+    actionCell.appendChild(deleteBtn);
+    row.appendChild(actionCell);
+
+    tbody.appendChild(row);
+  });
+}
+</script>
+
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  if (typeof updateTable === 'function') updateTable();
+});
 </script>
 
 </body>
