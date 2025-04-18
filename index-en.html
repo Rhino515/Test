@@ -156,15 +156,19 @@
 <tr>
 <td colspan="2"><strong>Total</strong></td>
 <td id="totalBonusPay">$0.00</td>
-<td><button onclick="clearAll()">Clear All</button></td>
+
 </tr>
 </tfoot>
 </table>
+<div style="margin-top: 2em;">
+  <button onclick="clearCurrentPayPeriod()" style='background-color:red;color:white;padding:0.7em 1.5em;border:none;border-radius:4px;cursor:pointer;'>Clear Current Pay Period</button>
+</div>
+
 <!-- 
 
     Export CSV Button -->
 <div style="margin-top: 1em;">
-<button class="clear-all-button" onclick="exportCSV()">
+<button onclick="exportCSV()">
 
     Export CSV</button>
 
@@ -643,6 +647,25 @@ window.addEventListener('load', () => {
   const label = document.getElementById("payPeriodLabel");
   if (label) label.textContent = period.label;
 });
+</script>
+
+
+<script>
+function clearCurrentPayPeriod() {
+  const confirmMsg = document.documentElement.lang === 'es'
+    ? "¿Estás seguro de que deseas borrar todas las entradas del periodo actual?"
+    : "Are you sure you want to clear all entries from the current pay period?";
+  if (!confirm(confirmMsg)) return;
+
+  const period = getCurrentPayPeriod();
+  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  history = history.filter(entry => {
+    const d = new Date(entry.date);
+    return d < new Date(period.start) || d > new Date(period.end);
+  });
+  localStorage.setItem('trimHistory', JSON.stringify(history));
+  updateSessionTable();
+}
 </script>
 
 </body>
