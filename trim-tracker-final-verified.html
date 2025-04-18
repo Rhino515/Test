@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trim Tracker</title>
+<style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    .lang-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #777;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    img.banner {
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 16px;
+      line-height: 1.5;
+      font-weight: bold;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 12px;
+      text-align: center;
+      transition: background-color 0.2s ease;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #1a1a1a;
+    }
+    tbody tr:hover {
+      background-color: #2a2a2a;
+    }
+    input[type="text"], input[type="number"], input[type="date"] {
+      width: 100%;
+      padding: 6px;
+      font-size: 16px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-weight: bold;
+      box-sizing: border-box;
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #555;
+    }
+    button {
+      padding: 8px 12px;
+      margin: 10px 5px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    button.delete-row {
+      background-color: #dc3545;
+    }
+    button.delete-row:hover {
+      background-color: #c82333;
+    }
+    button.clear-all {
+      background-color: #ffc107;
+      color: #111;
+    }
+    button.clear-all:hover {
+      background-color: #e0a800;
+    }
+    a.back-link {
+      display: inline-block;
+      margin-top: 30px;
+      color: #0af;
+      text-decoration: none;
+    }
+  
+
+
+
+.note-input {
+  width: 120px;
+  min-height: 144px;
+  max-height: 200px;
+  font-size: 15px;
+  padding: 8px;
+  box-sizing: border-box;
+  color: white;
+  background-color: #222;
+  border: 1px solid #555;
+  border-radius: 4px;
+  resize: vertical;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+
+</style>
+</head>
+<body>
+<button class="lang-toggle" onclick="toggleLanguage()">Español</button>
+<img alt="Trim Tracker Banner" class="banner" src="trim-tracker-banner.PNG"/>
+<p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
+<strong>Note:</strong>Your data is saved locally in your browser and will remain available unless you clear your cache or switch devices or browsers. Please make sure to use the app in your preferred language, as data is stored separately for each language version. While this tool helps track data, we recommend backing up your information to avoid loss.
+  </p>
+
+<button id="sortDateBtn" onclick="toggleDateSort()">Sort by Date: Newest First</button>
+<table id="sessionTable">
+<thead>
+<tr>
+<th>Date</th>
+<th>Strain</th>
+<th>Grams</th>
+<th>Total</th>
+<th>Notes</th><th>Actions</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+<button onclick="addRow()">Add Row</button>
+<button class="clear-all" onclick="clearAllRows()">Clear All</button>
+<button onclick="exportCSV()">Export CSV</button>
+<input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+<button onclick="document.getElementById('csvInput').click()">Import CSV</button>
+<a class="back-link" id="backLink">← Back to Calculator</a>
+<div id="dailyTotals" style="margin-top: 30px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
+<h3>Daily Totals</h3>
+<ul id="totalsList" style="list-style: none; padding: 0;"></ul>
+</div>
+
+</body>
+</html>
+<script>
+
+  const userLang = navigator.language || navigator.userLanguage;
+  if (userLang.startsWith('es') && !window.location.href.includes('index-es.html') && !window.location.href.includes('trim-tracker-es.html')) {
+    if (window.location.href.includes('trim-tracker')) {
+      window.location.href = 'trim-tracker-es.html';
+    } else {
+      window.location.href = 'index-es.html';
+    }
+  }
+
+
+let sortDescending = true;
+
+function toggleDateSort() {
+  const tbody = document.getElementById('tableBody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+
+  rows.sort((a, b) => {
+    const aDate = new Date(a.querySelector('input[type="date"]').value);
+    const bDate = new Date(b.querySelector('input[type="date"]').value);
+    return sortDescending ? bDate - aDate : aDate - bDate;
+  });
+
+  rows.forEach(row => tbody.appendChild(row));
+  sortDescending = !sortDescending;
+  document.getElementById('sortDateBtn').textContent = sortDescending ? "Sort by Date: Newest First" : "Sort by Date: Oldest First";
+  debounceSave();
+}
+
+// Add move up/down buttons to each row
+function addMoveButtons(row) {
+  const actionCell = row.querySelector('td:last-child');
+
+  const upBtn = document.createElement('button');
+  upBtn.textContent = '↑';
+  upBtn.style.marginRight = '5px';
+  upBtn.onclick = () => {
+    const prev = row.previousElementSibling;
+    if (prev) {
+      row.parentNode.insertBefore(row, prev);
+      debounceSave();
+    }
+  };
+
+  const downBtn = document.createElement('button');
+  downBtn.textContent = '↓';
+  downBtn.style.marginRight = '5px';
+  downBtn.onclick = () => {
+    const next = row.nextElementSibling;
+    if (next) {
+      row.parentNode.insertBefore(next, row);
+      debounceSave();
+    }
+  };
+
+  actionCell.insertBefore(downBtn, actionCell.firstChild);
+  actionCell.insertBefore(upBtn, actionCell.firstChild);
+}
+
+// Patch existing addRow to use addMoveButtons
+const originalAddRow = addRow;
+addRow = function(data) {
+  originalAddRow(data);
+  const tbody = document.getElementById('tableBody');
+  const newRow = tbody.lastElementChild;
+  addMoveButtons(newRow);
+}
+
+function addMoveButtons(row) {
+  const actionCell = row.querySelector('td:last-child');
+
+  const upBtn = document.createElement('button');
+  upBtn.textContent = '↑';
+  upBtn.style.backgroundColor = '#28a745';
+  upBtn.style.color = 'white';
+  upBtn.style.marginRight = '5px';
+  upBtn.onclick = () => {
+    const prev = row.previousElementSibling;
+    if (prev) {
+      row.parentNode.insertBefore(row, prev);
+      debounceSave();
+    }
+  };
+
+  const downBtn = document.createElement('button');
+  downBtn.textContent = '↓';
+  downBtn.style.backgroundColor = '#28a745';
+  downBtn.style.color = 'white';
+  downBtn.style.marginRight = '5px';
+  downBtn.onclick = () => {
+    const next = row.nextElementSibling;
+    if (next) {
+      row.parentNode.insertBefore(next, row);
+      debounceSave();
+    }
+  };
+
+  actionCell.insertBefore(downBtn, actionCell.firstChild);
+  actionCell.insertBefore(upBtn, actionCell.firstChild);
+}
+
+</script>
