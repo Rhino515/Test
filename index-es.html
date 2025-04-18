@@ -816,11 +816,3 @@ function importTrimTrackerTotal() {
   document.getElementById('result').innerText = "Bonus Pay: $" + stored;
 }
 </script>
-
-<script>
-function clearAll() {
-  if (confirm("¿Estás seguro de que deseas borrar todas las entradas?")) {
-    localStorage.removeItem('trimHistory');
-    updateSessionTable();
-  }
-</script>
