@@ -229,11 +229,16 @@ function addMoveButtons(row) {
 <th>Strain</th>
 <th>Grams</th>
 <th>Total</th>
-<th>Notes</th><th>Actions</th>
+<th>Actions</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
 </table>
+<div style="margin-top: 1em;">
+  <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+  <button onclick="document.getElementById('csvInput').click()" style="background-color:#28a745;color:white;padding:0.5em 1.2em;border:none;border-radius:4px;cursor:pointer;">Import CSV</button>
+</div>
+
 <button onclick="addRow()">Add Row</button>
 <button class="clear-all" onclick="clearAllRows()">Clear All</button>
 <button onclick="exportCSV()">Export CSV</button>
@@ -280,7 +285,7 @@ function addMoveButtons(row) {
       const dateCell = document.createElement('td');
       const dateInput = document.createElement('input');
       dateInput.type = 'date';
-      dateInput.value = data.date || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+      dateInput.value = data.date || new Date().toLocaleDateString('en-CA');
       dateInput.oninput = () => { debounceSave(); updateDailyTotals(); };
       dateCell.appendChild(dateInput);
       row.appendChild(dateCell);
@@ -333,12 +338,12 @@ function addMoveButtons(row) {
 
       
       const noteCell = document.createElement('td');
-      const noteInput = document.createElement('textarea');
-      noteInput.placeholder = 'Notes';
-      noteInput.value = data.note || '';
-      noteInput.className = 'note-input';
-      noteInput.addEventListener('input', debounceSave);
-      noteCell.appendChild(noteInput);
+      const 
+      
+      
+      
+      
+      noteCell.appendChild(
       row.insertBefore(noteCell, row.children[4]); // Insert after Grams before Total
     
 
@@ -379,7 +384,7 @@ const actionCell = document.createElement('td');
         const strain = strainCell.querySelector('input').value;
         const grams = Array.from(gramsCell.querySelectorAll('input')).map(input => input.value);
         
-        return { date, strain, grams, note: noteCell.querySelector('textarea')?.value || '' };
+        return { date, strain, grams, noteCell.querySelector('textarea')?.value || '' };
       });
       localStorage.setItem(storageKey, JSON.stringify(data));
     }
@@ -439,7 +444,7 @@ const actionCell = document.createElement('td');
 
       
       // Save today's total to localStorage for use in Calculator
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+      const today = new Date().toLocaleDateString('en-CA');
       if (totalsMap[today]) {
         localStorage.setItem('trimTrackerDailyTotal-' + today, totalsMap[today].toFixed(2));
       } else {
@@ -497,6 +502,30 @@ function addMoveButtons(row) {
   actionCell.insertBefore(upBtn, actionCell.firstChild);
 }
 </script>
+
+<script>
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const lines = e.target.result.split('\n').slice(1);
+    let entries = JSON.parse(localStorage.getItem('trimTrackerEntries') || "[]");
+
+    lines.forEach(line => {
+      const [date, grams, bonus] = line.split(',');
+      if (!date || isNaN(parseFloat(grams)) || isNaN(parseFloat(bonus))) return;
+      entries.push({ date: date.trim(), grams: parseFloat(grams), bonusPay: parseFloat(bonus).toFixed(2) });
+    });
+
+    localStorage.setItem('trimTrackerEntries', JSON.stringify(entries));
+    updateTable();
+    alert("Import successful");
+  };
+  reader.readAsText(file);
+}
+</script>
+
 </body>
 </html>
 <script>
