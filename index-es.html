@@ -221,6 +221,7 @@ const dateStr = now.toISOString().split('T')[0];
       history.push(entry);
       localStorage.setItem('trimHistory', JSON.stringify(history));
       updateSessionTable();
+  document.getElementById('sessionTable').scrollIntoView({ behavior: 'smooth' });
 
       const scrollTarget = document.getElementById('sessionTable');
       if (scrollTarget) scrollTarget.scrollIntoView({ behavior: 'smooth' });
@@ -673,6 +674,7 @@ function calculate() {
   history.push(entry);
   localStorage.setItem('trimHistory', JSON.stringify(history));
   updateSessionTable();
+  document.getElementById('sessionTable').scrollIntoView({ behavior: 'smooth' });
   document.getElementById('grams').value = '';
 }
 
