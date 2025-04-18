@@ -1,7 +1,128 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="es">
 <head>
+<script>
+  const userLang = navigator.language || navigator.userLanguage;
+  if (userLang.startsWith('es') && !window.location.href.includes('index-es.html') && !window.location.href.includes('trim-tracker-es.html')) {
+    if (window.location.href.includes('trim-tracker')) {
+      window.location.href = 'trim-tracker-es.html';
+    } else {
+      window.location.href = 'index-es.html';
+    }
+  }
+
+
+let sortDescending = true;
+
+function toggleFechaSort() {
+  const tbody = document.getElementById('tableBody');
+  const rows = Array.from(tbody.querySelectorAll('tr'));
+
+  rows.sort((a, b) => {
+    const aFecha = new Fecha(a.querySelector('input[type="date"]').value);
+    const bFecha = new Fecha(b.querySelector('input[type="date"]').value);
+    return sortDescending ? bFecha - aFecha : aFecha - bFecha;
+  });
+
+  rows.forEach(row => tbody.appendChild(row));
+  sortDescending = !sortDescending;
+  document.getElementById('sortFechaBtn').textContent = sortDescending ? "Ordenar por Fecha: Más Recientes" : "Ordenar por Fecha: Más Antiguas";
+  debounceSave();
+}
+
+// Add move up/down buttons to each row
+function addMoveButtons(row) {
+  const actionCell = row.querySelector('td:last-child');
+
+  const upBtn = document.createElement('button');
+  upBtn.textContent = '↑';
+  upBtn.style.marginRight = '5px';
+  upBtn.onclick = () => {
+    const prev = row.previousElementSibling;
+    if (prev) {
+      row.parentNode.insertBefore(row, prev);
+      debounceSave();
+    }
+  };
+
+  const downBtn = document.createElement('button');
+  downBtn.textContent = '↓';
+  downBtn.style.marginRight = '5px';
+  downBtn.onclick = () => {
+    const next = row.nextElementSibling;
+    if (next) {
+      row.parentNode.insertBefore(next, row);
+      debounceSave();
+    }
+  };
+
+  actionCell.insertBefore(downBtn, actionCell.firstChild);
+  actionCell.insertBefore(upBtn, actionCell.firstChild);
+}
+
+// Patch existing addRow to use addMoveButtons
+const originalAddRow = addRow;
+addRow = function(data) {
+  originalAddRow(data);
+  const tbody = document.getElementById('tableBody');
+  const newRow = tbody.lastElementChild;
+  addMoveButtons(newRow);
+}
+
+function addMoveButtons(row) {
+  const actionCell = row.querySelector('td:last-child');
+
+  const upBtn = document.createElement('button');
+  upBtn.textContent = '↑';
+  upBtn.style.backgroundColor = '#28a745';
+  upBtn.style.color = 'white';
+  upBtn.style.marginRight = '5px';
+  upBtn.onclick = () => {
+    const prev = row.previousElementSibling;
+    if (prev) {
+      row.parentNode.insertBefore(row, prev);
+      debounceSave();
+    }
+  };
+
+  const downBtn = document.createElement('button');
+  downBtn.textContent = '↓';
+  downBtn.style.backgroundColor = '#28a745';
+  downBtn.style.color = 'white';
+  downBtn.style.marginRight = '5px';
+  downBtn.onclick = () => {
+    const next = row.nextElementSibling;
+    if (next) {
+      row.parentNode.insertBefore(next, row);
+      debounceSave();
+    }
+  };
+
+  actionCell.insertBefore(downBtn, actionCell.firstChild);
+  actionCell.insertBefore(upBtn, actionCell.firstChild);
+}
+
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const lines = e.target.result.split('\n').slice(1); // Skip header
+    lines.forEach(line => {
+      if (line.trim() === '') return;
+      const [date, strain, gramsStr, note] = line.split(',').map(x => x.replace(/^"|"$|\r/g, '').trim());
+      const grams = gramsStr.split(';').map(g => g.trim());
+      addRow({ date, strain, grams, note });
+    });
+    debounceSave();
+    updateDailyTotals();
+  };
+  reader.readAsText(file);
+}
+
+</script>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
 <title>Registro de Recorte</title>
@@ -94,7 +215,7 @@
 
 
 
-.-input {
+.note-input {
   width: 120px;
   min-height: 144px;
   max-height: 200px;
@@ -112,19 +233,15 @@
 
 
 </style>
-        
 </head>
 <body>
-<button class="lang-toggle" onclick="toggleLanguage()">Inglés</button>
+<button class="lang-toggle" onclick="window.location.href = 'trim-tracker.html';">English</button>
 <img alt="Registro de Recorte Banner" class="banner" src="trim-tracker-banner.PNG"/>
 <p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
-<strong>:</strong>Tus datos se guardan localmente en tu navegador y permanecerán disponibles a menos que borres la caché o cambies de dispositivo o navegador. Asegúrate de usar la aplicación en tu idioma preferido, ya que los datos se almacenan por separado para cada versión del idioma. Aunque esta herramienta ayuda a rastrear datos, recomendamos hacer una copia de seguridad para evitar pérdidas.
+<strong>Nota:</strong>Tus datos se guardan localmente en tu navegador y estarán disponibles a menos que borres tu caché o cambies de dispositivo o navegador. Asegúrate de usar la aplicación en tu idioma preferido, ya que los datos se almacenan por separado para cada versión de idioma. Aunque esta herramienta ayuda a seguir los datos, recomendamos hacer una copia de seguridad de tu información para evitar pérdidas.
   </p>
 
-<div style="margin-top: 1em;">
-  <button onclick="exportCSV()" style="background-color:#28a745;color:white;padding:0.5em 1.2em;border:none;border-radius:4px;cursor:pointer;">Exportar CSV</button>
-</div>
-
+<button id="sortFechaBtn" onclick="toggleFechaSort()">Ordenar por Fecha: Más Recientes</button>
 <table id="sessionTable">
 <thead>
 <tr>
@@ -132,110 +249,353 @@
 <th>Variedad</th>
 <th>Gramos</th>
 <th>Total</th>
-<th>Acciones</th>
+<th>Notas</th><th>Acciones</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
 </table>
-<div style="margin-top: 1em;">
-  <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
-  <button onclick="document.getElementById('csvInput').click()" style="background-color:#28a745;color:white;padding:0.5em 1.2em;border:none;border-radius:4px;cursor:pointer;">Import CSV</button>
-</div>
-
 <button onclick="addRow()">Agregar Fila</button>
 <button class="clear-all" onclick="clearAllRows()">Borrar Todo</button>
 <button onclick="exportCSV()">Exportar CSV</button>
-<a class="back-link" id="backLink">← ← Volver a la Calculadora</a>
+<input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
+<button onclick="document.getElementById('csvInput').click()">Importar CSV</button>
+
+<a class="back-link" id="backLink">← Volver a la Calculadora</a>
 <div id="dailyTotals" style="margin-top: 30px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
-<h3>Daily Totals</h3>
+<h3>Totales Diarios</h3>
 <ul id="totalsList" style="list-style: none; padding: 0;"></ul>
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <script>
-window.addEventListener("DOMContentLoaded", () => {
-  updateTable();
-});
+    const lang = document.documentElement.lang;
+    const storageKey = `trimTrackerData-${lang}`;
 
-function addRow(entry = {}) {
-  const tbody = document.getElementById("tableBody");
-  const row = document.createElement("tr");
+    let saveTimeout;
 
-  const dateCell = document.createElement("td");
-  const dateInput = document.createElement("input");
-  dateInput.type = "date";
-  dateInput.value = entry.date || new Date().toISOString().split("T")[0];
-  dateCell.appendChild(dateInput);
-  row.appendChild(dateCell);
+    function debounceSave() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(saveData);
+        } else {
+          saveData();
+        }
+      }, 300);
+    }
 
-  const strainCell = document.createElement("td");
-  const strainInput = document.createElement("input");
-  strainInput.type = "text";
-  strainInput.value = entry.strain || "";
-  strainCell.appendChild(strainInput);
-  row.appendChild(strainCell);
+    function createGramInput(onChangeFunc, value = '') {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = '0';
+      input.step = '0.01';
+      input.placeholder = 'g';
+      input.value = value;
+      input.oninput = () => {
+        onChangeFunc();
+        debounceSave();
+      };
+      return input;
+    }
 
-  const gramsCell = document.createElement("td");
-  const gramsInput = document.createElement("input");
-  gramsInput.type = "number";
-  gramsInput.step = "0.01";
-  gramsInput.value = entry.grams || "";
-  gramsCell.appendChild(gramsInput);
-  row.appendChild(gramsCell);
+    function addRow(data = {}) {
+      const tbody = document.getElementById('tableBody');
+      const row = document.createElement('tr');
 
-  const bonusCell = document.createElement("td");
-  const bonusInput = document.createElement("input");
-  bonusInput.type = "number";
-  bonusInput.step = "0.01";
-  bonusInput.value = entry.bonusPay || "";
-  bonusCell.appendChild(bonusInput);
-  row.appendChild(bonusCell);
+      const dateCell = document.createElement('td');
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.value = data.date || new Fecha().toLocaleFechaString('en-CA');
+      dateInput.oninput = () => { debounceSave(); updateDailyTotals(); };
+      dateCell.appendChild(dateInput);
+      row.appendChild(dateCell);
 
-  const actionCell = document.createElement("td");
-  const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "Eliminar";
-  deleteBtn.onclick = () => {
-    row.remove();
-    saveData();
+      const strainCell = document.createElement('td');
+      const strainInput = document.createElement('input');
+      strainInput.type = 'text';
+      strainInput.value = data.strain || '';
+      strainInput.oninput = debounceSave;
+      strainCell.appendChild(strainInput);
+      row.appendChild(strainCell);
+
+      const gramsCell = document.createElement('td');
+      const gramsWrapper = document.createElement('div');
+      gramsWrapper.style.display = 'flex';
+      gramsWrapper.style.flexWrap = 'wrap';
+      gramsWrapper.style.gap = '4px';
+
+      const totalCell = document.createElement('td');
+
+      const updateTotal = () => {
+        const inputs = gramsWrapper.querySelectorAll('input');
+        let sum = 0;
+        inputs.forEach(input => {
+          const val = parseFloat(input.value);
+          if (!isNaN(val)) sum += val;
+        });
+        totalCell.innerText = sum.toFixed(2);
+        updateDailyTotals();
+      };
+
+      (data.grams || ['', '', '']).forEach(g => {
+        gramsWrapper.appendChild(createGramInput(updateTotal, g));
+      });
+
+      const addGramBtn = document.createElement('button');
+      addGramBtn.textContent = '+';
+      addGramBtn.onclick = () => {
+        gramsWrapper.appendChild(createGramInput(updateTotal));
+        debounceSave();
+      };
+
+      gramsCell.appendChild(gramsWrapper);
+      gramsCell.appendChild(addGramBtn);
+      row.appendChild(gramsCell);
+
+      totalCell.innerText = '0.00';
+      row.appendChild(totalCell);
+      updateTotal();
+
+      
+      const noteCell = document.createElement('td');
+      const noteInput = document.createElement('textarea');
+      noteInput.placeholder = 'Notas';
+      noteInput.value = data.note || '';
+      noteInput.className = 'note-input';
+      noteInput.addEventListener('input', debounceSave);
+      noteCell.appendChild(noteInput);
+      row.insertBefore(noteCell, row.children[4]); // Insert after Gramos before Total
+    
+
+const actionCell = document.createElement('td');
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'Eliminar';
+      delBtn.className = 'delete-row';
+      delBtn.onclick = () => {
+        if (confirm('Are you sure you want to delete this row?')) {
+          row.remove();
+          debounceSave();
+          updateDailyTotals();
+        }
+      };
+      actionCell.appendChild(delBtn);
+      row.appendChild(actionCell);
+
+      tbody.appendChild(row);
+
+  // Add move buttons
+  addMoveButtons(row);
+    }
+
+    function clearAllRows() {
+      if (confirm('Are you sure you want to delete all rows? This cannot be undone.')) {
+        document.getElementById('tableBody').innerHTML = '';
+        addRow();
+        debounceSave();
+        updateDailyTotals();
+      }
+    }
+
+    function saveData() {
+      const rows = document.querySelectorAll('#tableBody tr');
+      const data = Array.from(rows).map(row => {
+        const [dateCell, strainCell, gramsCell, noteCell, totalCell, actionCell] = row.querySelectorAll('td');
+        const date = dateCell.querySelector('input').value;
+        const strain = strainCell.querySelector('input').value;
+        const grams = Array.from(gramsCell.querySelectorAll('input')).map(input => input.value);
+        
+        return { date, strain, grams, note: noteCell.querySelector('textarea')?.value || '' };
+      });
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function loadData() {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        parsed.forEach(entry => addRow(entry));
+      } else {
+        addRow();
+      }
+    }
+
+    function exportCSV() {
+      const rows = document.querySelectorAll('#tableBody tr');
+      let csvContent = "Fecha,Variedad,Gramos (semicolon separated),Note,Total\n";
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const date = cells[0].querySelector('input').value;
+        const strain = cells[1].querySelector('input').value;
+        const gramInputs = cells[2].querySelectorAll('input');
+        const grams = Array.from(gramInputs).map(input => input.value).join(';');
+        const total = cells[3].innerText;
+        
+        const note = cells[3].querySelector('input')?.value || '';
+        csvContent += `"${date}","${strain}","${grams}","${note}","${total}"\n`;
+    
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'trim-tracker.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function updateDailyTotals() {
+      const rows = document.querySelectorAll('#tableBody tr');
+      const totalsMap = {};
+
+      rows.forEach(row => {
+        const date = row.querySelector('td input[type="date"]').value;
+        const total = parseFloat(row.querySelector('td:nth-child(4)').innerText) || 0;
+        if (date) {
+          if (!totalsMap[date]) totalsMap[date] = 0;
+          totalsMap[date] += total;
+        }
+      });
+
+      const totalsList = document.getElementById('totalsList');
+      totalsList.innerHTML = '';
+
+      
+      // Save today's total to localStorage for use in Calculator
+      const today = new Fecha().toLocaleFechaString('en-CA');
+      if (totalsMap[today]) {
+        localStorage.setItem('trimTrackerDailyTotal-' + today, totalsMap[today].toFixed(2));
+      } else {
+        localStorage.removeItem('trimTrackerDailyTotal');
+      }
+
+
+      Object.entries(totalsMap).forEach(([date, total]) => {
+        const li = document.createElement('li');
+        li.textContent = `${date}: ${total.toFixed(2)}g`;
+        totalsList.appendChild(li);
+      });
+    }
+
+    function window.location.href = 'trim-tracker.html'; {
+      window.location.href = 'trim-tracker-es.html';
+    }
+
+    document.getElementById('backLink').href = 'index.html';
+
+    localStorage.removeItem('trimTrackerDailyTotal');  // Clear old total
+loadData();
+setTimeout(updateDailyTotals, 200);  // Force save today's total after loading
+  
+function addMoveButtons(row) {
+  const actionCell = row.querySelector('td:last-child');
+
+  const upBtn = document.createElement('button');
+  upBtn.textContent = '↑';
+  upBtn.style.backgroundColor = '#28a745';
+  upBtn.style.color = 'white';
+  upBtn.style.marginRight = '5px';
+  upBtn.onclick = () => {
+    const prev = row.previousElementSibling;
+    if (prev) {
+      row.parentNode.insertBefore(row, prev);
+      debounceSave();
+    }
   };
-  actionCell.appendChild(deleteBtn);
-  row.appendChild(actionCell);
 
-  tbody.insertBefore(row, tbody.firstChild);
+  const downBtn = document.createElement('button');
+  downBtn.textContent = '↓';
+  downBtn.style.backgroundColor = '#28a745';
+  downBtn.style.color = 'white';
+  downBtn.style.marginRight = '5px';
+  downBtn.onclick = () => {
+    const next = row.nextElementSibling;
+    if (next) {
+      row.parentNode.insertBefore(next, row);
+      debounceSave();
+    }
+  };
+
+  actionCell.insertBefore(downBtn, actionCell.firstChild);
+  actionCell.insertBefore(upBtn, actionCell.firstChild);
 }
 
-function saveData() {
-  const rows = document.querySelectorAll("#tableBody tr");
-  const data = Array.from(rows).map(row => {
-    return {
-      date: row.querySelector("td:nth-child(1) input").value,
-      strain: row.querySelector("td:nth-child(2) input").value,
-      grams: row.querySelector("td:nth-child(3) input").value,
-      bonusPay: row.querySelector("td:nth-child(4) input").value
-    };
-  });
-  localStorage.setItem("trimTrackerData-es", JSON.stringify(data));
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const lines = e.target.result.split('\n').slice(1); // Skip header
+    lines.forEach(line => {
+      if (line.trim() === '') return;
+      const [date, strain, gramsStr, note] = line.split(',').map(x => x.replace(/^"|"$|\r/g, '').trim());
+      const grams = gramsStr.split(';').map(g => g.trim());
+      addRow({ date, strain, grams, note });
+    });
+    debounceSave();
+    updateDailyTotals();
+  };
+  reader.readAsText(file);
 }
 
-function updateTable() {
-  const data = JSON.parse(localStorage.getItem("trimTrackerData-es") || "[]");
-  const tbody = document.getElementById("tableBody");
-  tbody.innerHTML = "";
-  data.forEach(entry => addRow(entry));
-}
 </script>
-
 </body>
 </html>
+<script>
+    // Update totals whenever any input changes
+    document.addEventListener('input', updateDailyTotals);
+
+function addMoveButtons(row) {
+  const actionCell = row.querySelector('td:last-child');
+
+  const upBtn = document.createElement('button');
+  upBtn.textContent = '↑';
+  upBtn.style.backgroundColor = '#28a745';
+  upBtn.style.color = 'white';
+  upBtn.style.marginRight = '5px';
+  upBtn.onclick = () => {
+    const prev = row.previousElementSibling;
+    if (prev) {
+      row.parentNode.insertBefore(row, prev);
+      debounceSave();
+    }
+  };
+
+  const downBtn = document.createElement('button');
+  downBtn.textContent = '↓';
+  downBtn.style.backgroundColor = '#28a745';
+  downBtn.style.color = 'white';
+  downBtn.style.marginRight = '5px';
+  downBtn.onclick = () => {
+    const next = row.nextElementSibling;
+    if (next) {
+      row.parentNode.insertBefore(next, row);
+      debounceSave();
+    }
+  };
+
+  actionCell.insertBefore(downBtn, actionCell.firstChild);
+  actionCell.insertBefore(upBtn, actionCell.firstChild);
+}
+
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const lines = e.target.result.split('\n').slice(1); // Skip header
+    lines.forEach(line => {
+      if (line.trim() === '') return;
+      const [date, strain, gramsStr, note] = line.split(',').map(x => x.replace(/^"|"$|\r/g, '').trim());
+      const grams = gramsStr.split(';').map(g => g.trim());
+      addRow({ date, strain, grams, note });
+    });
+    debounceSave();
+    updateDailyTotals();
+  };
+  reader.readAsText(file);
+}
+
+</script>
