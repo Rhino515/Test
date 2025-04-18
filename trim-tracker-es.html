@@ -376,7 +376,7 @@ function importCSV(event) {
   const reader = new FileReader();
   reader.onload = function(e) {
     const lines = e.target.result.split('\n').slice(1);
-    let entries = JSON.parse(localStorage.getItem('trimTrackerEntries') || "[]");
+    let entries = JSON.parse(localStorage.getItem('trimTrackerData-es') || "[]");
 
     lines.forEach(line => {
       const [date, grams, bonus] = line.split(',');
@@ -384,7 +384,7 @@ function importCSV(event) {
       entries.push({ date: date.trim(), grams: parseFloat(grams), bonusPay: parseFloat(bonus).toFixed(2) });
     });
 
-    localStorage.setItem('trimTrackerEntries', JSON.stringify(entries));
+    localStorage.setItem('trimTrackerData-es', JSON.stringify(entries));
     updateTable();
     alert("Import successful");
   };
@@ -395,7 +395,7 @@ function importCSV(event) {
 
 <script>
 function updateTable() {
-  const entries = JSON.parse(localStorage.getItem('trimTrackerEntries') || "[]");
+  const entries = JSON.parse(localStorage.getItem('trimTrackerData-es') || "[]");
   const tbody = document.querySelector("table tbody");
   tbody.innerHTML = "";
 
@@ -425,7 +425,7 @@ function updateTable() {
     deleteBtn.textContent = "Delete";
     deleteBtn.onclick = () => {
       entries.splice(index, 1);
-      localStorage.setItem("trimTrackerEntries", JSON.stringify(entries));
+      localStorage.setItem('trimTrackerData-es', JSON.stringify(entries));
       updateTable();
     };
     actionCell.appendChild(deleteBtn);
