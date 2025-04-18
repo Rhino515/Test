@@ -140,10 +140,7 @@
 <div style="margin-top: 1em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
 <strong>Note:</strong> For the Trim Tracker import feature to work properly, please use the calculator and tracker in your preferred language only. Mixing languages may cause data sync issues.
   </div>
-<div id="payPeriodInputs" style="margin-top: 1em; font-size: 1em; color: white;">
-<label>Pay Period Start: <input id="payPeriodStart" type="date"/></label>
-<label style="margin-left: 1em;">End: <input id="payPeriodEnd" type="date"/></label>
-</div>
+
 <div id="payPeriodLabel" style="margin-top: 1em; color: #0f0; font-weight: bold;"></div>
 <table id="sessionTable">
 <thead>
@@ -651,6 +648,48 @@ function deleteEntry(index) {
 }
 </script>
 
+
+
+<script>
+// Auto pay period starting from April 14, 2025 (Monday)
+function getCurrentPayPeriod() {
+  const base = new Date("2025-04-14T00:00:00"); // Monday
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.floor((today - base) / (1000 * 60 * 60 * 24));
+  const periodIndex = Math.floor(diffDays / 14);
+  const periodStart = new Date(base);
+  periodStart.setDate(base.getDate() + periodIndex * 14);
+  const periodEnd = new Date(periodStart);
+  periodEnd.setDate(periodStart.getDate() + 13);
+  return {
+    start: periodStart.toISOString().split('T')[0],
+    end: periodEnd.toISOString().split('T')[0],
+    label: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Pay Period: ') +
+           periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
+  };
+}
+
+// Overwrite groupByPayPeriod to use automatic schedule
+function groupByPayPeriod(history) {
+  const period = getCurrentPayPeriod();
+  const start = new Date(period.start);
+  const end = new Date(period.end);
+  end.setHours(23, 59, 59, 999);
+  const entries = history.map((entry, i) => [entry, i]).filter(([entry]) => {
+    const d = new Date(entry.date);
+    return d >= start && d <= end;
+  });
+  return { [period.start]: { label: period.label, entries } };
+}
+
+// Replace pay period label text
+window.addEventListener('load', () => {
+  const period = getCurrentPayPeriod();
+  const label = document.getElementById("payPeriodLabel");
+  if (label) label.textContent = period.label;
+});
+</script>
 
 </body>
 </html>
