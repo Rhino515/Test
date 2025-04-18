@@ -28,7 +28,7 @@
     input {
       font-size: 1.2em;
       padding: 0.5em;
-      margin-top: 0.6em;
+      margin-top: 1em;
       width: 150px;
       background-color: #222;
       color: #fff;
@@ -38,10 +38,10 @@
     button {
       background-color: green;
       color: white;
-      padding: 0.45em 1em;
+      padding: 0.7em 1.5em;
       border: none;
       font-size: 1em;
-      margin-top: 0.6em;
+      margin-top: 1em;
       border-radius: 4px;
       cursor: pointer;
     }
@@ -49,15 +49,15 @@
       background-color: darkgreen;
     }
     img {
-      margin-top: 0.6em;
+      margin-top: 1em;
       width: 200px;
     }
     #result {
-      margin-top: 0.6em;
+      margin-top: 1em;
       font-size: 1.2em;
     }
     .install-links {
-      margin-top: 0.6em;
+      margin-top: 2em;
     }
     .install-links a {
       display: inline-block;
@@ -137,11 +137,11 @@
 <a href="trim-tracker.html">Go to Trim Tracker</a>
 <a class="nav-button" href="help.html">How to Use the App</a>
 </div>
-<div style="margin-top: 0.6em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
+<div style="margin-top: 1em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
 <strong>Note:</strong> For the Trim Tracker import feature to work properly, please use the calculator and tracker in your preferred language only. Mixing languages may cause data sync issues.
   </div>
 
-<div id="payPeriodLabel" style="margin-top: 0.6em; color: #0f0; font-weight: bold;"></div>
+<div id="payPeriodLabel" style="margin-top: 1em; color: #0f0; font-weight: bold;"></div>
 <table id="sessionTable">
 <thead>
 <tr>
@@ -156,32 +156,21 @@
 <tr>
 <td colspan="2"><strong>Total</strong></td>
 <td id="totalBonusPay">$0.00</td>
-
+<td><button onclick="clearAll()">Clear All</button></td>
 </tr>
 </tfoot>
 </table>
-<div style="margin-top: 0.6em;">
-  <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importCSV(event)">
-  <button onclick="document.getElementById('csvInput').click()" style='background-color:#28a745;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;'>Import CSV</button>
-</div>
-
-<div style="margin-top: 0.6em;">
-  <button onclick="downloadCSV()" style='background-color:green;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;'>Export CSV</button>
-</div>
-
-
-
-
-
-<div style="margin-top: 0.6em;">
-  <button onclick="clearCurrentPayPeriod()" style='background-color:red;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;'>Clear Current Pay Period</button>
-</div>
-
 <!-- 
 
     Export CSV Button -->
+<div style="margin-top: 1em;">
+<button class="clear-all-button" onclick="exportCSV()">
 
-<div style="margin-top: 1.2em; border-top: 1px solid #444; padding-top: 1em;">
+    Export CSV</button>
+
+
+</div>
+<div style="margin-top: 3em; border-top: 1px solid #444; padding-top: 1em;">
 <h2 onclick="togglePayCalc()" style="color:#0f0; cursor:pointer;">Hourly &amp; Pay Averages ▼</h2>
 <div id="payCalcSection" style="display:none;">
 <p>Enter your hourly pay and hours worked, then choose a date range:</p>
@@ -190,7 +179,7 @@
 <label>Start Date: <input id="startDate" type="date"/></label><br/>
 <label>End Date: <input id="endDate" type="date"/></label><br/>
 <button onclick="calculateAverages()">Calculate Averages</button>
-<div id="averageResults" style="margin-top: 0.6em; text-align: left;"></div>
+<div id="averageResults" style="margin-top: 1em; text-align: left;"></div>
 </div>
 </div><div style="margin-top: 4em; padding-top: 2em; border-top: 1px solid #444;">
 <h2 style="color: #0f0;">About the Creator</h2>
@@ -323,6 +312,20 @@ function updateSessionTable() {
       };
       actionCell.appendChild(deleteBtn);
 
+      const upBtn = document.createElement('button');
+      upBtn.textContent = '↑';
+      upBtn.style.marginLeft = '5px';
+      upBtn.style.color = 'lime';
+      upBtn.onclick = function () { moveEntry(index, -1); };
+      actionCell.appendChild(upBtn);
+
+      const downBtn = document.createElement('button');
+      downBtn.textContent = '↓';
+      downBtn.style.marginLeft = '5px';
+      downBtn.style.color = 'lime';
+      downBtn.onclick = function () { moveEntry(index, 1); };
+      actionCell.appendChild(downBtn);
+
       row.appendChild(actionCell);
       tbody.appendChild(row);
       totalBonusPay += parseFloat(entry.bonusPay);
@@ -368,7 +371,16 @@ function calculateAverages() {
 </script>
 
 <script>
-
+function moveEntry(index, direction) {
+  const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= history.length) return;
+  const temp = history[index];
+  history[index] = history[newIndex];
+  history[newIndex] = temp;
+  localStorage.setItem('trimHistory', JSON.stringify(history));
+  updateSessionTable();
+}
 
 
 
@@ -517,6 +529,20 @@ Object.values(grouped).forEach((week, groupIndex) => {
       };
       actionCell.appendChild(deleteBtn);
 
+      const upBtn = document.createElement('button');
+      upBtn.textContent = '↑';
+      upBtn.style.marginLeft = '5px';
+      upBtn.style.color = 'lime';
+      upBtn.onclick = function () { moveEntry(index, -1); };
+      actionCell.appendChild(upBtn);
+
+      const downBtn = document.createElement('button');
+      downBtn.textContent = '↓';
+      downBtn.style.marginLeft = '5px';
+      downBtn.style.color = 'lime';
+      downBtn.onclick = function () { moveEntry(index, 1); };
+      actionCell.appendChild(downBtn);
+
       row.appendChild(actionCell);
       tbody.appendChild(row);
       totalBonusPay += parseFloat(entry.bonusPay);
@@ -617,85 +643,6 @@ window.addEventListener('load', () => {
   const label = document.getElementById("payPeriodLabel");
   if (label) label.textContent = period.label;
 });
-</script>
-
-
-<script>
-function clearCurrentPayPeriod() {
-  const confirmMsg = document.documentElement.lang === 'es'
-    ? "¿Estás seguro de que deseas borrar todas las entradas del periodo actual?"
-    : "Are you sure you want to clear all entries from the current pay period?";
-  if (!confirm(confirmMsg)) return;
-
-  const period = getCurrentPayPeriod();
-  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  history = history.filter(entry => {
-    const d = new Date(entry.date);
-    return d < new Date(period.start) || d > new Date(period.end);
-  });
-  localStorage.setItem('trimHistory', JSON.stringify(history));
-  updateSessionTable();
-}
-</script>
-
-
-<script>
-function downloadCSV() {
-  const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  if (history.length === 0) {
-    alert(document.documentElement.lang === 'es' ? "No hay datos para exportar." : "No data to export.");
-    return;
-  }
-
-  const headers = ["Date", "Grams", "Bonus"];
-  const rows = history.map(entry => [entry.date, entry.grams, entry.bonusPay]);
-
-  let csvContent = "data:text/csv;charset=utf-8," 
-    + headers.join(",") + "\n" 
-    + rows.map(e => e.join(",")).join("\n");
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "trim_data.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-</script>
-
-
-<script>
-function importCSV(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const text = e.target.result;
-    const lines = text.split('\n').slice(1); // Skip header
-    let imported = [];
-
-    for (let line of lines) {
-      if (!line.trim()) continue;
-      const [date, grams, bonus] = line.split(',');
-      if (!date || isNaN(parseFloat(grams)) || isNaN(parseFloat(bonus))) continue;
-      imported.push({ date: date.trim(), grams: parseFloat(grams), bonusPay: parseFloat(bonus).toFixed(2) });
-    }
-
-    if (imported.length === 0) {
-      alert(document.documentElement.lang === 'es' ? "Archivo CSV no válido o vacío." : "Invalid or empty CSV file.");
-      return;
-    }
-
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    history = history.concat(imported);
-    localStorage.setItem('trimHistory', JSON.stringify(history));
-    updateSessionTable();
-    alert(document.documentElement.lang === 'es' ? "Importación completada." : "Import completed.");
-  };
-  reader.readAsText(file);
-}
 </script>
 
 </body>
