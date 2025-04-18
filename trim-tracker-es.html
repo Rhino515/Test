@@ -150,255 +150,91 @@
 <h3>Daily Totals</h3>
 <ul id="totalsList" style="list-style: none; padding: 0;"></ul>
 </div>
-<script>
-    const lang = document.documentElement.lang;
-    const storageKey = `trimTrackerData-${lang}`;
-
-    let saveTimeout;
-
-    function debounceSave() {
-      clearTimeout(saveTimeout);
-      saveTimeout = setTimeout(() => {
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(saveData);
-        } else {
-          saveData();
-        }
-      }, 300);
-    }
-
-    function createGramInput(onChangeFunc, value = '') {
-      const input = document.createElement('input');
-      input.type = 'number';
-      input.min = '0';
-      input.step = '0.01';
-      input.placeholder = 'g';
-      input.value = value;
-      input.oninput = () => {
-        onChangeFunc();
-        debounceSave();
-      };
-      return input;
-    }
-
-    function addRow(data = {}) {
-      const tbody = document.getElementById('tableBody');
-      const row = document.createElement('tr');
-
-      const dateCell = document.createElement('td');
-      const dateInput = document.createElement('input');
-      dateInput.type = 'date';
-      dateInput.value = data.date || new Date().toLocaleDateString('en-CA');
-      dateInput.oninput = () => { debounceSave(); updateDailyTotals(); };
-      dateCell.appendChild(dateInput);
-      row.appendChild(dateCell);
-
-      const strainCell = document.createElement('td');
-      const strainInput = document.createElement('input');
-      strainInput.type = 'text';
-      strainInput.value = data.strain || '';
-      strainInput.oninput = debounceSave;
-      strainCell.appendChild(strainInput);
-      row.appendChild(strainCell);
-
-      const gramsCell = document.createElement('td');
-      const gramsWrapper = document.createElement('div');
-      gramsWrapper.style.display = 'flex';
-      gramsWrapper.style.flexWrap = 'wrap';
-      gramsWrapper.style.gap = '4px';
-
-      const totalCell = document.createElement('td');
-
-      const updateTotal = () => {
-        const inputs = gramsWrapper.querySelectorAll('input');
-        let sum = 0;
-        inputs.forEach(input => {
-          const val = parseFloat(input.value);
-          if (!isNaN(val)) sum += val;
-        });
-        totalCell.innerText = sum.toFixed(2);
-        updateDailyTotals();
-      };
-
-      (data.grams || ['', '', '']).forEach(g => {
-        gramsWrapper.appendChild(createGramInput(updateTotal, g));
-      });
-
-      const addGramBtn = document.createElement('button');
-      addGramBtn.textContent = '+';
-      addGramBtn.onclick = () => {
-        gramsWrapper.appendChild(createGramInput(updateTotal));
-        debounceSave();
-      };
-
-      gramsCell.appendChild(gramsWrapper);
-      gramsCell.appendChild(addGramBtn);
-      row.appendChild(gramsCell);
-
-      totalCell.innerText = '0.00';
-      row.appendChild(totalCell);
-      updateTotal();
-
-      
-      
-      const actionCell = document.createElement('td');
-      const delBtn = document.createElement('button');
-      delBtn.textContent = 'Eliminar';
-      delBtn.className = 'delete-row';
-      delBtn.onclick = () => {
-        if (confirm('Are you sure you want to delete this row?')) {
-          row.remove();
-          debounceSave();
-          updateDailyTotals();
-        }
-      };
-      actionCell.appendChild(delBtn);
-      row.appendChild(actionCell);
-
-      tbody.insertBefore(row, tbody.firstChild);
-    }
-
-    function clearAllRows() {
-      if (confirm('Are you sure you want to delete all rows? This cannot be undone.')) {
-        document.getElementById('tableBody').innerHTML = '';
-        addRow();
-        debounceSave();
-        updateDailyTotals();
-      }
-    }
-
-    
-    function saveData() {
-  const rows = document.querySelectorAll('#tableBody tr');
-  const data = Array.from(rows).map(row => {
-    const date = row.querySelector('input[type="date"]').value;
-    const strain = row.querySelector('input[type="text"]').value;
-    const grams = Array.from(row.querySelectorAll('td:nth-child(3) input')).map(input => input.value);
-    return { date, strain, grams };
-  });
-  localStorage.setItem('trimTrackerData-es', JSON.stringify(data));
-}
-localStorage.setItem(storageKey, JSON.stringify(data));
-    }
-
-    function loadData() {
-      const stored = localStorage.getItem(storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        parsed.forEach(entry => addRow(entry));
-      } else {
-        addRow();
-      }
-    }
-
-    function exportCSV() {
-      const rows = document.querySelectorAll('#tableBody tr');
-      let csvContent = "Fecha,Variedad,Gramos (semicolon separated),Total\n";
-
-      rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        const date = cells[0].querySelector('input').value;
-        const strain = cells[1].querySelector('input').value;
-        const gramInputs = cells[2].querySelectorAll('input');
-        const grams = Array.from(gramInputs).map(input => input.value).join(';');
-        const total = cells[3].innerText;
-        
-        
-    
-      });
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', 'trim-tracker.csv');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    function updateDailyTotals() {
-      const rows = document.querySelectorAll('#tableBody tr');
-      const totalsMap = {};
-
-      rows.forEach(row => {
-        const date = row.querySelector('td input[type="date"]').value;
-        const total = parseFloat(row.querySelector('td:nth-child(4)').innerText) || 0;
-        if (date) {
-          if (!totalsMap[date]) totalsMap[date] = 0;
-          totalsMap[date] += total;
-        }
-      });
-
-      const totalsList = document.getElementById('totalsList');
-      totalsList.innerHTML = '';
-
-      
-      // Save today's total to localStorage for use in Calculator
-      const today = new Date().toLocaleDateString('en-CA');
-      if (totalsMap[today]) {
-        localStorage.setItem('trimTrackerDailyTotal', totalsMap[today].toFixed(2));
-      } else {
-        localStorage.removeItem('trimTrackerDailyTotal');
-      }
 
 
-      Object.entries(totalsMap).forEach(([date, total]) => {
-        const li = document.createElement('li');
-        li.textContent = `${date}: ${total.toFixed(2)}g`;
-        totalsList.appendChild(li);
-      });
-    }
-
-    function toggleLanguage() {
-      window.location.href = 'trim-tracker.html';
-    }
-
-    document.getElementById('backLink').href = 'index-es.html';
-
-    localStorage.removeItem('trimTrackerDailyTotal');  // Clear old total
-loadData();
-setTimeout(updateDailyTotals, 200);  // Force save today's total after loading
-  </script>
-
-<script>
-function importCSV(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const lines = e.target.result.split('\n').slice(1);
-    let entries = JSON.parse(localStorage.getItem('trimTrackerData-es') || "[]");
-
-    lines.forEach(line => {
-      const [date, grams, bonus] = line.split(',');
-      if (!date || isNaN(parseFloat(grams)) || isNaN(parseFloat(bonus))) return;
-      entries.push({ date: date.trim(), grams: parseFloat(grams), bonusPay: parseFloat(bonus).toFixed(2) });
-    });
-
-    localStorage.setItem('trimTrackerData-es', JSON.stringify(entries));
-    updateTable();
-    alert("Import successful");
-  };
-  reader.readAsText(file);
-}
-</script>
 
 
-<script>
-function updateTable() {
-  const entries = JSON.parse(localStorage.getItem('trimTrackerData-es') || "[]");
-  const tbody = document.getElementById("tableBody");
-  tbody.innerHTML = "";
-  entries.forEach(entry => addRow(entry));
-}
-</script>
+
+
+
+
+
+
+
+
 
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  if (typeof updateTable === 'function') updateTable();
+  updateTable();
 });
+
+function addRow(entry = {}) {
+  const tbody = document.getElementById("tableBody");
+  const row = document.createElement("tr");
+
+  const dateCell = document.createElement("td");
+  const dateInput = document.createElement("input");
+  dateInput.type = "date";
+  dateInput.value = entry.date || new Date().toISOString().split("T")[0];
+  dateCell.appendChild(dateInput);
+  row.appendChild(dateCell);
+
+  const strainCell = document.createElement("td");
+  const strainInput = document.createElement("input");
+  strainInput.type = "text";
+  strainInput.value = entry.strain || "";
+  strainCell.appendChild(strainInput);
+  row.appendChild(strainCell);
+
+  const gramsCell = document.createElement("td");
+  const gramsInput = document.createElement("input");
+  gramsInput.type = "number";
+  gramsInput.step = "0.01";
+  gramsInput.value = entry.grams || "";
+  gramsCell.appendChild(gramsInput);
+  row.appendChild(gramsCell);
+
+  const bonusCell = document.createElement("td");
+  const bonusInput = document.createElement("input");
+  bonusInput.type = "number";
+  bonusInput.step = "0.01";
+  bonusInput.value = entry.bonusPay || "";
+  bonusCell.appendChild(bonusInput);
+  row.appendChild(bonusCell);
+
+  const actionCell = document.createElement("td");
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "Eliminar";
+  deleteBtn.onclick = () => {
+    row.remove();
+    saveData();
+  };
+  actionCell.appendChild(deleteBtn);
+  row.appendChild(actionCell);
+
+  tbody.insertBefore(row, tbody.firstChild);
+}
+
+function saveData() {
+  const rows = document.querySelectorAll("#tableBody tr");
+  const data = Array.from(rows).map(row => {
+    return {
+      date: row.querySelector("td:nth-child(1) input").value,
+      strain: row.querySelector("td:nth-child(2) input").value,
+      grams: row.querySelector("td:nth-child(3) input").value,
+      bonusPay: row.querySelector("td:nth-child(4) input").value
+    };
+  });
+  localStorage.setItem("trimTrackerData-es", JSON.stringify(data));
+}
+
+function updateTable() {
+  const data = JSON.parse(localStorage.getItem("trimTrackerData-es") || "[]");
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+  data.forEach(entry => addRow(entry));
+}
 </script>
 
 </body>
