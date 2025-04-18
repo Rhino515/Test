@@ -260,30 +260,7 @@ function updateSessionTable() {
   });
 
   Object.values(weekMap).forEach((week) => {
-    const toggleRow = document.createElement('tr');
-    const toggleCell = document.createElement('td');
-    toggleCell.colSpan = 4;
-    toggleCell.style.cursor = 'pointer';
-    toggleCell.style.background = '#1a1a1a';
-    toggleCell.style.color = '#0f0';
-    toggleCell.style.fontWeight = 'bold';
-    toggleCell.textContent = week.label + " ▼";
-    let collapsed = false;
-    toggleCell.onclick = () => {
-      collapsed = !collapsed;
-      week.entries.forEach(([_, i]) => {
-        const row = document.getElementById('row-' + i);
-        if (row) row.style.display = collapsed ? 'none' : '';
-      });
-      
-if (week.label.includes(currentStart) && week.label.includes(currentEnd)) {
-  toggleCell.style.border = '2px solid lime';
-  toggleCell.style.boxShadow = '0 0 10px lime';
-}
-toggleCell.textContent = week.label + (collapsed ? " ▶" : " ▼");
-    };
-    toggleRow.appendChild(toggleCell);
-    tbody.appendChild(toggleRow);
+    
 
     week.entries.forEach(([entry, index]) => {
       const row = document.createElement('tr');
@@ -501,30 +478,7 @@ updateSessionTable = function() {
 const currentStart = localStorage.getItem('payPeriodStart');
 const currentEnd = localStorage.getItem('payPeriodEnd');
 Object.values(grouped).forEach((week, groupIndex) => {
-    const toggleRow = document.createElement('tr');
-    const toggleCell = document.createElement('td');
-    toggleCell.colSpan = 4;
-    toggleCell.style.cursor = 'pointer';
-    toggleCell.style.background = '#1a1a1a';
-    toggleCell.style.color = '#0f0';
-    toggleCell.style.fontWeight = 'bold';
-    toggleCell.textContent = week.label + " ▼";
-    let collapsed = false;
-    toggleCell.onclick = () => {
-      collapsed = !collapsed;
-      week.entries.forEach(([_, i]) => {
-        const row = document.getElementById('row-' + i);
-        if (row) row.style.display = collapsed ? 'none' : '';
-      });
-      
-if (week.label.includes(currentStart) && week.label.includes(currentEnd)) {
-  toggleCell.style.border = '2px solid lime';
-  toggleCell.style.boxShadow = '0 0 10px lime';
-}
-toggleCell.textContent = week.label + (collapsed ? " ▶" : " ▼");
-    };
-    toggleRow.appendChild(toggleCell);
-    tbody.appendChild(toggleRow);
+    
     week.entries.forEach(([entry, index]) => {
       const row = document.createElement('tr');
       row.id = 'row-' + index;
