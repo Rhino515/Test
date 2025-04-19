@@ -318,13 +318,16 @@ function getCurrentPayPeriod() {
 }
 
 function getPayPeriodForDate(date) {
-  const base = new Date("2025-04-14T00:00:00"); // Monday
-  const diffDays = Math.floor((date - base) / (1000 * 60 * 60 * 24));
-  const periodIndex = Math.floor(diffDays / 14);
+  const base = new Date("2025-04-14T00:00:00"); // Base Monday
+  const timeDiff = date.getTime() - base.getTime();
+  const dayDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+  const periodOffset = Math.floor(dayDiff / 14); // Calculate how many 14-day periods away
+
   const periodStart = new Date(base);
-  periodStart.setDate(base.getDate() + periodIndex * 14);
+  periodStart.setDate(base.getDate() + periodOffset * 14);
   const periodEnd = new Date(periodStart);
   periodEnd.setDate(periodStart.getDate() + 13);
+
   return {
     start: periodStart.toISOString().split('T')[0],
     end: periodEnd.toISOString().split('T')[0],
@@ -339,7 +342,7 @@ window.addEventListener('load', () => {
   const label = document.getElementById("payPeriodLabel");
   if (label) label.textContent = period.label;
 
-  // Also format dates in history to YYYY-MM-DD on load if necessary
+  // Also format dates in history to<ctrl3348>-MM-DD on load if necessary
   let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
   let changed = false;
   history.forEach(entry => {
@@ -385,7 +388,7 @@ function updateSessionTable() {
           updateSessionTable();
         }
       } else {
-        alert(document.documentElement.lang === 'es' ? "Formato de fecha no válido. Por favor use AAAA-MM-DD." : "Invalid date format. Please use YYYY-MM-DD.");
+        alert(document.documentElement.lang === 'es' ? "Formato de fecha no válido. Por favor use AAAA-MM-DD." : "Invalid date format. Please use<ctrl3348>-MM-DD.");
         this.textContent = history[index].date;
       }
     });
@@ -648,7 +651,7 @@ function groupByPayPeriod(history) {
     if (entryDate >= currentStart && entryDate <= currentEnd) {
       currentPeriodEntries.push([entry, index]);
     } else if (entryDate < currentStart) {
-      // Group by pay period for past entries
+      // Group by the correct two-week pay period for past dates
       const period = getPayPeriodForDate(entryDate);
       const key = period.start;
       if (!pastPeriodGroups[key]) {
@@ -656,8 +659,7 @@ function groupByPayPeriod(history) {
       }
       pastPeriodGroups[key].entries.push([entry, index]);
     }
-    // We're not explicitly handling future dates in this request,
-    // but you could add an 'else if (entryDate > currentEnd)' block if needed.
+    // Future dates could be handled with another 'else if'
   });
 
   const grouped = {};
