@@ -139,9 +139,9 @@
     input.value = value;
     // Call updateTotal and updateDailyTotals directly on input, and debounceSave
     input.oninput = () => {
-      updateTotalFunc();
+      updateTotalFunc(); // Update the total in the current row
       updateDailyTotals(); // Update daily totals and localStorage key
-      debounceSave(); // Save the main tracker data
+      debounceSave(); // Save the main tracker data structure
     };
     return input;
   }
@@ -185,7 +185,7 @@
         if (!isNaN(val)) sum += val;
       });
       totalCell.innerText = sum.toFixed(2);
-      // Removed call to updateDailyTotals here
+      // Removed call to updateDailyTotals here - it's now called by the input's oninput
     };
 
     const grams = data.grams || ['', '', ''];
@@ -195,7 +195,7 @@
     addGramBtn.textContent = '+';
     addGramBtn.onclick = () => {
       gramsWrapper.appendChild(createGramInput(updateTotalFunc));
-      updateDailyTotals(); // Update totals after adding a new input field
+      updateDailyTotals(); // Update totals after adding a new input field (calls updateView)
       debounceSave(); // Save after adding an input field
     };
 
@@ -208,7 +208,7 @@
     row.appendChild(totalCell);
 
 
-    updateTotalFunc(); // Calculate total initially
+    updateTotalFunc(); // Calculate total initially for the new row
 
     const delBtn = document.createElement('button');
     delBtn.textContent = lang === 'es' ? 'Eliminar' : 'Delete'; // Localize button text
@@ -218,7 +218,7 @@
       if (confirm(confirmMsg)) {
         row.remove();
         debounceSave(); // Save after deleting a row
-        updateDailyTotals(); // Update totals after deleting a row (will also call updateView)
+        updateDailyTotals(); // Update totals after deleting a row (calls updateView)
         // updateView(); // No longer needed to call here, updateDailyTotals calls it
       }
     };
@@ -227,7 +227,7 @@
     row.appendChild(actionCell);
 
     tbody.appendChild(row);
-    if (!skipViewUpdate) updateView(); // Update view unless explicitly skipped
+    if (!skipViewUpdate) updateView(); // Update view unless explicitly skipped (e.g., during load)
   }
 
   function updateView() {
@@ -242,7 +242,7 @@
     rows.forEach(row => {
       const dateInput = row.querySelector('input[type="date"]');
       const date = dateInput?.value;
-      if (!date) return;
+      if (!date) return; // Skip rows with no date
       if (!dateGroups[date]) dateGroups[date] = [];
       dateGroups[date].push(row);
     });
@@ -270,7 +270,7 @@
         headerRow.style.cursor = 'pointer';
 
         const headerCell = document.createElement('td');
-        headerCell.colSpan = 5; // Span across all columns
+        headerCell.colSpan = 5; // Span across all columns (adjust if your table structure changes)
         headerCell.style.textAlign = 'left';
         // Initial state is collapsed, show '+' and the total
         headerCell.innerHTML = `<span style="font-weight:bold;">➕ ${date} – Total: ${totalGrams.toFixed(2)}g</span>`;
@@ -357,9 +357,12 @@
            console.warn("#totalsList element not found. Daily totals list not updated.");
         }
 
-      // Call updateView here ONLY when daily totals are updated (after add/delete/input)
-      // This updates the totals in the collapsible headers and re-renders the groups
-      updateView();
+      // --- FIX APPLIED HERE ---
+      // Removed the call to updateView() from here.
+      // updateView() is now only called explicitly where needed (addRow, deleteRow, loadData via DOMContentLoaded).
+      // This prevents the input field from losing focus on every character input.
+      // updateView();
+      // --- END FIX ---
   }
 
 
@@ -371,7 +374,8 @@
       if(tbody) tbody.innerHTML = ''; // Clear the table body
       addRow({}, true); // Add a default row for today, skip view update initially
       debounceSave(); // Save the cleared state (main tracker data)
-      updateDailyTotals(); // Update totals (will remove dated localStorage keys) and view
+      updateDailyTotals(); // Update totals (will remove dated localStorage keys)
+      updateView(); // Call updateView explicitly after clearing rows
     }
   }
 
@@ -409,7 +413,7 @@
     } else {
       addRow({}, true); // Add a default row if no data is stored
     }
-     // updateView() is called after load in the DOMContentLoaded listener via updateDailyTotals
+     // updateView() and updateDailyTotals() are called after load in the DOMContentLoaded listener
   }
 
   function exportCSV() {
@@ -514,7 +518,7 @@
            importedEntries.forEach(entry => addRow(entry, true)); // Add rows, skip initial view update per row
 
           // Update totals and view after all rows are added
-          updateDailyTotals();
+          updateDailyTotals(); // Updates totals and calls updateView
           // updateView() is called by updateDailyTotals
 
 
@@ -549,7 +553,7 @@
     loadData();
     // Use requestAnimationFrame to ensure the DOM is updated after loadData before calculating totals and view.
     requestAnimationFrame(() => {
-         updateDailyTotals();
+         updateDailyTotals(); // Calculate totals and update localStorage keys
          // updateView() is called by updateDailyTotals
     });
   });
