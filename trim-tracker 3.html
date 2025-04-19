@@ -133,6 +133,94 @@
   const storageKey = `trimTrackerData-${lang}`;
   let saveTimeout;
 
+  function createGramInput(onChangeFunc, value = '') {
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '0';
+    input.step = '0.01';
+    input.placeholder = 'g';
+    input.value = value;
+    input.oninput = () => { onChangeFunc(); debounceSave(); };
+    return input;
+  }
+
+  function addRow(data = {}) {
+    const tbody = document.getElementById('tableBody');
+    const row = document.createElement('tr');
+
+    // Date
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.value = data.date || new Date().toISOString().slice(0, 10);
+    dateInput.oninput = () => { debounceSave(); updateDailyTotals(); updateView(); };
+    const dateCell = document.createElement('td');
+    dateCell.appendChild(dateInput);
+    row.appendChild(dateCell);
+
+    // Strain
+    const strainInput = document.createElement('input');
+    strainInput.type = 'text';
+    strainInput.value = data.strain || '';
+    strainInput.oninput = debounceSave;
+    const strainCell = document.createElement('td');
+    strainCell.appendChild(strainInput);
+    row.appendChild(strainCell);
+
+    // Grams
+    const gramsWrapper = document.createElement('div');
+    gramsWrapper.style.display = 'flex';
+    gramsWrapper.style.flexWrap = 'wrap';
+    gramsWrapper.style.gap = '4px';
+
+    const grams = data.grams || ['', '', ''];
+    grams.forEach(g => gramsWrapper.appendChild(createGramInput(updateTotal, g)));
+
+    const addGramBtn = document.createElement('button');
+    addGramBtn.textContent = '+';
+    addGramBtn.onclick = () => {
+      gramsWrapper.appendChild(createGramInput(updateTotal));
+      debounceSave();
+    };
+
+    const gramsCell = document.createElement('td');
+    gramsCell.appendChild(gramsWrapper);
+    gramsCell.appendChild(addGramBtn);
+    row.appendChild(gramsCell);
+
+    // Total
+    const totalCell = document.createElement('td');
+    row.appendChild(totalCell);
+
+    function updateTotal() {
+      let sum = 0;
+      gramsWrapper.querySelectorAll('input').forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) sum += val;
+      });
+      totalCell.innerText = sum.toFixed(2);
+      updateDailyTotals();
+    }
+    updateTotal();
+
+    // Delete Button
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'Delete';
+    delBtn.className = 'delete-row';
+    delBtn.onclick = () => {
+      if (confirm('Delete this row?')) {
+        row.remove();
+        debounceSave();
+        updateDailyTotals();
+      }
+    };
+    const actionCell = document.createElement('td');
+    actionCell.appendChild(delBtn);
+    row.appendChild(actionCell);
+
+    tbody.appendChild(row);
+    updateView();
+  }
+
   function debounceSave() {
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
@@ -163,7 +251,7 @@
 
     rows.forEach(row => tbody.appendChild(row));
 
-    groupRowsByDate(); // <-- NEW: call collapse/expand logic
+    groupRowsByDate();
   }
 
   function groupRowsByDate() {
@@ -185,6 +273,13 @@
     Object.keys(dateGroups).sort((a, b) => b.localeCompare(a)).forEach(date => {
       const isToday = date === today;
 
+      let totalGrams = 0;
+      dateGroups[date].forEach(row => {
+        const totalCell = row.querySelector('td:nth-child(4)');
+        const grams = parseFloat(totalCell?.innerText || 0);
+        totalGrams += isNaN(grams) ? 0 : grams;
+      });
+
       if (!isToday) {
         const headerRow = document.createElement('tr');
         headerRow.className = 'collapsed-row-header';
@@ -194,18 +289,19 @@
         const headerCell = document.createElement('td');
         headerCell.colSpan = 5;
         headerCell.style.textAlign = 'left';
-        headerCell.innerHTML = `<span style="font-weight:bold;">➕ ${date}</span>`;
+        headerCell.innerHTML = `<span style="font-weight:bold;">➕ ${date} – Total: ${totalGrams.toFixed(2)}g</span>`;
         headerRow.appendChild(headerCell);
 
         headerRow.addEventListener('click', () => {
           const isCollapsed = headerRow.getAttribute('data-collapsed') !== 'false';
           headerRow.setAttribute('data-collapsed', String(!isCollapsed));
-          headerCell.innerHTML = `<span style="font-weight:bold;">${isCollapsed ? '➖' : '➕'} ${date}</span>`;
+          headerCell.innerHTML = `<span style="font-weight:bold;">${isCollapsed ? '➖' : '➕'} ${date} – Total: ${totalGrams.toFixed(2)}g</span>`;
           dateGroups[date].forEach(r => r.style.display = isCollapsed ? '' : 'none');
         });
 
         headerRow.setAttribute('data-collapsed', 'true');
         tbody.appendChild(headerRow);
+
         dateGroups[date].forEach(r => {
           r.style.display = 'none';
           tbody.appendChild(r);
