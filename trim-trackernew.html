@@ -127,7 +127,11 @@
   <button onclick="addRow()">Add Row</button>
   <button class="clear-all" onclick="clearAllRows()">Clear All</button>
   <button onclick="exportCSV()">Export CSV</button>
-  <a id="backLink" class="back-link">← Back to Calculator</a>
+  
+<input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="importCSV(event)">
+<button onclick="document.getElementById('csvFileInput').click()">Import CSV</button>
+
+<a id="backLink" class="back-link">← Back to Calculator</a>
 
   <div id="dailyTotals" style="margin-top: 30px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
     <h3>Daily Totals</h3>
@@ -337,6 +341,28 @@
     localStorage.removeItem('trimTrackerDailyTotal');  // Clear old total
 loadData();
 setTimeout(updateDailyTotals, 200);  // Force save today's total after loading
+
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const rows = e.target.result.split('\n').slice(1); // Skip CSV header
+      rows.forEach(row => {
+        const cells = row.split(','); // Assuming your CSV is comma-separated
+        if (cells.length >= 3) {
+          const date = cells[0].trim().replace(/(^"|"$)/g, '');
+          const strain = cells[1].trim().replace(/(^"|"$)/g, '');
+          const grams = cells[2].replace(/(^"|"$)/g, '').split(';').map(g => g.trim());
+          addRow({ date, strain, grams });
+        }
+      });
+      updateDailyTotals();
+    };
+    reader.readAsText(file);
+  }
+}
+
   </script>
 
 <script>
