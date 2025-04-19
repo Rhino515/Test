@@ -229,7 +229,7 @@ function addMoveButtons(row) {
 <th>Strain</th>
 <th>Grams</th>
 <th>Total</th>
-<th>Notes</th><th>Actions</th>
+<th>Actions</th>
 </tr>
 </thead>
 <tbody id="tableBody"></tbody>
@@ -334,14 +334,6 @@ function addMoveButtons(row) {
       updateTotal();
 
       
-      const noteCell = document.createElement('td');
-      const noteInput = document.createElement('textarea');
-      noteInput.placeholder = 'Notes';
-      noteInput.value = data.note || '';
-      noteInput.className = 'note-input';
-      noteInput.addEventListener('input', debounceSave);
-      noteCell.appendChild(noteInput);
-      row.insertBefore(noteCell, row.children[4]); // Insert after Grams before Total
     
 
 const actionCell = document.createElement('td');
@@ -376,12 +368,12 @@ const actionCell = document.createElement('td');
     function saveData() {
       const rows = document.querySelectorAll('#tableBody tr');
       const data = Array.from(rows).map(row => {
-        const [dateCell, strainCell, gramsCell, noteCell, totalCell, actionCell] = row.querySelectorAll('td');
+        const [dateCell, strainCell, gramsCell, totalCell, actionCell] = row.querySelectorAll('td');
         const date = dateCell.querySelector('input').value;
         const strain = strainCell.querySelector('input').value;
         const grams = Array.from(gramsCell.querySelectorAll('input')).map(input => input.value);
         
-        return { date, strain, grams, note: noteCell.querySelector('textarea')?.value || '' };
+        return { date, strain, grams,
       });
       localStorage.setItem(storageKey, JSON.stringify(data));
     }
@@ -398,7 +390,7 @@ const actionCell = document.createElement('td');
 
     function exportCSV() {
       const rows = document.querySelectorAll('#tableBody tr');
-      let csvContent = "Date,Strain,Grams (semicolon separated),Note,Total\n";
+      let csvContent = "Date,Strain,Grams (semicolon separated),Total\n";
 
       rows.forEach(row => {
         const cells = row.querySelectorAll('td');
@@ -409,7 +401,7 @@ const actionCell = document.createElement('td');
         const total = cells[3].innerText;
         
         const note = cells[3].querySelector('input')?.value || '';
-        csvContent += `"${date}","${strain}","${grams}","${note}","${total}"\n`;
+        csvContent += `"${date}","${strain}","${grams}","${total}"\n`;
     
       });
 
@@ -547,9 +539,9 @@ function importCSV(event) {
     const lines = e.target.result.split('\n').slice(1); // skip header
     lines.forEach(line => {
       if (line.trim() === '') return;
-      const [date, strain, gramsStr, note] = line.split(',').map(x => x.replace(/^"|"$|\r/g, '').trim());
+      const [date, strain, gramsStr] = line.split(',').map(x => x.replace(/^"|"$|\r/g, '').trim());
       const grams = (gramsStr || '').split(';').map(g => g.trim()).filter(g => g !== '');
-      addRow({ date, strain, grams, note });
+      addRow({ date, strain, grams });
     });
     debounceSave();
     updateDailyTotals();
