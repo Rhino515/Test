@@ -194,24 +194,6 @@ function addMoveButtons(row) {
   
 
 
-
-.note-input {
-  width: 120px;
-  min-height: 144px;
-  max-height: 200px;
-  font-size: 15px;
-  padding: 8px;
-  box-sizing: border-box;
-  color: white;
-  background-color: #222;
-  border: 1px solid #555;
-  border-radius: 4px;
-  resize: vertical;
-  overflow-y: auto;
-  white-space: pre-wrap;
-}
-
-
 </style>
 </head>
 <body>
@@ -400,7 +382,6 @@ const actionCell = document.createElement('td');
         const grams = Array.from(gramInputs).map(input => input.value).join(';');
         const total = cells[3].innerText;
         
-        const note = cells[3].querySelector('input')?.value || '';
         csvContent += `"${date}","${strain}","${grams}","${total}"\n`;
     
       });
