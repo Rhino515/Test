@@ -129,14 +129,20 @@
     }, 300);
   }
 
-  function createGramInput(onChangeFunc, value = '') {
+  // --- MODIFIED createGramInput ---
+  function createGramInput(updateTotalFunc, value = '') {
     const input = document.createElement('input');
     input.type = 'number';
     input.min = '0';
     input.step = '0.01';
     input.placeholder = 'g';
     input.value = value;
-    input.oninput = () => { onChangeFunc(); debounceSave(); };
+    // Call updateTotal and updateDailyTotals directly on input, and debounceSave
+    input.oninput = () => {
+      updateTotalFunc();
+      updateDailyTotals(); // Update daily totals and localStorage key
+      debounceSave(); // Save the main tracker data
+    };
     return input;
   }
 
@@ -171,13 +177,25 @@
     gramsWrapper.style.flexWrap = 'wrap';
     gramsWrapper.style.gap = '4px';
 
+    // Pass the updateTotal function defined within the addRow scope
+    const updateTotalFunc = () => {
+      let sum = 0;
+      gramsWrapper.querySelectorAll('input').forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) sum += val;
+      });
+      totalCell.innerText = sum.toFixed(2);
+      // Removed call to updateDailyTotals here
+    };
+
     const grams = data.grams || ['', '', ''];
-    grams.forEach(g => gramsWrapper.appendChild(createGramInput(updateTotal, g)));
+    grams.forEach(g => gramsWrapper.appendChild(createGramInput(updateTotalFunc, g)));
 
     const addGramBtn = document.createElement('button');
     addGramBtn.textContent = '+';
     addGramBtn.onclick = () => {
-      gramsWrapper.appendChild(createGramInput(updateTotal));
+      gramsWrapper.appendChild(createGramInput(updateTotalFunc));
+      updateDailyTotals(); // Update totals after adding a new input field
       debounceSave(); // Save after adding an input field
     };
 
@@ -189,16 +207,8 @@
     const totalCell = document.createElement('td');
     row.appendChild(totalCell);
 
-    function updateTotal() {
-      let sum = 0;
-      gramsWrapper.querySelectorAll('input').forEach(input => {
-        const val = parseFloat(input.value);
-        if (!isNaN(val)) sum += val;
-      });
-      totalCell.innerText = sum.toFixed(2);
-      updateDailyTotals(); // Update totals when gram inputs change
-    }
-    updateTotal(); // Calculate total initially
+
+    updateTotalFunc(); // Calculate total initially
 
     const delBtn = document.createElement('button');
     delBtn.textContent = lang === 'es' ? 'Eliminar' : 'Delete'; // Localize button text
@@ -208,8 +218,8 @@
       if (confirm(confirmMsg)) {
         row.remove();
         debounceSave(); // Save after deleting a row
-        updateDailyTotals(); // Update totals after deleting a row
-        updateView(); // Re-render view after deleting a row
+        updateDailyTotals(); // Update totals after deleting a row (will also call updateView)
+        // updateView(); // No longer needed to call here, updateDailyTotals calls it
       }
     };
     const actionCell = document.createElement('td');
@@ -320,7 +330,7 @@
         localStorage.setItem(storageKeyForDate, total.toFixed(2));
     });
 
-    // Clean up dated keys in localStorage for dates that no longer have entries in the table
+    // Clean up dated keys in localStorage for dates that no longer have entries
     allTrackerKeys.forEach(key => {
         const dateFromKey = key.replace('trimTrackerDailyTotal-', '');
         // If a key exists in localStorage but there's no entry for that date in our current totalsMap, remove it.
@@ -347,7 +357,8 @@
            console.warn("#totalsList element not found. Daily totals list not updated.");
         }
 
-      // Call updateView to refresh the collapsible headers with the new totals and re-render groups
+      // Call updateView here ONLY when daily totals are updated (after add/delete/input)
+      // This updates the totals in the collapsible headers and re-renders the groups
       updateView();
   }
 
@@ -398,7 +409,7 @@
     } else {
       addRow({}, true); // Add a default row if no data is stored
     }
-     // updateView() is called after load in the DOMContentLoaded listener
+     // updateView() is called after load in the DOMContentLoaded listener via updateDailyTotals
   }
 
   function exportCSV() {
@@ -536,8 +547,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     loadData();
-    // Use requestAnimationFrame or a small timeout to ensure the DOM is updated after loadData
-    // before calculating totals and view.
+    // Use requestAnimationFrame to ensure the DOM is updated after loadData before calculating totals and view.
     requestAnimationFrame(() => {
          updateDailyTotals();
          // updateView() is called by updateDailyTotals
