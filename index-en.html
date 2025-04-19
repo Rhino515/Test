@@ -3,11 +3,6 @@
 <html lang="en">
 <head>
 <script>
-  if (window.location.pathname.endsWith('trim-tracker.html')) {
-    window.location.replace('trim-tracker-en.html');
-  }
-</script>
-<script>
   const userLang = navigator.language || navigator.userLanguage;
   if (userLang.startsWith('es') && !window.location.href.includes('index-es.html') && !window.location.href.includes('trim-tracker-es.html')) {
     if (window.location.href.includes('trim-tracker')) {
@@ -139,7 +134,7 @@
 <button onclick="calculate()">Calculate</button>
 <p id="result"></p>
 <div class="install-links">
-<a href="trim-tracker-en.html">Go to Trim Tracker</a>
+<a href="trim-tracker.html">Go to Trim Tracker</a>
 <a class="nav-button" href="help.html">How to Use the App</a>
 </div>
 <div style="margin-top: 0.6em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
@@ -228,8 +223,10 @@
       }
       const bonusPay = calculateBonus(grams);
       document.getElementById('result').innerText = 'Bonus Pay: $' + bonusPay.toFixed(2);
-      const now = new Date();
-const dateStr = now.toISOString().split('T')[0];
+      
+    const now = new Date(new Date().getTime() - (8 * 60 * 60 * 1000));
+    const dateStr = now.toISOString().split('T')[0];
+    
       const entry = { date: dateStr, grams: grams, bonusPay: bonusPay.toFixed(2) };
       let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
       history.push(entry);
