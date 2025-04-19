@@ -115,323 +115,315 @@
     <tbody id="tableBody"></tbody>
   </table>
 
-  <!-- UPDATED: triggers full visible row -->
   <button onclick="addRow()">Add Row</button>
   <button class="clear-all" onclick="clearAllRows()">Clear All</button>
   <button onclick="exportCSV()">Export CSV</button>
-
   <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="importCSV(event)">
   <button onclick="document.getElementById('csvFileInput').click()">Import CSV</button>
-
   <a id="backLink" class="back-link" href="index.html">← Back to Calculator</a>
 
   <div id="dailyTotals" style="margin-top: 30px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
     <h3>Daily Totals</h3>
     <ul id="totalsList" style="list-style: none; padding: 0;"></ul>
   </div>
-<script>
-  const lang = document.documentElement.lang;
-  const storageKey = `trimTrackerData-${lang}`;
-  let saveTimeout;
 
-  function createGramInput(onChangeFunc, value = '') {
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.min = '0';
-    input.step = '0.01';
-    input.placeholder = 'g';
-    input.value = value;
-    input.oninput = () => { onChangeFunc(); debounceSave(); };
-    return input;
-  }
+  <script>
+    const lang = document.documentElement.lang;
+    const storageKey = `trimTrackerData-${lang}`;
+    let saveTimeout;
 
-  function addRow(data = {}, skipViewUpdate = false) {
-    const tbody = document.getElementById('tableBody');
-    const row = document.createElement('tr');
-
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.value = data.date || new Date().toISOString().slice(0, 10);
-    if (skipViewUpdate) {
-      dateInput.dataset.skipCollapse = 'true';
+    function createGramInput(onChangeFunc, value = '') {
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = '0';
+      input.step = '0.01';
+      input.placeholder = 'g';
+      input.value = value;
+      input.oninput = () => { onChangeFunc(); debounceSave(); };
+      return input;
     }
-    dateInput.oninput = () => {
-      delete dateInput.dataset.skipCollapse;
-      debounceSave();
-      updateDailyTotals();
-      updateView();
-    };
-    const dateCell = document.createElement('td');
-    dateCell.appendChild(dateInput);
-    row.appendChild(dateCell);
 
-    const strainInput = document.createElement('input');
-    strainInput.type = 'text';
-    strainInput.value = data.strain || '';
-    strainInput.oninput = debounceSave;
-    const strainCell = document.createElement('td');
-    strainCell.appendChild(strainInput);
-    row.appendChild(strainCell);
+    function addRow(data = {}, skipViewUpdate = false) {
+      const tbody = document.getElementById('tableBody');
+      const row = document.createElement('tr');
 
-    const gramsWrapper = document.createElement('div');
-    gramsWrapper.style.display = 'flex';
-    gramsWrapper.style.flexWrap = 'wrap';
-    gramsWrapper.style.gap = '4px';
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.value = data.date || new Date().toISOString().slice(0, 10);
+      if (skipViewUpdate) dateInput.dataset.skipCollapse = 'true';
+      dateInput.oninput = () => {
+        delete dateInput.dataset.skipCollapse;
+        debounceSave();
+        updateDailyTotals();
+        updateView();
+      };
+      const dateCell = document.createElement('td');
+      dateCell.appendChild(dateInput);
+      row.appendChild(dateCell);
 
-    const grams = data.grams || ['', '', ''];
-    grams.forEach(g => gramsWrapper.appendChild(createGramInput(updateTotal, g)));
+      const strainInput = document.createElement('input');
+      strainInput.type = 'text';
+      strainInput.value = data.strain || '';
+      strainInput.oninput = debounceSave;
+      const strainCell = document.createElement('td');
+      strainCell.appendChild(strainInput);
+      row.appendChild(strainCell);
 
-    const addGramBtn = document.createElement('button');
-    addGramBtn.textContent = '+';
-    addGramBtn.onclick = () => {
-      gramsWrapper.appendChild(createGramInput(updateTotal));
-      debounceSave();
-    };
+      const gramsWrapper = document.createElement('div');
+      gramsWrapper.style.display = 'flex';
+      gramsWrapper.style.flexWrap = 'wrap';
+      gramsWrapper.style.gap = '4px';
 
-    const gramsCell = document.createElement('td');
-    gramsCell.appendChild(gramsWrapper);
-    gramsCell.appendChild(addGramBtn);
-    row.appendChild(gramsCell);
+      const grams = data.grams || ['', '', ''];
+      grams.forEach(g => gramsWrapper.appendChild(createGramInput(updateTotal, g)));
 
-    const totalCell = document.createElement('td');
-    row.appendChild(totalCell);
+      const addGramBtn = document.createElement('button');
+      addGramBtn.textContent = '+';
+      addGramBtn.onclick = () => {
+        gramsWrapper.appendChild(createGramInput(updateTotal));
+        debounceSave();
+      };
 
-    function updateTotal() {
-      let sum = 0;
-      gramsWrapper.querySelectorAll('input').forEach(input => {
-        const val = parseFloat(input.value);
-        if (!isNaN(val)) sum += val;
+      const gramsCell = document.createElement('td');
+      gramsCell.appendChild(gramsWrapper);
+      gramsCell.appendChild(addGramBtn);
+      row.appendChild(gramsCell);
+
+      const totalCell = document.createElement('td');
+      row.appendChild(totalCell);
+
+      function updateTotal() {
+        let sum = 0;
+        gramsWrapper.querySelectorAll('input').forEach(input => {
+          const val = parseFloat(input.value);
+          if (!isNaN(val)) sum += val;
+        });
+        totalCell.innerText = sum.toFixed(2);
+        updateDailyTotals();
+      }
+      updateTotal();
+
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'Delete';
+      delBtn.className = 'delete-row';
+      delBtn.onclick = () => {
+        if (confirm('Delete this row?')) {
+          row.remove();
+          debounceSave();
+          updateDailyTotals();
+        }
+      };
+      const actionCell = document.createElement('td');
+      actionCell.appendChild(delBtn);
+      row.appendChild(actionCell);
+
+      tbody.appendChild(row);
+      if (!skipViewUpdate) updateView();
+    }
+
+    function debounceSave() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        if ('requestIdleCallback' in window) requestIdleCallback(saveData);
+        else saveData();
+      }, 300);
+    }
+
+    function updateView() {
+      const tbody = document.getElementById('tableBody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const today = new Date().toISOString().slice(0, 10);
+
+      rows.forEach(row => {
+        const dateInput = row.querySelector('input[type="date"]');
+        if (dateInput && !dateInput.dataset.skipCollapse) {
+          if (dateInput.value < today) row.classList.add('collapsed');
+          else row.classList.remove('collapsed');
+        }
       });
-      totalCell.innerText = sum.toFixed(2);
-      updateDailyTotals();
-    }
-    updateTotal();
 
-    const delBtn = document.createElement('button');
-    delBtn.textContent = 'Delete';
-    delBtn.className = 'delete-row';
-    delBtn.onclick = () => {
-      if (confirm('Delete this row?')) {
-        row.remove();
+      rows.sort((a, b) => {
+        const aDate = a.querySelector('input[type="date"]')?.value || '';
+        const bDate = b.querySelector('input[type="date"]')?.value || '';
+        return bDate.localeCompare(aDate);
+      });
+
+      rows.forEach(row => tbody.appendChild(row));
+      groupRowsByDate();
+    }
+
+    function groupRowsByDate() {
+      const tbody = document.getElementById('tableBody');
+      const allRows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.classList.contains('collapsed-row-header'));
+      const today = new Date().toISOString().slice(0, 10);
+      const dateGroups = {};
+
+      allRows.forEach(row => {
+        const date = row.querySelector('input[type="date"]')?.value;
+        if (!date) return;
+        if (!dateGroups[date]) dateGroups[date] = [];
+        dateGroups[date].push(row);
+      });
+
+      tbody.innerHTML = '';
+      Object.keys(dateGroups).sort((a, b) => b.localeCompare(a)).forEach(date => {
+        const isToday = date === today;
+        let totalGrams = 0;
+        dateGroups[date].forEach(row => {
+          const totalCell = row.querySelector('td:nth-child(4)');
+          const grams = parseFloat(totalCell?.innerText || 0);
+          totalGrams += isNaN(grams) ? 0 : grams;
+        });
+
+        if (!isToday) {
+          const headerRow = document.createElement('tr');
+          headerRow.className = 'collapsed-row-header';
+          headerRow.style.backgroundColor = '#222';
+          headerRow.style.cursor = 'pointer';
+
+          const headerCell = document.createElement('td');
+          headerCell.colSpan = 5;
+          headerCell.style.textAlign = 'left';
+          headerCell.innerHTML = `<span style="font-weight:bold;">➕ ${date} – Total: ${totalGrams.toFixed(2)}g</span>`;
+          headerRow.appendChild(headerCell);
+
+          headerRow.addEventListener('click', () => {
+            const isCollapsed = headerRow.getAttribute('data-collapsed') !== 'false';
+            headerRow.setAttribute('data-collapsed', String(!isCollapsed));
+            headerCell.innerHTML = `<span style="font-weight:bold;">${isCollapsed ? '➖' : '➕'} ${date} – Total: ${totalGrams.toFixed(2)}g</span>`;
+            dateGroups[date].forEach(r => r.style.display = isCollapsed ? '' : 'none');
+          });
+
+          headerRow.setAttribute('data-collapsed', 'true');
+          tbody.appendChild(headerRow);
+          dateGroups[date].forEach(r => {
+            r.style.display = 'none';
+            tbody.appendChild(r);
+          });
+        } else {
+          dateGroups[date].forEach(r => {
+            r.style.display = '';
+            tbody.appendChild(r);
+          });
+        }
+      });
+    }
+
+    function updateDailyTotals() {
+      const rows = document.querySelectorAll('#tableBody tr');
+      const totalsMap = {};
+      rows.forEach(row => {
+        const date = row.querySelector('input[type="date"]')?.value;
+        const total = parseFloat(row.querySelector('td:nth-child(4)')?.innerText) || 0;
+        if (date) {
+          if (!totalsMap[date]) totalsMap[date] = 0;
+          totalsMap[date] += total;
+        }
+      });
+
+      const today = new Date().toISOString().slice(0, 10);
+      if (totalsMap[today]) {
+        localStorage.setItem('trimTrackerDailyTotal', totalsMap[today].toFixed(2));
+      } else {
+        localStorage.removeItem('trimTrackerDailyTotal');
+      }
+
+      const totalsList = document.getElementById('totalsList');
+      totalsList.innerHTML = '';
+      Object.entries(totalsMap).forEach(([date, total]) => {
+        const li = document.createElement('li');
+        li.textContent = `${date}: ${total.toFixed(2)}g`;
+        totalsList.appendChild(li);
+      });
+    }
+
+    function clearAllRows() {
+      if (confirm('Delete all rows? This cannot be undone.')) {
+        document.getElementById('tableBody').innerHTML = '';
+        addRow({}, true);
         debounceSave();
         updateDailyTotals();
       }
-    };
-    const actionCell = document.createElement('td');
-    actionCell.appendChild(delBtn);
-    row.appendChild(actionCell);
-
-    tbody.appendChild(row);
-
-    if (!skipViewUpdate) {
-      updateView();
     }
-  }
 
-  function updateView() {
-    const tbody = document.getElementById('tableBody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    const today = new Date().toISOString().slice(0, 10);
+    function saveData() {
+      const rows = document.querySelectorAll('#tableBody tr');
+      const data = Array.from(rows).map(row => {
+        const date = row.querySelector('input[type="date"]')?.value || '';
+        const strain = row.querySelector('input[type="text"]')?.value || '';
+        const grams = Array.from(row.querySelectorAll('td:nth-child(3) input')).map(input => input.value);
+        return { date, strain, grams };
+      });
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
 
-    rows.forEach(row => {
-      const dateInput = row.querySelector('input[type="date"]');
-      if (dateInput && !dateInput.dataset.skipCollapse) {
-        if (dateInput.value < today) {
-          row.classList.add('collapsed');
-        } else {
-          row.classList.remove('collapsed');
-        }
+    function loadData() {
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        JSON.parse(stored).forEach(entry => addRow(entry));
+      } else {
+        addRow({}, true);
       }
-    });
+    }
 
-    rows.sort((a, b) => {
-      const aDate = a.querySelector('input[type="date"]')?.value || '';
-      const bDate = b.querySelector('input[type="date"]')?.value || '';
-      return bDate.localeCompare(aDate);
-    });
+    function exportCSV() {
+      const rows = document.querySelectorAll('#tableBody tr');
+      let csvContent = "Date,Strain,Grams (semicolon separated),Total\n";
 
-    rows.forEach(row => tbody.appendChild(row));
-
-    groupRowsByDate();
-  }
-
-  function groupRowsByDate() {
-    const tbody = document.getElementById('tableBody');
-    const allRows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.classList.contains('collapsed-row-header'));
-    const today = new Date().toISOString().slice(0, 10);
-    const dateGroups = {};
-
-    allRows.forEach(row => {
-      const date = row.querySelector('input[type="date"]')?.value;
-      if (!date) return;
-      if (!dateGroups[date]) dateGroups[date] = [];
-      dateGroups[date].push(row);
-    });
-
-    tbody.innerHTML = '';
-
-    Object.keys(dateGroups).sort((a, b) => b.localeCompare(a)).forEach(date => {
-      const isToday = date === today;
-
-      let totalGrams = 0;
-      dateGroups[date].forEach(row => {
+      rows.forEach(row => {
+        if (row.classList.contains('collapsed-row-header')) return;
+        const dateInput = row.querySelector('input[type="date"]');
+        const strainInput = row.querySelector('input[type="text"]');
+        const gramInputs = row.querySelectorAll('td:nth-child(3) input');
         const totalCell = row.querySelector('td:nth-child(4)');
-        const grams = parseFloat(totalCell?.innerText || 0);
-        totalGrams += isNaN(grams) ? 0 : grams;
+        const date = dateInput?.value || '';
+        const strain = strainInput?.value || '';
+        const grams = Array.from(gramInputs).map(input => input.value).join(';');
+        const total = totalCell?.innerText || '0';
+        if (date) {
+          csvContent += `"${date}","${strain}","${grams}","${total}"\n`;
+        }
       });
 
-      if (!isToday) {
-        const headerRow = document.createElement('tr');
-        headerRow.className = 'collapsed-row-header';
-        headerRow.style.backgroundColor = '#222';
-        headerRow.style.cursor = 'pointer';
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'trim-tracker.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
 
-        const headerCell = document.createElement('td');
-        headerCell.colSpan = 5;
-        headerCell.style.textAlign = 'left';
-        headerCell.innerHTML = `<span style="font-weight:bold;">➕ ${date} – Total: ${totalGrams.toFixed(2)}g</span>`;
-        headerRow.appendChild(headerCell);
-
-        headerRow.addEventListener('click', () => {
-          const isCollapsed = headerRow.getAttribute('data-collapsed') !== 'false';
-          headerRow.setAttribute('data-collapsed', String(!isCollapsed));
-          headerCell.innerHTML = `<span style="font-weight:bold;">${isCollapsed ? '➖' : '➕'} ${date} – Total: ${totalGrams.toFixed(2)}g</span>`;
-          dateGroups[date].forEach(r => r.style.display = isCollapsed ? '' : 'none');
-        });
-
-        headerRow.setAttribute('data-collapsed', 'true');
-        tbody.appendChild(headerRow);
-        dateGroups[date].forEach(r => {
-          r.style.display = 'none';
-          tbody.appendChild(r);
-        });
-      } else {
-        dateGroups[date].forEach(r => {
-          r.style.display = '';
-          tbody.appendChild(r);
-        });
+    function importCSV(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const rows = e.target.result.split('\n').slice(1);
+          rows.forEach(row => {
+            const cells = row.split(',');
+            if (cells.length >= 3) {
+              const date = cells[0].replace(/(^"|"$)/g, '');
+              const strain = cells[1].replace(/(^"|"$)/g, '');
+              const grams = cells[2].replace(/(^"|"$)/g, '').split(';');
+              addRow({ date, strain, grams }, true);
+            }
+          });
+          updateDailyTotals();
+        };
+        reader.readAsText(file);
       }
-    });
-  }
-
-  function updateDailyTotals() {
-    const rows = document.querySelectorAll('#tableBody tr');
-    const totalsMap = {};
-    rows.forEach(row => {
-      const date = row.querySelector('input[type="date"]')?.value;
-      const total = parseFloat(row.querySelector('td:nth-child(4)')?.innerText) || 0;
-      if (date) {
-        if (!totalsMap[date]) totalsMap[date] = 0;
-        totalsMap[date] += total;
-      }
-    });
-
-    const today = new Date().toISOString().slice(0, 10);
-    if (totalsMap[today]) {
-      localStorage.setItem('trimTrackerDailyTotal', totalsMap[today].toFixed(2));
-    } else {
-      localStorage.removeItem('trimTrackerDailyTotal');
     }
 
-    const totalsList = document.getElementById('totalsList');
-    totalsList.innerHTML = '';
-    Object.entries(totalsMap).forEach(([date, total]) => {
-      const li = document.createElement('li');
-      li.textContent = `${date}: ${total.toFixed(2)}g`;
-      totalsList.appendChild(li);
-    });
-  }
-
-  function clearAllRows() {
-    if (confirm('Delete all rows? This cannot be undone.')) {
-      document.getElementById('tableBody').innerHTML = '';
-      addRow({}, true);
-      debounceSave();
-      updateDailyTotals();
+    function toggleLanguage() {
+      window.location.href = 'trim-tracker-es.html';
     }
-  }
 
-  function saveData() {
-    const rows = document.querySelectorAll('#tableBody tr');
-    const data = Array.from(rows).map(row => {
-      const date = row.querySelector('input[type="date"]')?.value || '';
-      const strain = row.querySelector('input[type="text"]')?.value || '';
-      const grams = Array.from(row.querySelectorAll('td:nth-child(3) input')).map(input => input.value);
-      return { date, strain, grams };
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      setTimeout(updateDailyTotals, 200);
     });
-    localStorage.setItem(storageKey, JSON.stringify(data));
-  }
-
-  function loadData() {
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      JSON.parse(stored).forEach(entry => addRow(entry));
-    } else {
-      addRow({}, true);
-    }
-  }
-
-  function exportCSV() {
-    const rows = document.querySelectorAll('#tableBody tr');
-    let csvContent = "Date,Strain,Grams (semicolon separated),Total\n";
-
-    rows.forEach(row => {
-      if (row.classList.contains('collapsed-row-header')) return;
-
-      const dateInput = row.querySelector('input[type="date"]');
-      const strainInput = row.querySelector('input[type="text"]');
-      const gramInputs = row.querySelectorAll('td:nth-child(3) input');
-      const totalCell = row.querySelector('td:nth-child(4)');
-
-      const date = dateInput?.value || '';
-      const strain = strainInput?.value || '';
-      const grams = Array.from(gramInputs).map(input => input.value).join(';');
-      const total = totalCell?.innerText || '0';
-
-      if (date) {
-        csvContent += `"${date}","${strain}","${grams}","${total}"\n`;
-      }
-    });
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'trim-tracker.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  function importCSV(event) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const rows = e.target.result.split('\n').slice(1);
-        rows.forEach(row => {
-          const cells = row.split(',');
-          if (cells.length >= 3) {
-            const date = cells[0].replace(/(^"|"$)/g, '');
-            const strain = cells[1].replace(/(^"|"$)/g, '');
-            const grams = cells[2].replace(/(^"|"$)/g, '').split(';');
-            addRow({ date, strain, grams }, true);
-          }
-        });
-        updateDailyTotals();
-      };
-      reader.readAsText(file);
-    }
-  }
-
-  function toggleLanguage() {
-    window.location.href = 'trim-tracker-es.html';
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    loadData();
-    setTimeout(updateDailyTotals, 200);
-  });
-</script>
+  </script>
 </body>
 </html>
