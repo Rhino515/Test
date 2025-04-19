@@ -552,7 +552,7 @@ window.addEventListener('load', () => {
 <script>
 document.getElementById('import-tracker-total').addEventListener('click', () => {
   const todayISO = new Date().toISOString().split('T')[0];
-  const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+  localStorage.getItem(`trimTrackerDailyTotal-${today}`);
   if (trackerTotal) {
     document.getElementById('grams').value = trackerTotal;
     alert("Imported " + trackerTotal + "g from Trim Tracker.");
