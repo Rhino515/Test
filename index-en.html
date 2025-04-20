@@ -298,77 +298,41 @@
 </script>
 
 <script>
-// Auto pay period starting from April 14, 2025 (Monday) in PST
+// Auto pay period starting from April 14, 2025 (Monday)
 function getCurrentPayPeriod() {
-  const baseUTC = new Date(Date.UTC(2025, 3, 14, 0, 0, 0)); // April is 0-indexed, so 3 is April. UTC time for Monday.
-  const nowUTC = new Date();
-
-  // Get the PST offset in milliseconds
-  const pstOffset = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', timeZoneName: 'short' }).includes('PDT') ? -7 * 60 * 60 * 1000 : -8 * 60 * 60 * 1000;
-
-  // Convert base and current time to PST
-  const basePST = new Date(baseUTC.getTime() + pstOffset);
-  const nowPST = new Date(nowUTC.getTime() + pstOffset);
-  nowPST.setHours(0, 0, 0, 0);
-
-  const diffDays = Math.floor((nowPST - basePST) / (1000 * 60 * 60 * 24));
+  const base = new Date("2025-04-14T00:00:00"); // Monday
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.floor((today - base) / (1000 * 60 * 60 * 24));
   const periodIndex = Math.floor(diffDays / 14);
-  const periodStartPST = new Date(basePST);
-  periodStartPST.setDate(basePST.getDate() + periodIndex * 14);
-  const periodEndPST = new Date(periodStartPST);
-  periodEndPST.setDate(periodStartPST.getDate() + 13);
-
-  // Format dates as<ctrl3348>-MM-DD (local time, which is now PST)
-  const formatDate = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
+  const periodStart = new Date(base);
+  periodStart.setDate(base.getDate() + periodIndex * 14);
+  const periodEnd = new Date(periodStart);
+  periodEnd.setDate(periodStart.getDate() + 13);
   return {
-    start: formatDate(periodStartPST),
-    end: formatDate(periodEndPST),
+    start: periodStart.toISOString().split('T')[0],
+    end: periodEnd.toISOString().split('T')[0],
     label: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Pay Period: ') +
-           formatDate(periodStartPST) + ' – ' + formatDate(periodEndPST)
+           periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
   };
 }
 
-function getPayPeriodForDate(dateStr) {
-  const baseUTC = new Date(Date.UTC(2025, 3, 14, 0, 0, 0)); // April is 0-indexed. UTC time for Monday.
-
-  // Get the PST offset
-  const pstOffset = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', timeZoneName: 'short
-' }).includes('PDT') ? -7 * 60 * 60 * 1000 : -8 * 60 * 60 * 1000;
-  const basePST = new Date(baseUTC.getTime() + pstOffset);
-
-  const inputDate = new Date(dateStr);
-  // Convert input date to PST
-  const inputDatePST = new Date(inputDate.getTime() + pstOffset);
-  inputDatePST.setHours(0, 0, 0, 0);
-
-  const timeDiff = inputDatePST.getTime() - basePST.getTime();
+function getPayPeriodForDate(date) {
+  const base = new Date("2025-04-14T00:00:00"); // Base Monday
+  const timeDiff = date.getTime() - base.getTime();
   const dayDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
   const periodOffset = Math.floor(dayDiff / 14); // Calculate how many 14-day periods away
 
-  const periodStartPST = new Date(basePST);
-  periodStartPST.setDate(basePST.getDate() + periodOffset * 14);
-  const periodEndPST = new Date(periodStartPST);
-  periodEndPST.setDate(periodStartPST.getDate() + 13);
-
-  // Format dates as<ctrl3348>-MM-DD (local time, which is PST)
-  const formatDate = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  const periodStart = new Date(base);
+  periodStart.setDate(base.getDate() + periodOffset * 14);
+  const periodEnd = new Date(periodStart);
+  periodEnd.setDate(periodStart.getDate() + 13);
 
   return {
-    start: formatDate(periodStartPST),
-    end: formatDate(periodEndPST),
+    start: periodStart.toISOString().split('T')[0],
+    end: periodEnd.toISOString().split('T')[0],
     label: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Pay Period: ') +
-           formatDate(periodStartPST) + ' – ' + formatDate(periodEndPST)
+           periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
   };
 }
 
@@ -486,7 +450,7 @@ function updateSessionTable() {
       totalBonusPay += parseFloat(entry.bonusPay || 0);
     });
   } else if (currentPeriodKey) {
-    const headerRow = documentcreateElement('tr');
+    const headerRow = document.createElement('tr');
     const headerCell = document.createElement('th');
     headerCell.setAttribute('colspan', '4');
     headerCell.style.textAlign = 'left';
@@ -540,176 +504,148 @@ function updateSessionTable() {
     tfoot.querySelector('#totalBonusPay').textContent = '$' + totalBonusPay.toFixed(2);
   }
 }
-</script>
-
 <script>
-document.getElementById('import-tracker-total').addEventListener('click', () => {
-  // Get today's date in PST
-  const todayPST = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })).toISOString().slice(0, 10);
-  const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayPST);
-  if (trackerTotal) {
-    document.getElementById('grams').value = trackerTotal;
-    alert("Imported " + trackerTotal + "g from Trim Tracker.");
-  } else {
-    alert("No trim tracker total found for today.");
-  }
-});
-</script>
-
-<script>
-function clearCurrentPayPeriod() {
-  const confirmMsg = document.documentElement.lang === 'es'
-    ? "¿Estás seguro de que deseas borrar todas las entradas del periodo actual?"
-    : "Are you sure you want to clear all entries from the current pay period?";
-  if (!confirm(confirmMsg)) return;
-
-  const period = getCurrentPayPeriod();
-  const periodStart = new Date(period.start);
-  const periodEnd = new Date(period.end);
-  periodEnd.setHours(23, 59, 59, 999); // Include the whole end day
-
-  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  history = history.filter(entry => {
-    const d = new Date(entry.date);
-     d.setHours(0, 0, 0, 0); // Set entry date to midnight for accurate comparison
-    return d < periodStart || d > periodEnd;
-  });
-  localStorage.setItem('trimHistory', JSON.stringify(history));
-  updateSessionTable();
-}
-</script>
-
-<script>
-function downloadCSV() {
+// This is the effective updateSessionTable function called by calculate, deleteEntry, importCSV, and the load listener.
+function updateSessionTable() {
   const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  if (history.length === 0) {
-    alert(document.documentElement.lang === 'es' ? "No hay datos para exportar." : "No data to export.");
-    return;
+  const tbody = document.getElementById('sessionTable').getElementsByTagName('tbody')[0];
+  tbody.innerHTML = '';
+  let currentPeriodBonusTotal = 0; // Initialize total for the current period
+
+  const grouped = groupByPayPeriod(history);
+  const currentPeriodKey = Object.keys(grouped).find(key => key === getCurrentPayPeriod().start);
+
+  // Function to create a table row for an entry
+  const createEntryRow = (entry, index) => {
+    const row = document.createElement('tr');
+    row.id = 'row-' + index;
+
+    const dateCell = document.createElement('td');
+    dateCell.textContent = entry.date;
+    dateCell.contentEditable = true;
+    dateCell.addEventListener('blur', function () {
+      const updatedDate = this.textContent.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
+        if (history[index].date !== updatedDate) {
+          history[index].date = updatedDate;
+          localStorage.setItem('trimHistory', JSON.stringify(history));
+          updateSessionTable();
+        }
+      } else {
+        alert(document.documentElement.lang === 'es' ? "Formato de fecha no válido. Por favor use AAAA-MM-DD." : "Invalid date format. Please use YYYY-MM-DD.");
+        this.textContent = history[index].date;
+      }
+    });
+    row.appendChild(dateCell);
+
+    const gramsCell = document.createElement('td');
+    gramsCell.textContent = entry.grams;
+    gramsCell.contentEditable = true;
+    gramsCell.style.backgroundColor = '#222';
+    gramsCell.addEventListener('blur', function () {
+      const newGrams = parseFloat(this.textContent.trim());
+      if (!isNaN(newGrams) && newGrams >= 0) {
+        if (history[index].grams !== newGrams) {
+          history[index].grams = newGrams;
+          const newBonus = calculateBonus(newGrams);
+          history[index].bonusPay = newBonus.toFixed(2);
+          localStorage.setItem('trimHistory', JSON.stringify(history));
+          updateSessionTable();
+        }
+      } else {
+        alert(document.documentElement.lang === 'es' ? "Por favor ingrese un número de gramos válido (cero o más)." : "Please enter a valid number of grams (zero or more).");
+        this.textContent = history[index].grams;
+      }
+    });
+    row.appendChild(gramsCell);
+
+    const bonusPayCell = document.createElement('td');
+    bonusPayCell.textContent = '$' + parseFloat(entry.bonusPay || 0).toFixed(2);
+    row.appendChild(bonusPayCell);
+
+    const actionCell = document.createElement('td');
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = document.documentElement.lang === 'es' ? 'Eliminar' : 'Delete';
+    deleteBtn.className = 'delete-button';
+    deleteBtn.onclick = (function(originalIndex) {
+        return function() {
+            if (confirm(document.documentElement.lang === 'es' ? "¿Estás seguro de que deseas borrar esta entrada?" : "Are you sure you want to delete this entry?")) {
+                deleteEntry(originalIndex);
+            }
+        };
+    })(index);
+    actionCell.appendChild(deleteBtn);
+    row.appendChild(actionCell);
+    return row;
+  };
+
+  // Render current pay period
+  if (currentPeriodKey && grouped[currentPeriodKey].entries.length > 0) {
+    const headerRow = document.createElement('tr');
+    const headerCell = document.createElement('th');
+    headerCell.setAttribute('colspan', '4');
+    headerCell.style.textAlign = 'left';
+    headerCell.textContent = grouped[currentPeriodKey].label;
+    tbody.appendChild(headerRow);
+
+    grouped[currentPeriodKey].entries.sort(([, aIndex], [, bIndex]) => new Date(history[aIndex].date) - new Date(history[bIndex].date)).forEach(([entry, index]) => {
+      tbody.appendChild(createEntryRow(entry, index));
+      currentPeriodBonusTotal += parseFloat(entry.bonusPay || 0); // Accumulate bonus for current period
+    });
+  } else if (currentPeriodKey) {
+    const headerRow = document.createElement('tr');
+    const headerCell = document.createElement('th');
+    headerCell.setAttribute('colspan', '4');
+    headerCell.style.textAlign = 'left';
+    headerCell.textContent = grouped[currentPeriodKey].label;
+    tbody.appendChild(headerRow);
+    const emptyRow = document.createElement('tr');
+    const emptyCell = document.createElement('td');
+    emptyCell.setAttribute('colspan', '4');
+    emptyCell.textContent = document.documentElement.lang === 'es' ? 'No hay entradas para este periodo.' : 'No entries for this period.';
+    emptyCell.style.textAlign = 'center';
+    emptyRow.appendChild(emptyCell);
+    tbody.appendChild(emptyRow);
   }
 
-  const headers = ["Date", "Grams", "Bonus"];
-  const rows = history.map(entry => [entry.date, entry.grams, parseFloat(entry.bonusPay || 0).toFixed(2)]); // Ensure bonus is formatted
+  // Render past pay periods in collapsible sections
+  Object.keys(grouped)
+    .filter(key => key !== currentPeriodKey)
+    .sort((a, b) => new Date(b) - new Date(a)) // Sort past periods newest first
+    .forEach(key => {
+      const periodData = grouped[key];
+      if (periodData.entries.length > 0) {
+        const header = document.createElement('div');
+        header.className = 'past-period-header';
+        header.textContent = periodData.label + ' ▼';
+        header.addEventListener('click', function() {
+          const content = this.nextElementSibling;
+          content.classList.toggle('open');
+          this.textContent = periodData.label + (content.classList.contains('open') ? ' ▲' : ' ▼');
+        });
+        document.getElementById('sessionTable').parentNode.insertBefore(header, document.getElementById('sessionTable').nextSibling);
 
-  let csvContent = "data:text/csv;charset=utf-8,"
-    + headers.join(",") + "\n"
-    + rows.map(e => e.join(",")).join("\n");
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "norcal_trim_data.csv"); // Changed filename for clarity
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-</script>
-
-<script>
-function importCSV(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const text = e.target.result;
-    const lines = text.split('\n').slice(1); // Skip header
-    let imported = [];
-    let errorCount = 0;
-
-    for (let line of lines) {
-      const trimmedLine = line.trim();
-      if (!trimmedLine) continue; // Skip empty lines
-
-      const columns = trimmedLine.split(',');
-       if (columns.length < 3) { // Basic check for expected columns
-           errorCount++;
-           continue;
-       }
-
-      const date = columns[0].trim();
-      const grams = parseFloat(columns[1].trim());
-      const bonus = parseFloat(columns[2].trim());
-
-
-      // Basic validation
-      if (/^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(grams) && grams >= 0 && !isNaN(bonus) && bonus >= 0) {
-           // You might want to recalculate bonus here instead of trusting the CSV value
-           // const calculatedBonus = calculateBonus(grams);
-           // imported.push({ date: date, grams: grams, bonusPay: calculatedBonus.toFixed(2) });
-           // Or trust the CSV but format it correctly
-           imported.push({ date: date, grams: grams, bonusPay: bonus.toFixed(2) });
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'past-period-content';
+        periodData.entries.sort(([, aIndex], [, bIndex]) => new Date(history[aIndex].date) - new Date(history[bIndex].date)).forEach(([entry, index]) => {
+          const row = createEntryRow(entry, index);
+          contentDiv.appendChild(row);
+          // We are NOT adding to currentPeriodBonusTotal here
+        });
+        document.getElementById('sessionTable').parentNode.insertBefore(contentDiv, header.nextSibling);
       } else {
-           errorCount++;
+        const header = document.createElement('div');
+        header.className = 'past-period-header';
+        header.textContent = periodData.label + ' (No entries)';
+        document.getElementById('sessionTable').parentNode.insertBefore(header, document.getElementById('sessionTable').nextSibling);
       }
-    }
+    });
 
-    if (imported.length === 0 && errorCount > 0) {
-       alert(document.documentElement.lang === 'es' ? "Archivo CSV no válido o vacío. No se importaron entradas válidas." : "Invalid or empty CSV file. No valid entries imported.");
-       return;
-    }
-     if (imported.length === 0 && errorCount === 0) {
-        alert(document.documentElement.lang === 'es' ? "Archivo CSV vacío." : "Empty CSV file.");
-        return;
-     }
-
-
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    history = history.concat(imported);
-    localStorage.setItem('trimHistory', JSON.stringify(history));
-    updateSessionTable();
-     let successMsg = document.documentElement.lang === 'es' ? `Importación completada. ${imported.length} entrada(s) importada(s).` : `Import completed. ${imported.length} entry(s) imported.`;
-     if (errorCount > 0) {
-         successMsg += (document.documentElement.lang === 'es' ? ` ${errorCount} fila(s) no válidas omitidas.` : ` ${errorCount} invalid row(s) skipped.`);
-     }
-     alert(successMsg);
-
-  };
-  reader.readAsText(file);
-  // Reset the file input so the same file can be imported again if needed
-  event.target.value = '';
-}
-</script>
-
-<script>
-// This is the final, effective groupByPayPeriod function called by updateSessionTable.
-function groupByPayPeriod(history) {
-  const currentPeriod = getCurrentPayPeriod();
-  const currentStart = new Date(currentPeriod.start);
-  const currentEnd = new Date(currentPeriod.end);
-  currentEnd.setHours(23, 59, 59, 999);
-
-  const currentPeriodEntries = [];
-  const pastPeriodGroups = {};
-
-  history.forEach((entry, index) => {
-    const entryDate = new Date(entry.date);
-    entryDate.setHours(0, 0, 0, 0);
-
-    if (entryDate >= currentStart && entryDate <= currentEnd) {
-      currentPeriodEntries.push([entry, index]);
-    } else if (entryDate < currentStart) {
-      // Group by the correct two-week pay period for past dates
-      const period = getPayPeriodForDate(entryDate);
-      const key = period.start;
-      if (!pastPeriodGroups[key]) {
-        pastPeriodGroups[key] = { label: period.label, entries: [] };
-      }
-      pastPeriodGroups[key].entries.push([entry, index]);
-    }
-    // Future dates could be handled with another 'else if'
-  });
-
-  const grouped = {};
-  grouped[currentPeriod.start] = { label
-: currentPeriodEntries };
-
-  // Sort past period groups by start date (newest first)
-  const sortedPastKeys = Object.keys(pastPeriodGroups).sort((a, b) => new Date(b) - new Date(a));
-  sortedPastKeys.forEach(key => {
-    grouped[key] = pastPeriodGroups[key];
-  });
-
-  return grouped;
+  // Update total bonus pay in the footer for the CURRENT PERIOD ONLY
+  const tfoot = document.getElementById('sessionTable').getElementsByTagName('tfoot')[0];
+  if (tfoot) {
+    tfoot.querySelector('#totalBonusPay').textContent = '$' + currentPeriodBonusTotal.toFixed(2);
+  }
 }
 </script>
 
