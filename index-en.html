@@ -298,41 +298,77 @@
 </script>
 
 <script>
-// Auto pay period starting from April 14, 2025 (Monday)
+// Auto pay period starting from April 14, 2025 (Monday) in PST
 function getCurrentPayPeriod() {
-  const base = new Date("2025-04-14T00:00:00"); // Monday
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diffDays = Math.floor((today - base) / (1000 * 60 * 60 * 24));
+  const baseUTC = new Date(Date.UTC(2025, 3, 14, 0, 0, 0)); // April is 0-indexed, so 3 is April. UTC time for Monday.
+  const nowUTC = new Date();
+
+  // Get the PST offset in milliseconds
+  const pstOffset = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', timeZoneName: 'short' }).includes('PDT') ? -7 * 60 * 60 * 1000 : -8 * 60 * 60 * 1000;
+
+  // Convert base and current time to PST
+  const basePST = new Date(baseUTC.getTime() + pstOffset);
+  const nowPST = new Date(nowUTC.getTime() + pstOffset);
+  nowPST.setHours(0, 0, 0, 0);
+
+  const diffDays = Math.floor((nowPST - basePST) / (1000 * 60 * 60 * 24));
   const periodIndex = Math.floor(diffDays / 14);
-  const periodStart = new Date(base);
-  periodStart.setDate(base.getDate() + periodIndex * 14);
-  const periodEnd = new Date(periodStart);
-  periodEnd.setDate(periodStart.getDate() + 13);
+  const periodStartPST = new Date(basePST);
+  periodStartPST.setDate(basePST.getDate() + periodIndex * 14);
+  const periodEndPST = new Date(periodStartPST);
+  periodEndPST.setDate(periodStartPST.getDate() + 13);
+
+  // Format dates as YYYY-MM-DD (local time, which is now PST)
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   return {
-    start: periodStart.toISOString().split('T')[0],
-    end: periodEnd.toISOString().split('T')[0],
+    start: formatDate(periodStartPST),
+    end: formatDate(periodEndPST),
     label: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Pay Period: ') +
-           periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
+           formatDate(periodStartPST) + ' – ' + formatDate(periodEndPST)
   };
 }
 
-function getPayPeriodForDate(date) {
-  const base = new Date("2025-04-14T00:00:00"); // Base Monday
-  const timeDiff = date.getTime() - base.getTime();
+function getPayPeriodForDate(dateStr) {
+  const baseUTC = new Date(Date.UTC(2025, 3, 14, 0, 0, 0)); // April is 0-indexed. UTC time for Monday.
+
+  // Get the PST offset
+  const pstOffset = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', timeZoneName:
+short' }).includes('PDT') ? -7 * 60 * 60 * 1000 : -8 * 60 * 60 * 1000;
+  const basePST = new Date(baseUTC.getTime() + pstOffset);
+
+  const inputDate = new Date(dateStr);
+  // Convert input date to PST
+  const inputDatePST = new Date(inputDate.getTime() + pstOffset);
+  inputDatePST.setHours(0, 0, 0, 0);
+
+  const timeDiff = inputDatePST.getTime() - basePST.getTime();
   const dayDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
   const periodOffset = Math.floor(dayDiff / 14); // Calculate how many 14-day periods away
 
-  const periodStart = new Date(base);
-  periodStart.setDate(base.getDate() + periodOffset * 14);
-  const periodEnd = new Date(periodStart);
-  periodEnd.setDate(periodStart.getDate() + 13);
+  const periodStartPST = new Date(basePST);
+  periodStartPST.setDate(basePST.getDate() + periodOffset * 14);
+  const periodEndPST = new Date(periodStartPST);
+  periodEndPST.setDate(periodStartPST.getDate() + 13);
+
+  // Format dates as YYYY-MM-DD (local time, which is PST)
+  const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   return {
-    start: periodStart.toISOString().split('T')[0],
-    end: periodEnd.toISOString().split('T')[0],
+    start: formatDate(periodStartPST),
+    end: formatDate(periodEndPST),
     label: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Pay Period: ') +
-           periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
+           formatDate(periodStartPST) + ' – ' + formatDate(periodEndPST)
   };
 }
 
@@ -342,7 +378,7 @@ window.addEventListener('load', () => {
   const label = document.getElementById("payPeriodLabel");
   if (label) label.textContent = period.label;
 
-  // Also format dates in history to<ctrl3348>-MM-DD on load if necessary
+  // Also format dates in history to YYYY-MM-DD on load if necessary
   let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
   let changed = false;
   history.forEach(entry => {
@@ -388,7 +424,7 @@ function updateSessionTable() {
           updateSessionTable();
         }
       } else {
-        alert(document.documentElement.lang === 'es' ? "Formato de fecha no válido. Por favor use AAAA-MM-DD." : "Invalid date format. Please use<ctrl3348>-MM-DD.");
+        alert(document.documentElement.lang === 'es' ? "Formato de fecha no válido. Por favor use AAAA-MM-DD." : "Invalid date format. Please use YYYY-MM-DD.");
         this.textContent = history[index].date;
       }
     });
