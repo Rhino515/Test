@@ -147,7 +147,9 @@
 
       const dateInput = document.createElement('input');
       dateInput.type = 'date';
-      dateInput.value = data.date || new Date().toISOString().slice(0, 10);
+      // Set default date to today in PST
+      const todayPST = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
+      dateInput.value = data.date || todayPST.toISOString().slice(0, 10);
       if (skipViewUpdate) dateInput.dataset.skipCollapse = 'true';
       dateInput.oninput = () => {
         delete dateInput.dataset.skipCollapse;
@@ -224,7 +226,8 @@
       const tbody = document.getElementById('tableBody');
       // Filter out the collapsed header rows before re-rendering
       const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.classList.contains('collapsed-row-header'));
-      const today = new Date().toISOString().slice(0, 10);
+      // Get today's date in PST
+      const todayPST = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })).toISOString().slice(0, 10);
       const dateGroups = {};
 
       rows.forEach(row => {
@@ -240,7 +243,7 @@
 
       // Sort dates descending (newest first)
       Object.keys(dateGroups).sort((a, b) => b.localeCompare(a)).forEach(date => {
-        const isToday = date === today;
+        const isToday = date === todayPST;
         let totalGrams = 0;
         dateGroups[date].forEach(row => {
           const totalCell = row.querySelector('td:nth-child(4)');
@@ -306,14 +309,15 @@
         }
       });
 
-      const today = new Date().toISOString().slice(0, 10);
+      // Get today's date in PST
+      const todayPST = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })).toISOString().slice(0, 10);
 
       // --- FIX APPLIED HERE ---
-      const todayStorageKey = 'trimTrackerDailyTotal-' + today; // Use the dated key
+      const todayStorageKey = 'trimTrackerDailyTotal-' + todayPST; // Use the dated key
 
-      if (totalsMap[today] !== undefined) { // Check if today has entries
+      if (totalsMap[todayPST] !== undefined) { // Check if today has entries
          // Save today's total using the dated key, rounded to 2 decimal places
-        localStorage.setItem(todayStorageKey, totalsMap[today].toFixed(2));
+        localStorage.setItem(todayStorageKey, totalsMap[todayPST].toFixed(2));
       } else {
          // If no entries for today, remove the dated key
         localStorage.removeItem(todayStorageKey);
@@ -393,7 +397,6 @@
       const rows = document.querySelectorAll('#tableBody tr:not(.collapsed-row-header)'); // Only export data rows
       // Ensure CSV content is properly quoted
       let csvContent = "Date,Strain,\"Grams (semicolon separated)\",Total\n"; // Updated header for clarity
-
       rows.forEach(row => {
         const date = `"${(row.querySelector('input[type="date"]')?.value || '').replace(/"/g, '""')}"`; // Quote and escape double quotes
         const strain = `"${(row.querySelector('input[type="text"]')?.value || '').replace(/"/g, '""')}"`; // Quote and escape double quotes
@@ -482,9 +485,14 @@
     }
 
     // Function to toggle language (remains the same)
-    // function toggleLanguage() {
-    //   window.location.href = 'trim-tracker-es.html';
-    // }
+    function toggleLanguage() {
+      const currentURL = window.location.href;
+      if (currentURL.includes('trim-tracker-es.html')) {
+        window.location.href = currentURL.replace('trim-tracker-es.html', 'trim-tracker.html');
+      } else {
+        window.location.href = 'trim-tracker-es.html';
+      }
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
