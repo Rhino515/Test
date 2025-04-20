@@ -318,7 +318,7 @@ function getCurrentPayPeriod() {
   const periodEndPST = new Date(periodStartPST);
   periodEndPST.setDate(periodStartPST.getDate() + 13);
 
-  // Format dates as YYYY-MM-DD (local time, which is now PST)
+  // Format dates as<ctrl3348>-MM-DD (local time, which is now PST)
   const formatDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -338,8 +338,8 @@ function getPayPeriodForDate(dateStr) {
   const baseUTC = new Date(Date.UTC(2025, 3, 14, 0, 0, 0)); // April is 0-indexed. UTC time for Monday.
 
   // Get the PST offset
-  const pstOffset = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', timeZoneName:
-short' }).includes('PDT') ? -7 * 60 * 60 * 1000 : -8 * 60 * 60 * 1000;
+  const pstOffset = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles', timeZoneName: 'short
+' }).includes('PDT') ? -7 * 60 * 60 * 1000 : -8 * 60 * 60 * 1000;
   const basePST = new Date(baseUTC.getTime() + pstOffset);
 
   const inputDate = new Date(dateStr);
@@ -356,7 +356,7 @@ short' }).includes('PDT') ? -7 * 60 * 60 * 1000 : -8 * 60 * 60 * 1000;
   const periodEndPST = new Date(periodStartPST);
   periodEndPST.setDate(periodStartPST.getDate() + 13);
 
-  // Format dates as YYYY-MM-DD (local time, which is PST)
+  // Format dates as<ctrl3348>-MM-DD (local time, which is PST)
   const formatDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -378,7 +378,7 @@ window.addEventListener('load', () => {
   const label = document.getElementById("payPeriodLabel");
   if (label) label.textContent = period.label;
 
-  // Also format dates in history to YYYY-MM-DD on load if necessary
+  // Also format dates in history to<ctrl3348>-MM-DD on load if necessary
   let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
   let changed = false;
   history.forEach(entry => {
@@ -424,7 +424,7 @@ function updateSessionTable() {
           updateSessionTable();
         }
       } else {
-        alert(document.documentElement.lang === 'es' ? "Formato de fecha no válido. Por favor use AAAA-MM-DD." : "Invalid date format. Please use YYYY-MM-DD.");
+        alert(document.documentElement.lang === 'es' ? "Formato de fecha no válido. Por favor use AAAA-MM-DD." : "Invalid date format. Please use<ctrl3348>-MM-DD.");
         this.textContent = history[index].date;
       }
     });
@@ -486,7 +486,7 @@ function updateSessionTable() {
       totalBonusPay += parseFloat(entry.bonusPay || 0);
     });
   } else if (currentPeriodKey) {
-    const headerRow = document.createElement('tr');
+    const headerRow = documentcreateElement('tr');
     const headerCell = document.createElement('th');
     headerCell.setAttribute('colspan', '4');
     headerCell.style.textAlign = 'left';
@@ -544,8 +544,9 @@ function updateSessionTable() {
 
 <script>
 document.getElementById('import-tracker-total').addEventListener('click', () => {
-  const todayISO = new Date().toISOString().split('T')[0];
-  const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+  // Get today's date in PST
+  const todayPST = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })).toISOString().slice(0, 10);
+  const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayPST);
   if (trackerTotal) {
     document.getElementById('grams').value = trackerTotal;
     alert("Imported " + trackerTotal + "g from Trim Tracker.");
@@ -699,7 +700,8 @@ function groupByPayPeriod(history) {
   });
 
   const grouped = {};
-  grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
+  grouped[currentPeriod.start] = { label
+: currentPeriodEntries };
 
   // Sort past period groups by start date (newest first)
   const sortedPastKeys = Object.keys(pastPeriodGroups).sort((a, b) => new Date(b) - new Date(a));
