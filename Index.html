@@ -175,7 +175,9 @@ function calculateBonus(grams) {
     bonusPay += (grams - 1134) * 0.05;
   }
   return bonusPay;
-}function calculate() {
+}
+
+function calculate() {
   const grams = parseFloat(document.getElementById('grams').value);
   if (isNaN(grams) || grams <= 0) {
     document.getElementById('result').innerText = 'Please enter a valid number of grams.';
@@ -202,6 +204,8 @@ function updateSessionTable() {
   let totalBonusPay = 0;
 
   const grouped = groupByPayPeriod(history);
+  const currentPeriodKey = getCurrentPayPeriod().start;
+
   const createEntryRow = (entry, index) => {
     const row = document.createElement('tr');
     row.id = 'row-' + index;
@@ -211,15 +215,16 @@ function updateSessionTable() {
     dateCell.contentEditable = true;
     dateCell.addEventListener('blur', function () {
       const updatedDate = this.textContent.trim();
-      if (/^\d{4}-\d{2}-\\d{2}$/.test(updatedDate)) {
-        if (history[index].date !== updatedDate) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (dateRegex.test(updatedDate)) {
+        if (history[index] && history[index].date !== updatedDate) {
           history[index].date = updatedDate;
           localStorage.setItem('trimHistory', JSON.stringify(history));
           updateSessionTable();
         }
       } else {
         alert("Invalid date format. Please use YYYY-MM-DD.");
-        this.textContent = history[index].date;
+        this.textContent = history[index] ? history[index].date : '';
       }
     });
     row.appendChild(dateCell);
@@ -263,9 +268,7 @@ function updateSessionTable() {
     return row;
   };
 
-  const currentPeriodKey = getCurrentPayPeriod().start;
   const currentGroup = grouped[currentPeriodKey];
-
   if (currentGroup && currentGroup.entries.length > 0) {
     const headerRow = document.createElement('tr');
     const headerCell = document.createElement('th');
@@ -304,149 +307,6 @@ function updateSessionTable() {
 
   document.getElementById('totalBonusPay').textContent = '$' + totalBonusPay.toFixed(2);
 }
-function getCurrentPayPeriod() {
-  const base = new Date("2025-04-14T00:00:00");
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const diffDays = Math.floor((today - base) / (1000 * 60 * 60 * 24));
-  const periodIndex = Math.floor(diffDays / 14);
-  const periodStart = new Date(base);
-  periodStart.setDate(base.getDate() + periodIndex * 14);
-  const periodEnd = new Date(periodStart);
-  periodEnd.setDate(periodStart.getDate() + 13);
-  return {
-    start: periodStart.toISOString().split('T')[0],
-    end: periodEnd.toISOString().split('T')[0],
-    label: 'Pay Period: ' + periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
-  };
-}
-
-function groupByPayPeriod(history) {
-  const currentPeriod = getCurrentPayPeriod();
-  const currentStart = new Date(currentPeriod.start);
-  const currentEnd = new Date(currentPeriod.end);
-  currentEnd.setHours(23, 59, 59, 999);
-
-  const currentPeriodEntries = [];
-  const pastGroups = {};
-
-  history.forEach((entry, index) => {
-    const d = new Date(entry.date);
-    d.setHours(0, 0, 0, 0);
-    if (d >= currentStart && d <= currentEnd) {
-      currentPeriodEntries.push([entry, index]);
-    } else {
-      const base = new Date("2025-04-14T00:00:00");
-      const offset = Math.floor((d - base) / (1000 * 60 * 60 * 24));
-      const periodOffset = Math.floor(offset / 14);
-      const periodStart = new Date(base);
-      periodStart.setDate(base.getDate() + periodOffset * 14);
-      const periodEnd = new Date(periodStart);
-      periodEnd.setDate(periodStart.getDate() + 13);
-      const key = periodStart.toISOString().split('T')[0];
-      const label = 'Pay Period: ' + key + ' – ' + periodEnd.toISOString().split('T')[0];
-      if (!pastGroups[key]) pastGroups[key] = { label, entries: [] };
-      pastGroups[key].entries.push([entry, index]);
-    }
-  });
-
-  const grouped = {};
-  grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
-
-  Object.keys(pastGroups).sort((a, b) => new Date(b) - new Date(a)).forEach(key => {
-    grouped[key] = pastGroups[key];
-  });
-
-  return grouped;
-}
-
-function deleteEntry(index) {
-  const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  history.splice(index, 1);
-  localStorage.setItem('trimHistory', JSON.stringify(history));
-  updateSessionTable();
-}
-
-function clearCurrentPayPeriod() {
-  const period = getCurrentPayPeriod();
-  const periodStart = new Date(period.start);
-  const periodEnd = new Date(period.end);
-  periodEnd.setHours(23, 59, 59, 999);
-
-  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  history = history.filter(entry => {
-    const d = new Date(entry.date);
-    d.setHours(0, 0, 0, 0);
-    return d < periodStart || d > periodEnd;
-  });
-  localStorage.setItem('trimHistory', JSON.stringify(history));
-  updateSessionTable();
-}
-
-function downloadCSV() {
-  const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  if (history.length === 0) {
-    alert("No data to export.");
-    return;
-  }
-
-  const headers = ["Date", "Grams", "Bonus"];
-  const rows = history.map(entry => [entry.date, entry.grams, parseFloat(entry.bonusPay || 0).toFixed(2)]);
-  let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
-
-  const encodedUri = encodeURI(csvContent);
-  const link = document.createElement("a");
-  link.setAttribute("href", encodedUri);
-  link.setAttribute("download", "norcal_trim_data.csv");
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-function importCSV(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const text = e.target.result;
-    const lines = text.split('\n').slice(1);
-    let imported = [];
-    lines.forEach(line => {
-      const [date, grams, bonus] = line.trim().split(',');
-      if (date && grams && bonus) {
-        imported.push({
-          date: date.trim(),
-          grams: parseFloat(grams.trim()),
-          bonusPay: parseFloat(bonus.trim()).toFixed(2)
-        });
-      }
-    });
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    history = history.concat(imported);
-    localStorage.setItem('trimHistory', JSON.stringify(history));
-    updateSessionTable();
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
-
-document.getElementById('import-tracker-total').addEventListener('click', () => {
-  const todayISO = new Date().toISOString().split('T')[0];
-  const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
-  if (trackerTotal) {
-    document.getElementById('grams').value = trackerTotal;
-    alert("Imported " + trackerTotal + "g from Trim Tracker.");
-  } else {
-    alert("No trim tracker total found for today.");
-  }
-});
-
-window.addEventListener('load', () => {
-  const period = getCurrentPayPeriod();
-  const label = document.getElementById("payPeriodLabel");
-  if (label) label.textContent = period.label;
-  updateSessionTable();
-});
 </script>
 </body>
 </html>
