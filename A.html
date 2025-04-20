@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+        const userLang = navigator.language || navigator.userLanguage;
+        if (userLang.startsWith('es') && !window.location.href.includes('index-es.html') && !window.location.href.includes('trim-tracker-es.html')) {
+            if (window.location.href.includes('trim-tracker')) {
+                window.location.href = 'trim-tracker-es.html';
+            } else {
+                window.location.href = 'index-es.html';
+            }
+        }
+    <script>
+function calculateBonus(grams) {
+  let bonusPay = 0;
+  if (grams > 1587) {
+    bonusPay += (grams - 1587) * 0.11;
+    bonusPay += (1587 - 1134) * 0.05;
+  } else if (grams > 1134) {
+    bonusPay += (grams - 1134) * 0.05;
+  }
+  return bonusPay;
+}
+
+function calculate() {
+  const grams = parseFloat(document.getElementById('grams').value);
+  if (isNaN(grams) || grams <= 0) {
+    document.getElementById('result').innerText = 'Please enter a valid number of grams.';
+    return;
+  }
+
+  const bonusPay = calculateBonus(grams);
+  document.getElementById('result').innerText = 'Bonus Pay: $' + bonusPay.toFixed(2);
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const entry = { date: dateStr, grams: grams, bonusPay: bonusPay.toFixed(2) };
+
+  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  history.push(entry);
+  localStorage.setItem('trimHistory', JSON.stringify(history));
+
+  updateSessionTable();
+
+  requestAnimationFrame(() => {
+    const scrollTarget = document.getElementById('sessionTable');
+    if (scrollTarget) scrollTarget.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  document.getElementById('grams').value = '';
+}
+
+function updateSessionTable() {
+  const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  const tbody = document.getElementById('sessionTable').getElementsByTagName('tbody')[0];
+  tbody.innerHTML = '';
+  let totalBonusPay = 0;
+
+  const grouped = groupByPayPeriod(history);
+  const createEntryRow = (entry, index) => {
+    const row = document.createElement('tr');
+    const dateCell = document.createElement('td');
+    dateCell.textContent = entry.date;
+    row.appendChild(dateCell);
+
+    const gramsCell = document.createElement('td');
+    gramsCell.textContent = entry.grams;
+    row.appendChild(gramsCell);
+
+    const bonusCell = document.createElement('td');
+    bonusCell.textContent = '$' + parseFloat(entry.bonusPay || 0).toFixed(2);
+    row.appendChild(bonusCell);
+
+    const actionCell = document.createElement('td');
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.className = 'delete-button';
+    deleteBtn.onclick = () => {
+      deleteEntry(index);
+    };
+    actionCell.appendChild(deleteBtn);
+    row.appendChild(actionCell);
+
+    return row;
+  };
+
+  const currentPeriodKey = getCurrentPayPeriod().start;
+  const currentGroup = grouped[currentPeriodKey];
+
+  if (currentGroup && currentGroup.entries.length > 0) {
+    currentGroup.entries.forEach(([entry, index]) => {
+      tbody.appendChild(createEntryRow(entry, index));
+      totalBonusPay += parseFloat(entry.bonusPay || 0);
+    });
+  }
+
+  document.getElementById('totalBonusPay').textContent = '$' + totalBonusPay.toFixed(2);
+}
+
+function deleteEntry(index) {
+  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  history.splice(index, 1);
+  localStorage.setItem('trimHistory', JSON.stringify(history));
+  updateSessionTable();
+}
+
+function clearCurrentPayPeriod() {
+  const period = getCurrentPayPeriod();
+  const periodStart = new Date(period.start);
+  const periodEnd = new Date(period.end);
+  periodEnd.setHours(23, 59, 59, 999);
+
+  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  history = history.filter(entry => {
+    const d = new Date(entry.date);
+    d.setHours(0, 0, 0, 0);
+    return d < periodStart || d > periodEnd;
+  });
+  localStorage.setItem('trimHistory', JSON.stringify(history));
+  updateSessionTable();
+}
+
+function getCurrentPayPeriod() {
+  const base = new Date("2025-04-14T00:00:00");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diffDays = Math.floor((today - base) / (1000 * 60 * 60 * 24));
+  const periodIndex = Math.floor(diffDays / 14);
+  const periodStart = new Date(base);
+  periodStart.setDate(base.getDate() + periodIndex * 14);
+  const periodEnd = new Date(periodStart);
+  periodEnd.setDate(periodStart.getDate() + 13);
+  return {
+    start: periodStart.toISOString().split('T')[0],
+    end: periodEnd.toISOString().split('T')[0],
+    label: 'Pay Period: ' + periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
+  };
+}
+
+function groupByPayPeriod(history) {
+  const currentPeriod = getCurrentPayPeriod();
+  const currentStart = new Date(currentPeriod.start);
+  const currentEnd = new Date(currentPeriod.end);
+  currentEnd.setHours(23, 59, 59, 999);
+
+  const currentPeriodEntries = [];
+  const pastGroups = {};
+
+  history.forEach((entry, index) => {
+    const d = new Date(entry.date);
+    d.setHours(0, 0, 0, 0);
+    if (d >= currentStart && d <= currentEnd) {
+      currentPeriodEntries.push([entry, index]);
+    } else {
+      const base = new Date("2025-04-14T00:00:00");
+      const offset = Math.floor((d - base) / (1000 * 60 * 60 * 24));
+      const periodOffset = Math.floor(offset / 14);
+      const periodStart = new Date(base);
+      periodStart.setDate(base.getDate() + periodOffset * 14);
+      const periodEnd = new Date(periodStart);
+      periodEnd.setDate(periodStart.getDate() + 13);
+      const key = periodStart.toISOString().split('T')[0];
+      const label = 'Pay Period: ' + key + ' – ' + periodEnd.toISOString().split('T')[0];
+      if (!pastGroups[key]) pastGroups[key] = { label, entries: [] };
+      pastGroups[key].entries.push([entry, index]);
+    }
+  });
+
+  const grouped = {};
+  grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
+
+  Object.keys(pastGroups).sort((a, b) => new Date(b) - new Date(a)).forEach(key => {
+    grouped[key] = pastGroups[key];
+  });
+
+  return grouped;
+}
+
+function downloadCSV() {
+  const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  if (history.length === 0) {
+    alert("No data to export.");
+    return;
+  }
+
+  const headers = ["Date", "Grams", "Bonus"];
+  const rows = history.map(entry => [entry.date, entry.grams, parseFloat(entry.bonusPay || 0).toFixed(2)]);
+  let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+
+  const encodedUri = encodeURI(csvContent);
+  const link = document.createElement("a");
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", "norcal_trim_data.csv");
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function importCSV(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const text = e.target.result;
+    const lines = text.split('\n').slice(1);
+    let imported = [];
+    lines.forEach(line => {
+      const [date, grams, bonus] = line.trim().split(',');
+      if (date && grams && bonus) {
+        imported.push({
+          date: date.trim(),
+          grams: parseFloat(grams.trim()),
+          bonusPay: parseFloat(bonus.trim()).toFixed(2)
+        });
+      }
+    });
+    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    history = history.concat(imported);
+    localStorage.setItem('trimHistory', JSON.stringify(history));
+    updateSessionTable();
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const importBtn = document.getElementById('import-tracker-total');
+  if (importBtn) {
+    importBtn.addEventListener('click', () => {
+      const todayISO = new Date().toISOString().split('T')[0];
+      const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+      if (trackerTotal) {
+        document.getElementById('grams').value = trackerTotal;
+        alert("Imported " + trackerTotal + "g from Trim Tracker.");
+      } else {
+        alert("No trim tracker total found for today.");
+      }
+    });
+  }
+
+  const label = document.getElementById("payPeriodLabel");
+  if (label) label.textContent = getCurrentPayPeriod().label;
+
+  updateSessionTable();
+});
+</script>
+</body>
+</html>
