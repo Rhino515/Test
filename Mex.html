@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script>
+  const userLang = navigator.language || navigator.userLanguage;
+  if (userLang.startsWith('en') && !window.location.href.includes('index.html') && !window.location.href.includes('trim-tracker.html')) {
+    if (window.location.href.includes('trim-tracker-es')) {
+      window.location.href = 'trim-tracker.html';
+    } else {
+      window.location.href = 'index.html';
+    }
+  }
+</script>
+<meta charset="utf-8"/>
+<title>Calculadora de Recorte NorCal</title>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<link href="manifest.json" rel="manifest"/>
+<meta content="#000000" name="theme-color"/>
+<style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: 'Montserrat', sans-serif;
+      text-align: center;
+      padding: 2em;
+    }
+    input {
+      font-size: 1.2em;
+      padding: 0.5em;
+      margin-top: 0.6em;
+      width: 150px;
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+    }
+    button {
+      background-color: green;
+      color: white;
+      padding: 0.45em 1em;
+      border: none;
+      font-size: 1em;
+      margin-top: 0.6em;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: darkgreen;
+    }
+    img {
+      margin-top: 0.6em;
+      width: 200px;
+    }
+    #result {
+      margin-top: 0.6em;
+      font-size: 1.2em;
+    }
+    .install-links {
+      margin-top: 0.6em;
+    }
+    .install-links a {
+      display: inline-block;
+      margin: 0.5em;
+      padding: 0.5em 1em;
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    .install-links a:hover {
+      background-color: #666;
+    }
+    table {
+      margin: 2em auto;
+      border-collapse: collapse;
+      width: 80%;
+    }
+    th, td {
+      border: 1px solid #555;
+      padding: 0.5em;
+    }
+    th {
+      background-color: #333;
+    }
+    td[contenteditable="true"] {
+      background-color: #222;
+    }
+    .delete-button {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 0.3em 0.6em;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .delete-button:hover {
+      background-color: darkred;
+    }
+    .clear-all-button {
+      background-color: orange;
+      color: black;
+      border: none;
+      padding: 0.5em 1em;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .clear-all-button:hover {
+      background-color: darkorange;
+    }
+    .language-toggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+    .language-toggle a {
+      color: white;
+      text-decoration: none;
+      margin-left: 10px;
+    }
+    .past-period-header {
+      background-color: #444;
+      color: white;
+      padding: 0.5em;
+      cursor: pointer;
+      margin-top: 1em;
+      border-radius: 4px;
+      text-align: left;
+    }
+    .past-period-content {
+      display: none;
+      margin-left: 1em;
+      padding: 0.5em;
+      border: 1px solid #555;
+      border-top: none;
+    }
+    .past-period-content.open {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<div class="language-toggle">
+<a href="index.html">English</a>
+<a href="index-es.html">Español</a>
+</div>
+<img alt="Logo de NorCal" src="norcal_icon.png"/>
+<p>Ingrese el total de gramos recortados:</p>
+<input id="grams" placeholder="ej. 1200" type="number"/>
+<br/>
+<button id="import-tracker-total">Añadir el Total de Hoy del Rastreador de Recorte</button>
+<br/>
+<button onclick="calcular()">Calcular</button>
+<p id="result"></p>
+<div class="install-links">
+<a href="trim-tracker-es.html">Ir al Rastreador de Recorte</a>
+<a class="nav-button" href="help-es.html">Cómo Usar la App</a>
+</div>
+<div style="margin-top: 0.6em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
+<strong>Nota:</strong> Para que la función de importación del Rastreador de Recorte funcione correctamente, utilice la calculadora y el rastreador solo en su idioma preferido. Mezclar idiomas puede causar problemas de sincronización de datos.
+  </div>
+
+<div id="payPeriodLabel" style="margin-top: 0.6em; color: #0f0; font-weight: bold;"></div>
+<table id="sessionTable">
+<thead>
+<tr>
+<th>Fecha &amp; Día</th>
+<th>Gramos</th>
+<th>Pago de Bonificación</th>
+<th>Acción</th>
+</tr>
+</thead>
+<tbody></tbody>
+<tfoot>
+<tr>
+<td colspan="2"><strong>Total</strong></td>
+<td id="totalBonusPay">$0.00</td>
+
+</tr>
+</tfoot>
+</table>
+<div style="margin-top: 0.6em;">
+  <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="importarCSV(event)">
+  <button onclick="document.getElementById('csvInput').click()" style='background-color:#28a745;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;'>Importar CSV</button>
+</div>
+
+<div style="margin-top: 0.6em;">
+  <button onclick="descargarCSV()" style='background-color:green;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;'>Exportar CSV</button>
+</div>
+
+<div style="margin-top: 0.6em;">
+  <button onclick="limpiarPeriodoPagoActual()" style='background-color:red;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;'>Limpiar Periodo de Pago Actual</button>
+</div>
+
+<div style="margin-top: 1.2em; border-top: 1px solid #444; padding-top: 1em;">
+<h2 onclick="alternarCalculoPago()" style="color:#0f0; cursor:pointer;">Promedios de Pago y Por Hora ▼</h2>
+<div id="payCalcSection" style="display:none;">
+<p>Ingrese su pago por hora y las horas trabajadas, luego elija un rango de fechas:</p>
+<label>Tarifa por Hora: <input id="hourlyRate" step="0.01" type="number"/></label><br/>
+<label>Horas Extras: <input id="overtimeHours" step="0.1" type="number"/></label><br/><label>Total de Horas Trabajadas: <input id="totalHours" step="0.1" type="number"/></label><br/>
+<label>Fecha de Inicio: <input id="startDate" type="date"/></label><br/>
+<label>Fecha de Fin: <input id="endDate" type="date"/></label><br/>
+<button onclick="calcularPromedios()">Calcular Promedios</button>
+<div id="averageResults" style="margin-top: 0.6em; text-align: left;"></div>
+</div>
+</div><div style="margin-top: 4em; padding-top: 2em; border-top: 1px solid #444;">
+<h2 style="color: #0f0;">Acerca del Creador</h2>
+<p style="max-width: 600px; margin: 0 auto; font-size: 1em; line-height: 1.6;">
+      Hola, mi nombre es Andrew y trabajo como recortador profesional en NorCal Cannabis.
+      Creé la Calculadora de Recorte NorCal para ayudar a simplificar los cálculos de pago de bonificación y facilitar el seguimiento del progreso diario para los recortadores.
+      <br/><br/>
+      Esta herramienta fue diseñada para ser práctica, fácil de usar y eficiente, ayudando a los trabajadores a mantenerse organizados e informados.
+      Mi objetivo es apoyar a la comunidad de recortadores con soluciones tecnológicas simples que marquen una diferencia real en el trabajo.
+    </p>
+</div>
+<script>
+    function calcularBonificacion(gramos) {
+      let pagoBonificacion = 0;
+      if (gramos > 1587) {
+        pagoBonificacion += (gramos - 1587) * 0.11;
+        pagoBonificacion += (1587 - 1134) * 0.05;
+      } else if (gramos > 1134) {
+        pagoBonificacion += (gramos - 1134) * 0.05;
+      }
+      return pagoBonificacion;
+    }
+
+    function calcular() {
+      const gramos = parseFloat(document.getElementById('grams').value);
+      if (isNaN(gramos) || gramos <= 0) {
+        document.getElementById('result').innerText = 'Por favor, ingrese un número válido de gramos.';
+        return;
+      }
+      const pagoBonificacion = calcularBonificacion(gramos);
+      document.getElementById('result').innerText = 'Pago de Bonificación: $' + pagoBonificacion.toFixed(2);
+      const ahora = new Date();
+      const fechaStr = ahora.toISOString().split('T')[0];
+      const entrada = { fecha: fechaStr, gramos: gramos, pagoBonificacion: pagoBonificacion.toFixed(2) };
+      let historial = JSON.parse(localStorage.getItem('historialRecorte')) || [];
+      historial.push(entrada);
+      localStorage.setItem('historialRecorte', JSON.stringify(historial));
+      actualizarTablaSesiones();
+      const objetivoDesplazamiento = document.getElementById('sessionTable');
+      if (objetivoDesplazamiento) objetivoDesplazamiento.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('grams').value = '';
+    }
+
+    function calcularPromedios() {
+      const tarifaPorHora = parseFloat(document.getElementById("hourlyRate").value);
+      const totalHoras = parseFloat(document.getElementById("totalHours").value);
+      const horasExtras = parseFloat(document.getElementById("overtimeHours").value) || 0;
+      const fechaInicio = new Date(document.getElementById("startDate").value);
+      const fechaFin = new Date(document.getElementById("endDate").value);
+      if (isNaN(tarifaPorHora) || isNaN(totalHoras) || isNaN(fechaInicio) || isNaN(fechaFin)) {
+        alert("Por favor, complete todos los campos.");
+        return;
+      }
+      const historial = JSON.parse(localStorage.getItem('historialRecorte')) || [];
+      const filtrado = historial.filter(entrada => {
+        const fechaEntrada = new Date(entrada.fecha);
+        // Establecer las horas a medianoche para una comparación de fechas precisa
+        fechaEntrada.setHours(0, 0, 0, 0);
+        fechaInicio.setHours(0, 0, 0, 0);
+        fechaFin.setHours(0, 0, 0, 0);
+        return fechaEntrada >= fechaInicio && fechaEntrada <= fechaFin;
+      });
+      let totalBonificacion = filtrado.reduce((suma, entrada) => suma + parseFloat(entrada.pagoBonificacion || 0), 0);
+      let pagoRegular = tarifaPorHora * totalHoras;
+      let pagoHorasExtras = tarifaPorHora * 1.5 * horasExtras;
+      let totalPorHora = pagoRegular + pagoHorasExtras;
+      let pagoTotal = totalBonificacion + totalPorHora;
+      // Calcular el número de días incluyendo las fechas de inicio y fin
+      let diferenciaDias = Math.max(1, (fechaFin - fechaInicio) / (1000 * 60 * 60 * 24) + 1);
+      let resultados = `
+        <p><strong>Pago Total de Bonificación:</strong> $${totalBonificacion.toFixed(2)}</p>
+        <p><strong>Pago Regular:</strong> $${pagoRegular.toFixed(2)}</p>
+        <p><strong>Pago de Horas Extras:</strong> $${pagoHorasExtras.toFixed(2)}</p>
+        <p><strong>Pago Total por Hora:</strong> $${totalPorHora.toFixed(2)}</p>
+        <p><strong>Pago Total:</strong> $${pagoTotal.toFixed(2)}</p>
+        <p><strong>Pago Diario Promedio:</strong> $${(pagoTotal / diferenciaDias).toFixed(2)}</p>
+        <p><strong>Promedio Semanal:</strong> $${(pagoTotal / diferenciaDias * 7).toFixed(2)}</p> <p><strong>Promedio Quincenal:</strong> $${(pagoTotal / diferenciaDias * 14).toFixed(2)}</p> <p><strong>Tarifa Promedio por Hora (con bonificación):</strong> $${(totalHoras + horasExtras > 0 ? (pagoTotal / (totalHoras + horasExtras)) : 0).toFixed(2)}</p> `;
+      document.getElementById("averageResults").innerHTML = resultados;
+    }
+
+    function alternarCalculoPago() {
+      const seccion = document.getElementById("payCalcSection");
+      if (seccion) {
+        seccion.style.display = seccion.style.display === "none" ? "block" : "none";
+      }
+    }
+
+    function eliminarEntrada(indice) {
+      const historial = JSON.parse(localStorage.getItem('historialRecorte')) || [];
+      historial.splice(indice, 1);
+      localStorage.setItem('historialRecorte', JSON.stringify(historial));
+      actualizarTablaSesiones();
+    }
+</script>
+
+<script>
+// Periodo de pago automático a partir del 14 de abril de 2025 (lunes)
+function obtenerPeriodoPagoActual() {
+  const base = new Date("2025-04-14T00:00:00"); // Lunes
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const diferenciaDias = Math.floor((hoy - base) / (1000 * 60 * 60 * 24));
+  const indicePeriodo = Math.floor(diferenciaDias / 14);
+  const inicioPeriodo = new Date(base);
+  inicioPeriodo.setDate(base.getDate() + indicePeriodo * 14);
+  const finPeriodo = new Date(inicioPeriodo);
+  finPeriodo.setDate(inicioPeriodo.getDate() + 13);
+  return {
+    inicio: inicioPeriodo.toISOString().split('T')[0],
+    fin: finPeriodo.toISOString().split('T')[0],
+    etiqueta: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Pay Period: ') +
+             inicioPeriodo.toISOString().split('T')[0] + ' – ' + finPeriodo.toISOString().split('T')[0]
+  };
+}
+
+function obtenerPeriodoPagoParaFecha(fecha) {
+  const base = new Date("2025-04-14T00:00:00"); // Lunes base
+  const diferenciaTiempo = fecha.getTime() - base.getTime();
+  const diferenciaDias = Math.floor(diferenciaTiempo / (1000 * 60 * 60 * 24));
+  const desplazamientoPeriodo = Math.floor(diferenciaDias / 14); // Calcula cuántos periodos de 14 días de diferencia
+
+  const
+  const inicioPeriodo = new Date(base);
+  inicioPeriodo.setDate(base.getDate() + desplazamientoPeriodo * 14);
+  const finPeriodo = new Date(inicioPeriodo);
+  finPeriodo.setDate(inicioPeriodo.getDate() + 13);
+
+  return {
+    inicio: inicioPeriodo.toISOString().split('T')[0],
+    fin: finPeriodo.toISOString().split('T')[0],
+    etiqueta: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Pay Period: ') +
+             inicioPeriodo.toISOString().split('T')[0] + ' – ' + finPeriodo.toISOString().split('T')[0]
+  };
+}
+
+// Reemplazar el texto de la etiqueta del periodo de pago al cargar la página
+window.addEventListener('load', () => {
+  const periodo = obtenerPeriodoPagoActual();
+  const etiqueta = document.getElementById("payPeriodLabel");
+  if (etiqueta) etiqueta.textContent = periodo.etiqueta;
+
+  // También formatear las fechas en el historial a AAAA-MM-DD al cargar si es necesario
+  let historial = JSON.parse(localStorage.getItem('historialRecorte')) || [];
+  let cambiado = false;
+  historial.forEach(entrada => {
+    const parseado = new Date(entrada.fecha);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(entrada.fecha) && !isNaN(parseado.getTime())) {
+      const iso = parseado.toISOString().split('T')[0];
+      entrada.fecha = iso;
+      cambiado = true;
+    }
+  });
+  if (cambiado) {
+    localStorage.setItem('historialRecorte', JSON.stringify(historial));
+  }
+  // La actualización inicial de la tabla se llama aquí después del posible formateo de la fecha
+  actualizarTablaSesiones();
+});
+</script>
+
+<script>
+// Esta es la función efectiva actualizarTablaSesiones llamada por calcular, eliminarEntrada, importarCSV y el listener de carga.
+function actualizarTablaSesiones() {
+  const historial = JSON.parse(localStorage.getItem('historialRecorte')) || [];
+  const tbody = document.getElementById('sessionTable').getElementsByTagName('tbody')[0];
+  tbody.innerHTML = '';
+  let totalPagoBonificacion = 0;
+
+  const agrupado = agruparPorPeriodoPago(historial);
+
+  // Función para crear una fila de tabla para una entrada
+  const crearFilaEntrada = (entrada, indice) => {
+    const fila = document.createElement('tr');
+    fila.id = 'fila-' + indice;
+
+    const celdaFecha = document.createElement('td');
+    celdaFecha.textContent = entrada.fecha;
+    celdaFecha.contentEditable = true;
+    celdaFecha.addEventListener('blur', function () {
+      const fechaActualizada = this.textContent.trim();
+      if (/^\d{4}-\d{2}-\d{2}$/.test(fechaActualizada)) {
+        if (historial[indice].fecha !== fechaActualizada) {
+          historial[indice].fecha = fechaActualizada;
+          localStorage.setItem('historialRecorte', JSON.stringify(historial));
+          actualizarTablaSesiones();
+        }
+      } else {
+        alert(document.documentElement.lang === 'es' ? "Formato de fecha no válido. Por favor, use AAAA-MM-DD." : "Invalid date format. Please use YYYY-MM-DD.");
+        this.textContent = historial[indice].fecha;
+      }
+    });
+    fila.appendChild(celdaFecha);
+
+    const celdaGramos = document.createElement('td');
+    celdaGramos.textContent = entrada.gramos;
+    celdaGramos.contentEditable = true;
+    celdaGramos.style.backgroundColor = '#222';
+    celdaGramos.addEventListener('blur', function () {
+      const nuevosGramos = parseFloat(this.textContent.trim());
+      if (!isNaN(nuevosGramos) && nuevosGramos >= 0) {
+        if (historial[indice].gramos !== nuevosGramos) {
+          historial[indice].gramos = nuevosGramos;
+          const nuevaBonificacion = calcularBonificacion(nuevosGramos);
+          historial[indice].pagoBonificacion = nuevaBonificacion.toFixed(2);
+          localStorage.setItem('historialRecorte', JSON.stringify(historial));
+          actualizarTablaSesiones();
+        }
+      } else {
+        alert(document.documentElement.lang === 'es' ? "Por favor, ingrese un número válido de gramos (cero o más)." : "Please enter a valid number of grams (zero or more).");
+        this.textContent = historial[indice].gramos;
+      }
+    });
+    fila.appendChild(celdaGramos);
+
+    const celdaPagoBonificacion = document.createElement('td');
+    celdaPagoBonificacion.textContent = '$' + parseFloat(entrada.pagoBonificacion || 0).toFixed(2);
+    fila.appendChild(celdaPagoBonificacion);
+
+    const celdaAccion = document.createElement('td');
+    const botonEliminar = document.createElement('button');
+    botonEliminar.textContent = document.documentElement.lang === 'es' ? 'Eliminar' : 'Delete';
+    botonEliminar.className = 'delete-button';
+    botonEliminar.onclick = (function(indiceOriginal) {
+        return function() {
+            if (confirm(document.documentElement.lang === 'es' ? "¿Está seguro de que desea borrar esta entrada?" : "Are you sure you want to delete this entry?")) {
+                eliminarEntrada(indiceOriginal);
+            }
+        };
+    })(indice);
+    celdaAccion.appendChild(botonEliminar);
+    fila.appendChild(celdaAccion);
+    return fila;
+  };
+
+  // Renderizar el periodo de pago actual
+  const clavePeriodoActual = Object.keys(agrupado).find(clave => clave === obtenerPeriodoPagoActual().inicio);
+  if (clavePeriodoActual && agrupado[clavePeriodoActual].entradas.length > 0) {
+    const filaEncabezado = document.createElement('tr');
+    const celdaEncabezado = document.createElement('th');
+    celdaEncabezado.setAttribute('colspan', '4');
+    celdaEncabezado.style.textAlign = 'left';
+    celdaEncabezado.textContent = agrupado[clavePeriodoActual].etiqueta;
+    tbody.appendChild(filaEncabezado);
+
+    agrupado[clavePeriodoActual].entradas.sort(([, indiceA], [, indiceB]) => new Date(historial[indiceA].fecha) - new Date(historial[indiceB].fecha)).forEach(([entrada, indice]) => {
+      tbody.appendChild(crearFilaEntrada(entrada, indice));
+      totalPagoBonificacion += parseFloat(entrada.pagoBonificacion || 0);
+    });
+  } else if (clavePeriodoActual) {
+    const filaEncabezado = document.createElement('tr');
+    const celdaEncabezado = document.createElement('th');
+    celdaEncabezado.setAttribute('colspan', '4');
+    celdaEncabezado.style.textAlign = 'left';
+    celdaEncabezado.textContent = agrupado[clavePeriodoActual].etiqueta;
+    tbody.appendChild(filaEncabezado);
+    const filaVacia = document.createElement('tr');
+    const celdaVacia = document.createElement('td');
+    celdaVacia.setAttribute('colspan', '4');
+    celdaVacia.textContent = document.documentElement.lang === 'es' ? 'No hay entradas para este periodo.' : 'No entries for this period.';
+    celdaVacia.style.textAlign = 'center';
+    filaVacia.appendChild(celdaVacia);
+    tbody.appendChild(filaVacia);
+  }
+
+  // Renderizar periodos de pago pasados en secciones plegables
+  Object.keys(agrupado)
+    .filter(clave => clave !== clavePeriodoActual)
+    .sort((a, b) => new Date(b) - new Date(a)) // Ordenar periodos pasados del más nuevo al más antiguo
+    .forEach(clave => {
+      const datosPeriodo = agrupado[clave];
+      if (datosPeriodo.entradas.length > 0) {
+        const encabezado = document.createElement('div');
+        encabezado.className = 'past-period-header';
+        encabezado.textContent = datosPeriodo.etiqueta + ' ▼';
+        encabezado.addEventListener('click', function() {
+          const contenido = this.nextElementSibling;
+          contenido.classList.toggle('open');
+          this.textContent = datosPeriodo.etiqueta + (contenido.classList.contains('open') ? ' ▲' : ' ▼');
+        });
+        document.getElementById('sessionTable').parentNode.insertBefore(encabezado, document.getElementById('sessionTable').nextSibling);
+
+        const divContenido = document.createElement('div');
+        divContenido.className = 'past-period-content';
+        datosPeriodo.entradas.sort(([, indiceA], [, indiceB]) => new Date(historial[indiceA].fecha) - new Date(historial[indiceB].fecha)).forEach(([entrada, indice]) => {
+          const fila = crearFilaEntrada(entrada, indice);
+          divContenido.appendChild(fila);
+          totalPagoBonificacion += parseFloat(entrada.pagoBonificacion || 0);
+        });
+        document.getElementById('sessionTable').parentNode.insertBefore(divContenido, encabezado.nextSibling);
+      } else {
+        const encabezado = document.createElement('div');
+        encabezado.className = 'past-period-header';
+        encabezado.textContent = datosPeriodo.etiqueta + ' (Sin entradas)';
+        document.getElementById('sessionTable').parentNode.insertBefore(encabezado, document.getElementById('sessionTable').nextSibling);
+      }
+    });
+
+  // Actualizar el pago total de bonificación
+  const tfoot = document.getElementById('sessionTable').getElementsByTagName('tfoot')[0];
+  if (tfoot) {
+    tfoot.querySelector('#totalBonusPay').textContent = '$' + totalPagoBonificacion.toFixed(2);
+  }
+}
+</script>
+
+<script>
+document.getElementById('import-tracker-total').addEventListener('click', () => {
+  const hoyISO = new Date().toISOString().split('T')[0];
+  const totalRastreador = localStorage.getItem('trimTrackerDailyTotal-' + hoyISO);
+  if (totalRastreador) {
+    document.getElementById('grams').value = totalRastreador;
+    alert("Se importaron " + totalRastreador + "g del Rastreador de Recorte.");
+  } else {
+    alert("No se encontró el total del rastreador de recorte para hoy.");
+  }
+});
+</script>
+
+<script>
+function limpiarPeriodoPagoActual() {
+  const mensajeConfirmacion = document.documentElement.lang === 'es'
+    ? "¿Está seguro de que desea borrar todas las entradas del periodo actual?"
+    : "Are you sure you want to clear all entries from the current pay period?";
+  if (!confirm(mensajeConfirmacion)) return;
+
+  const periodo = obtenerPeriodoPagoActual();
+  const inicioPeriodo = new Date(periodo.inicio);
+  const finPeriodo = new Date(periodo.fin);
+  finPeriodo.setHours(23, 59, 59, 999); // Incluir todo el día de finalización
+
+  let historial = JSON.parse(localStorage.getItem('historialRecorte')) || [];
+  historial = historial.filter(entrada => {
+    const d = new Date(entrada.fecha);
+     d.setHours(0, 0, 0, 0); // Establecer la fecha de entrada a medianoche para una comparación precisa
+    return d < inicioPeriodo || d > finPeriodo;
+  });
+  localStorage.setItem('historialRecorte', JSON.stringify(historial));
+  actualizarTablaSesiones();
+}
+</script>
+
+<script>
+function descargarCSV() {
+  const historial = JSON.parse(localStorage.getItem('historialRecorte')) || [];
+  if (historial.length === 0) {
+    alert(document.documentElement.lang === 'es' ? "No hay datos para exportar." : "No data to export.");
+    return;
+  }
+
+  const encabezados = ["Fecha", "Gramos", "Bonificación"];
+  const filas = historial.map(entrada => [entrada.fecha, entrada.gramos, parseFloat(entrada.pagoBonificacion || 0).toFixed(2)]); // Asegurar que la bonificación esté formateada
+
+  let contenidoCSV = "data:text/csv;charset=utf-8,"
+    + encabezados.join(",") + "\n"
+    + filas.map(e => e.join(",")).join("\n");
+
+  const uriCodificada = encodeURI(contenidoCSV);
+  const enlace = document.createElement("a");
+  enlace.setAttribute("href", uriCodificada);
+  enlace.setAttribute("download", "datos_recorte_norcal.csv"); // Nombre de archivo cambiado para mayor claridad
+  document.body.appendChild(enlace);
+  enlace.click();
+  document.body.removeChild(enlace);
+}
+</script>
+
+<script>
+function importarCSV(evento) {
+  const archivo = evento.target.files[0];
+  if (!archivo) return;
+
+  const lector = new FileReader();
+  lector.onload = function(e) {
+    const texto = e.target.result;
+    const lineas = texto.split('\n').slice(1); // Omitir la encabezado
+    let importado = [];
+    let contadorErrores = 0;
+
+    for (let linea of lineas) {
+      const lineaTrimmed = linea.trim();
+      if (!lineaTrimmed) continue; // Omitir líneas vacías
+
+      const columnas = lineaTrimmed.split(',');
+       if (columnas.length < 3) { // Comprobación básica de las columnas esperadas
+           contadorErrores++;
+           continue;
+       }
+
+      const fecha = columnas[0].trim();
+      const gramos = parseFloat(columnas[1].trim());
+      const bonificacion = parseFloat(columnas[2].trim());
+
+
+      // Validación básica
+      if (/^\d{4}-\d{2}-\d{2}$/.test(fecha) && !isNaN(gramos) && gramos >= 0 && !isNaN(bonificacion) && bonificacion >= 0) {
+           // Podrías recalcular la bonificación aquí en lugar de confiar en el valor del CSV
+           // const bonificacionCalculada = calcularBonificacion(gramos);
+           // importado.push({ fecha: fecha, gramos: gramos, pagoBonificacion: bonificacionCalculada.toFixed(2) });
+           // O confiar en el CSV pero formatearlo correctamente
+           importado.push({ fecha: fecha, gramos: gramos, pagoBonificacion: bonificacion.toFixed(2) });
+      } else {
+           contadorErrores++;
+      }
+    }
+
+    if (importado.length === 0 && contadorErrores > 0) {
+       alert(document.documentElement.lang === 'es' ? "Archivo CSV no válido o vacío. No se importaron entradas válidas." : "Invalid or empty CSV file. No valid entries imported.");
+       return;
+    }
+     if (importado.length === 0 && contadorErrores === 0) {
+        alert(document.documentElement.lang === 'es' ? "Archivo CSV vacío." : "Empty CSV file.");
+        return;
+     }
+
+
+    let historial = JSON.parse(localStorage.getItem('historialRecorte')) || [];
+    historial = historial.concat(importado);
+    localStorage.setItem('historialRecorte', JSON.stringify(historial));
+    actualizarTablaSesiones();
+     let mensajeExito = document.documentElement.lang === 'es' ? `Importación completada. ${importado.length} entrada(s) importada(s).` : `Import completed. ${importado.length} entry(s) imported.`;
+     if (contadorErrores > 0) {
+         mensajeExito += (document.documentElement.lang === 'es' ? ` ${contadorErrores} fila(s) no válidas omitidas.` : ` ${contadorErrores} invalid row(s) skipped.`);
+     }
+     alert(mensajeExito);
+
+  };
+  lector.readAsText(archivo);
+  // Restablecer el input de archivo para que el mismo archivo pueda importarse de nuevo si es necesario
+  evento.target.value = '';
+}
+</script>
+
+<script>
+// Esta es la función final y efectiva agruparPorPeriodoPago llamada por actualizarTablaSesiones.
+function agruparPorPeriodoPago(historial) {
+  const periodoActual = obtenerPeriodoPagoActual();
+  const inicioActual = new Date(periodoActual.inicio);
+  const finActual = new Date(periodoActual.fin);
+  finActual.setHours(23, 59, 59, 999);
+
+  const entradasPeriodoActual = [];
+  const gruposPeriodosPasados = {};
+
+  historial.forEach((entrada, indice) => {
+    const fechaEntrada = new Date(entrada.fecha);
+    fechaEntrada.setHours(0, 0, 0, 0);
+
+    if (fechaEntrada >= inicioActual && fechaEntrada <= finActual) {
+      entradasPeriodoActual.push([entrada, indice]);
+    } else if (fechaEntrada < inicioActual) {
+      // Agru
+par por el periodo de pago correcto de dos semanas para las fechas pasadas
+      const periodo = obtenerPeriodoPagoParaFecha(fechaEntrada);
+      const clave = periodo.inicio;
+      if (!gruposPeriodosPasados[clave]) {
+        gruposPeriodosPasados[clave] = { etiqueta: periodo.etiqueta, entradas: [] };
+      }
+      gruposPeriodosPasados[clave].entradas.push([entrada, indice]);
+    }
+    // Las fechas futuras podrían manejarse con otro 'else if'
+  });
+
+  const agrupado = {};
+  agrupado[periodoActual.inicio] = { etiqueta: periodoActual.etiqueta, entradas: entradasPeriodoActual };
+
+  // Ordenar los grupos de periodos pasados por fecha de inicio (el más reciente primero)
+  const clavesOrdenadasPasadas = Object.keys(gruposPeriodosPasados).sort((a, b) => new Date(b) - new Date(a));
+  clavesOrdenadasPasadas.forEach(clave => {
+    agrupado[clave] = gruposPeriodosPasados[clave];
+  });
+
+  return agrupado;
+}
+</script>
+
+</body>
+</html>
