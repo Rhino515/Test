@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="en">
+<html lang="es">
 <head>
 <script>
   const userLang = navigator.language || navigator.userLanguage;
@@ -145,27 +145,27 @@
 <a href="index-es.html">Español</a>
 </div>
 <img alt="NorCal Logo" src="norcal_icon.png"/>
-<p>Ingrese el total de gramos recortados:</p>
+<p>Ingresa el total de gramos recortados:</p>
 <input id="grams" placeholder="e.g. 1200" type="number"/>
 <br/>
-<button id="import-tracker-total">Agregar total de hoy del Trim Tracker</button>
+<button id="import-tracker-total">Agregar Total de Hoy del Trim Tracker</button>
 <br/>
-<button onclick="calculate()">Calcular</button>
+<button onclick="calculate()">Calculate</button>
 <p id="result"></p>
 <div class="install-links">
 <a href="trim-tracker.html">Ir al Trim Tracker</a>
 <a class="nav-button" href="help.html">Cómo Usar la Aplicación</a>
 </div>
 <div style="margin-top: 0.6em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
-<strong>Nota:</strong> For the Trim Tracker import feature to work properly, please use the calculator and tracker in your preferred language only. Mezclar idiomas puede causar problemas de sincronización de datos.
+<strong>Note:</strong> For the Trim Tracker import feature to work properly, please use the calculator and tracker in your preferred language only. Mixing languages may cause data sync issues.
   </div>
 <div id="payPeriodLabel" style="margin-top: 0.6em; color: #0f0; font-weight: bold;"></div>
 <table id="sessionTable">
 <thead>
 <tr>
-<th>Date &amp; Day</th>
+<th>Fecha y Día</th>
 <th>Gramos</th>
-<th>Pago de Bonificación</th>
+<th>Pago de Bono</th>
 <th>Acción</th>
 </tr>
 </thead>
@@ -185,21 +185,21 @@
 <button onclick="downloadCSV()" style="background-color:green;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Exportar CSV</button>
 </div>
 <div style="margin-top: 0.6em;">
-<button onclick="clearCurrentPayPeriod()" style="background-color:red;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;">Borrar Periodo de Pago Actual</button>
+<button onclick="clearCurrentPayPeriod()" style="background-color:red;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;">Borrar Período de Pago Actual</button>
 </div>
 <div style="margin-top: 1.2em; border-top: 1px solid #444; padding-top: 1em;">
-<h2 onclick="togglePayCalc()" style="color:#0f0; cursor:pointer;">Hourly &amp; Pay Averages ▼</h2>
+<h2 onclick="togglePayCalc()" style="color:#0f0; cursor:pointer;">Promedios de Pago por Hora ▼</h2>
 <div id="payCalcSection" style="display:none;">
 <p>Enter your hourly pay and hours worked, then choose a date range:</p>
-<label>Tarifa por Hora: <input id="hourlyRate" step="0.01" type="number"/></label><br/>
-<label>Horas Extra: <input id="overtimeHours" step="0.1" type="number"/></label><br/><label>Horas Totales Trabajadas: <input id="totalHours" step="0.1" type="number"/></label><br/>
+<label>Pago por Hora: <input id="hourlyRate" step="0.01" type="number"/></label><br/>
+<label>Horas Extra: <input id="overtimeHours" step="0.1" type="number"/></label><br/><label>Total de Horas Trabajadas: <input id="totalHours" step="0.1" type="number"/></label><br/>
 <label>Fecha de Inicio: <input id="startDate" type="date"/></label><br/>
 <label>Fecha de Fin: <input id="endDate" type="date"/></label><br/>
-<button onclick="calculateAverages()">Calcular Averages</button>
+<button onclick="calculateAverages()">Calcular Promedios</button>
 <div id="averageResults" style="margin-top: 0.6em; text-align: left;"></div>
 </div>
 </div><div style="margin-top: 4em; padding-top: 2em; border-top: 1px solid #444;">
-<h2 style="color: #0f0;">Sobre el Creador</h2>
+<h2 style="color: #0f0;">About the Creator</h2>
 <p style="max-width: 600px; margin: 0 auto; font-size: 1em; line-height: 1.6;">
       Hi, my name is Andrew, and I work as a professional trimmer at NorCal Cannabis.
       I created the NorCal Trim Calculator to help simplify bonus pay calculations and make it easier for trimmers
@@ -224,11 +224,11 @@
     function calculate() {
       const grams = parseFloat(document.getElementById('grams').value);
       if (isNaN(grams) || grams <= 0) {
-        document.getElementById('result').innerText = 'Please enter a valid number of grams.';
+        document.getElementById('result').innerText = 'Por favor, introduce un número válido de gramos.';
         return;
       }
       const bonusPay = calculateBonus(grams);
-      document.getElementById('result').innerText = 'Pago de Bonificación: $' + bonusPay.toFixed(2);
+      document.getElementById('result').innerText = 'Pago de Bono: $' + bonusPay.toFixed(2);
       const now = new Date();
       const dateStr = now.toISOString().split('T')[0];
       const entry = { date: dateStr, grams: grams, bonusPay: bonusPay.toFixed(2) };
@@ -265,16 +265,16 @@
       let overtimePay = hourlyRate * 1.5 * overtimeHours;
       let hourlyTotal = regularPay + overtimePay;
       let totalPay = bonusTotal + hourlyTotal;
-      // Calcular number of days inclusive of start and end dates
+      // Calculate number of days inclusive of start and end dates
       let dayDiff = Math.max(1, (endDate - startDate) / (1000 * 60 * 60 * 24) + 1);
       let results = `
-        <p><strong>Total Pago de Bonificación:</strong> $${bonusTotal.toFixed(2)}</p>
+        <p><strong>Total Pago de Bono:</strong> $${bonusTotal.toFixed(2)}</p>
         <p><strong>Regular Pay:</strong> $${regularPay.toFixed(2)}</p>
         <p><strong>Overtime Pay:</strong> $${overtimePay.toFixed(2)}</p>
         <p><strong>Total Hourly Pay:</strong> $${hourlyTotal.toFixed(2)}</p>
         <p><strong>Total Pay:</strong> $${totalPay.toFixed(2)}</p>
         <p><strong>Average Daily Pay:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
-        <p><strong>Average Weekly:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p> <p><strong>Average Bi-Weekly:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p> <p><strong>Average Hourly Rate (with bonus):</strong> $${(totalHours + overtimeHours > 0 ? (totalPay / (totalHours + overtimeHours)) : 0).toFixed(2)}</p> `;
+        <p><strong>Average Weekly:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p> <p><strong>Average Bi-Weekly:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p> <p><strong>Average Pago por Hora (with bonus):</strong> $${(totalHours + overtimeHours > 0 ? (totalPay / (totalHours + overtimeHours)) : 0).toFixed(2)}</p> `;
       document.getElementById("averageResults").innerHTML = results;
     }
 
@@ -307,7 +307,7 @@ function getCurrentPayPeriod() {
   return {
     start: periodStart.toISOString().split('T')[0],
     end: periodEnd.toISOString().split('T')[0],
-    label: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Periodo de Pago: ') +
+    label: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Pay Period: ') +
            periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
   };
 }
@@ -316,7 +316,7 @@ function getPayPeriodForDate(date) {
   const base = new Date("2025-04-14T00:00:00"); // Base Monday
   const timeDiff = date.getTime() - base.getTime();
   const dayDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-  const periodOffset = Math.floor(dayDiff / 14); // Calcular how many 14-day periods away
+  const periodOffset = Math.floor(dayDiff / 14); // Calculate how many 14-day periods away
 
   const periodStart = new Date(base);
   periodStart.setDate(base.getDate() + periodOffset * 14);
@@ -326,7 +326,7 @@ function getPayPeriodForDate(date) {
   return {
     start: periodStart.toISOString().split('T')[0],
     end: periodEnd.toISOString().split('T')[0],
-    label: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Periodo de Pago: ') +
+    label: (document.documentElement.lang === 'es' ? 'Periodo de Pago: ' : 'Pay Period: ') +
            periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
   };
 }
@@ -362,9 +362,9 @@ document.getElementById('import-tracker-total').addEventListener('click', () => 
   const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
   if (trackerTotal) {
     document.getElementById('grams').value = trackerTotal;
-    alert("Importado " + trackerTotal + "g desde Trim Tracker.");
+    alert("Imported " + trackerTotal + "g from Trim Tracker.");
   } else {
-    alert("No se encontró un total del Trim Tracker para hoy.");
+    alert("No trim tracker total found for today.");
   }
 });
 </script>
@@ -372,7 +372,7 @@ document.getElementById('import-tracker-total').addEventListener('click', () => 
 function clearCurrentPayPeriod() {
   const confirmMsg = document.documentElement.lang === 'es'
     ? "¿Estás seguro de que deseas borrar todas las entradas del periodo actual?"
-    : "¿Está seguro de que desea borrar todas las entradas del periodo de pago actual?";
+    : "Are you sure you want to clear all entries from the current pay period?";
   if (!confirm(confirmMsg)) return;
 
   const period = getCurrentPayPeriod();
@@ -394,7 +394,7 @@ function clearCurrentPayPeriod() {
 function downloadCSV() {
   const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
   if (history.length === 0) {
-    alert(document.documentElement.lang === 'es' ? "No hay datos para exportar." : "No hay datos para exportar.");
+    alert(document.documentElement.lang === 'es' ? "No hay datos para exportar." : "No data to export.");
     return;
   }
 
@@ -543,7 +543,7 @@ function updateSessionTable() {
       <td>${entry.date}</td>
       <td contenteditable="true" onblur="editGramos(${index}, this)">${entry.grams}</td>
       <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
-      <td><button onclick="deleteEntry(${index})" class="delete-button">Eliminar</button></td>`;
+      <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
     tbody.appendChild(row);
     totalBonusPay += parseFloat(entry.bonusPay || 0);
   });
@@ -572,7 +572,7 @@ function updateSessionTable() {
         <td>${entry.date}</td>
         <td contenteditable="true" onblur="editGramos(${index}, this)">${entry.grams}</td>
         <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
-        <td><button onclick="deleteEntry(${index})" class="delete-button">Eliminar</button></td>`;
+        <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
       content.appendChild(row);
     });
 
@@ -594,25 +594,3 @@ function editGramos(index, td) {
 }
 </script></body>
 </html>
-
-<script>
-
-      const dateCell = document.createElement('td');
-      dateCell.textContent = entry.date;
-      dateCell.contentEditable = true;
-      dateCell.addEventListener('blur', function () {
-        const updatedDate = this.textContent.trim();
-        if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
-          if (history[index].date !== updatedDate) {
-            history[index].date = updatedDate;
-            localStorage.setItem('trimHistory', JSON.stringify(history));
-            updateSessionTable();
-          }
-        } else {
-          alert("Por favor ingresa la fecha en el formato correcto (AAAA-MM-DD).");
-          this.textContent = history[index].date;
-        }
-      });
-      row.appendChild(dateCell);
-
-</script>
