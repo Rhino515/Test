@@ -585,7 +585,7 @@ function updateSessionTable() {
     group.entries.forEach(([entry, index]) => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${entry.date}</td>
+        <td contenteditable="true" onblur="editDate(${index}, this)">${entry.date}</td>
         <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
         <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
         <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
@@ -606,6 +606,19 @@ function editGrams(index, td) {
     history[index].bonusPay = calculateBonus(newGrams).toFixed(2);
     localStorage.setItem('trimHistory', JSON.stringify(history));
     updateSessionTable();
+  }
+}
+</script><script>
+function editDate(index, td) {
+  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  const updatedDate = td.textContent.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
+    history[index].date = updatedDate;
+    localStorage.setItem('trimHistory', JSON.stringify(history));
+    updateSessionTable();
+  } else {
+    alert("Please enter a valid date format: YYYY-MM-DD");
+    updateSessionTable(); // reset if invalid
   }
 }
 </script></body>
