@@ -540,7 +540,7 @@ function updateSessionTable() {
   currentEntries.forEach(([entry, index]) => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${entry.date}</td>
+      <td contenteditable="true" onblur="editDate(${index}, this)">${entry.date}</td>
       <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
       <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
       <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
@@ -569,7 +569,7 @@ function updateSessionTable() {
     group.entries.forEach(([entry, index]) => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${entry.date}</td>
+        <td contenteditable="true" onblur="editDate(${index}, this)">${entry.date}</td>
         <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
         <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
         <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
