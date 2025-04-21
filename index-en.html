@@ -536,27 +536,11 @@ function updateSessionTable() {
 
   const currentEntries = grouped[currentPeriod.start]?.entries || [];
 
-  // Render current pay period
+  // Render current pay period (now editable)
   currentEntries.forEach(([entry, index]) => {
-    
-    const dateCell = document.createElement('td');
-    dateCell.contentEditable = true;
-    dateCell.textContent = entry.date;
-    dateCell.addEventListener('blur', () => {
-      const updatedDate = dateCell.textContent.trim();
-      if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
-        history[index].date = updatedDate;
-        localStorage.setItem('trimHistory', JSON.stringify(history));
-        updateSessionTable();
-      } else {
-        alert("Invalid date format. Use YYYY-MM-DD.");
-        dateCell.textContent = entry.date; // Revert
-      }
-    });
-
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${entry.date}</td>
+      <td contenteditable="true" onblur="editDate(${index}, this)">${entry.date}</td>
       <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
       <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
       <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
@@ -569,6 +553,7 @@ function updateSessionTable() {
   // Clear previous collapsible past sections
   document.querySelectorAll('.past-period-header, .past-period-content').forEach(el => el.remove());
 
+  // Render past pay periods
   Object.keys(grouped).filter(key => key !== currentPeriod.start).forEach(key => {
     const group = grouped[key];
     const header = document.createElement('div');
@@ -606,19 +591,6 @@ function editGrams(index, td) {
     history[index].bonusPay = calculateBonus(newGrams).toFixed(2);
     localStorage.setItem('trimHistory', JSON.stringify(history));
     updateSessionTable();
-  }
-}
-</script><script>
-function editDate(index, td) {
-  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-  const updatedDate = td.textContent.trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
-    history[index].date = updatedDate;
-    localStorage.setItem('trimHistory', JSON.stringify(history));
-    updateSessionTable();
-  } else {
-    alert("Please enter a valid date format: YYYY-MM-DD");
-    updateSessionTable(); // reset if invalid
   }
 }
 </script></body>
