@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<script>
+  const userLang = navigator.language || navigator.userLanguage;
+  if (userLang.startsWith('es') && !window.location.href.includes('index-es.html') && !window.location.href.includes('trim-tracker-es.html')) {
+    if (window.location.href.includes('trim-tracker')) {
+      window.location.href = 'trim-tracker-es.html';
+    } else {
+      window.location.href = 'index-es.html';
+    }
+  }
+</script>
+<meta charset="utf-8"/>
+<title>NorCal Trim Calculator</title>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<link href="manifest.json" rel="manifest"/>
+<meta content="#000000" name="theme-color"/>
+<style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: 'Montserrat', sans-serif;
+      text-align: center;
+      padding: 2em;
+    }
+    input {
+      font-size: 1.2em;
+      padding: 0.5em;
+      margin-top: 0.6em;
+      width: 150px;
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #555;
+      border-radius: 4px;
+    }
+    button {
+      background-color: green;
+      color: white;
+      padding: 0.45em 1em;
+      border: none;
+      font-size: 1em;
+      margin-top: 0.6em;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: darkgreen;
+    }
+    img {
+      margin-top: 0.6em;
+      width: 200px;
+    }
+    #result {
+      margin-top: 0.6em;
+      font-size: 1.2em;
+    }
+    .install-links {
+      margin-top: 0.6em;
+    }
+    .install-links a {
+      display: inline-block;
+      margin: 0.5em;
+      padding: 0.5em 1em;
+      color: white;
+      background-color: #444;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+    .install-links a:hover {
+      background-color: #666;
+    }
+    table {
+      margin: 2em auto;
+      border-collapse: collapse;
+      width: 80%;
+    }
+    th, td {
+      border: 1px solid #555;
+      padding: 0.5em;
+    }
+    th {
+      background-color: #333;
+    }
+    td[contenteditable="true"] {
+      background-color: #222;
+    }
+    .delete-button {
+      background-color: red;
+      color: white;
+      border: none;
+      padding: 0.3em 0.6em;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .delete-button:hover {
+      background-color: darkred;
+    }
+    .clear-all-button {
+      background-color: orange;
+      color: black;
+      border: none;
+      padding: 0.5em 1em;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .clear-all-button:hover {
+      background-color: darkorange;
+    }
+    .language-toggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+    }
+    .language-toggle a {
+      color: white;
+      text-decoration: none;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="language-toggle">
+<a href="index-en.html">Inglés</a>
+<a href="index-es.html">Español</a>
+</div>
+<img alt="NorCal Logo" src="norcal_icon.png"/>
+<p>Ingresa el total de gramos recortados:</p>
+<input id="grams" placeholder="e.g. 1200" type="number"/>
+<br/>
+<button id="import-tracker-total">Agregar el total del Trim Tracker de hoy</button>
+<br/>
+<button onclick="calculate()">Calcular</button>
+<p id="result"></p>
+<div class="install-links">
+<a href="trim-tracker-es.html">Ir al Trim Tracker</a>
+<a class="nav-button" href="help.html">Cómo usar la aplicación</a>
+</div>
+<div style="margin-top: 0.6em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
+<strong>Nota:</strong> Para que la función de importación del Trim Tracker funcione correctamente, utiliza la calculadora y el rastreador solo en tu idioma preferido. Mezclar idiomas puede causar problemas de sincronización.
+  </div>
+<div id="payPeriodLabel" style="margin-top: 0.6em; color: #0f0; font-weight: bold;"></div>
+
+
+<div id="payPeriodLabel" style="margin-top: 0.6em; color: #0f0; font-weight: bold;"></div>
+<table id="sessionTable">
+<thead>
+<tr>
+<th>Fecha</th>
+<th>Gramos</th>
+<th>Bono</th>
+<th>Acción</th>
+</tr>
+</thead>
+<tbody></tbody>
+<tfoot>
+<tr>
+<td colspan="2"><strong>Total</strong></td>
+<td id="totalBonusPay">$0.00</td>
+<td></td>
+</tr>
+</tfoot>
+</table>
+<div id="pastPeriodsContainer"></div>
+<div style="margin-top: 0.6em;">
+<input accept=".csv" id="csvInput" onchange="importCSV(event)" style="display:none" type="file"/>
+<button onclick="document.getElementById('csvInput').click()" style="background-color:#28a745;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Importar CSV</button>
+</div>
+<div style="margin-top: 0.6em;">
+<button onclick="downloadCSV()" style="background-color:green;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Exportar CSV</button>
+</div>
+<div style="margin-top: 0.6em;">
+<button onclick="clearCurrentPayPeriod()" style="background-color:red;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;">Borrar Periodo Actual</button>
+</div>
+<div style="margin-top: 1.2em; border-top: 1px solid #444; padding-top: 1em;">
+<h2 onclick="togglePayCalc()" style="color:#0f0; cursor:pointer;">Promedios por Hora y Pago ▼</h2>
+<div id="payCalcSection" style="display:none;">
+<p>Ingresa tu pago por hora y las horas trabajadas, luego elige un rango de fechas:</p>
+<label>Pago por hora: <input id="hourlyRate" step="0.01" type="number"/></label><br/>
+<label>Horas extra: <input id="overtimeHours" step="0.1" type="number"/></label><br/><label>Total de horas trabajadas: <input id="totalHours" step="0.1" type="number"/></label><br/>
+<label>Fecha de inicio: <input id="startDate" type="date"/></label><br/>
+<label>Fecha de fin: <input id="endDate" type="date"/></label><br/>
+<button onclick="calculateAverages()">Calcular Averages</button>
+<div id="averageResults" style="margin-top: 0.6em; text-align: left;"></div>
+</div>
+</div><div style="margin-top: 4em; padding-top: 2em; border-top: 1px solid #444;">
+<h2 style="color: #0f0;">Sobre el Creador</h2>
+<p style="max-width: 600px; margin: 0 auto; font-size: 1em; line-height: 1.6;">
+      Hola, me llamo Andrew y trabajo como recortador profesional en NorCal Cannabis.
+      Creé la Calculadora de Trim NorCal para ayudar a simplificar los cálculos de bonificaciones y facilitar a los trimmers el seguimiento de su progreso diario.
+      <br/><br/>
+      Esta herramienta fue diseñada para ser práctica, fácil de usar y eficiente — ayudando a los trabajadores a mantenerse organizados e informados.
+      Mi objetivo es apoyar a la comunidad de recortadores con soluciones tecnológicas simples que marquen una verdadera diferencia en el trabajo.
+    </p>
+</div>
+
+</body>
+</html>
+
+<script>
+function calculate() {
+  const grams = parseFloat(document.getElementById('grams').value);
+  if (isNaN(grams) || grams <= 0) {
+    document.getElementById('result').innerText = 'Por favor ingrese un número válido de gramos.';
+    return;
+  }
+  const bonusPay = calculateBonus(grams);
+  document.getElementById('result').innerText = 'Pago de Bonificación: $' + bonusPay.toFixed(2);
+  const now = new Date();
+  const nowPST = new Date(now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" }));
+  const dateStr = nowPST.toISOString().split('T')[0];
+  const entry = { date: dateStr, grams: grams, bonusPay: bonusPay.toFixed(2) };
+  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  history.push(entry);
+  localStorage.setItem('trimHistory', JSON.stringify(history));
+  updateSessionTable();
+  document.getElementById('grams').value = '';
+}
+</script>
