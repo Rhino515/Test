@@ -593,5 +593,22 @@ function editGrams(index, td) {
     updateSessionTable();
   }
 }
-</script></body>
+</script>
+<script>
+function editDate(index, td) {
+  let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+  const updatedDate = td.textContent.trim();
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
+    history[index].date = updatedDate;
+    localStorage.setItem('trimHistory', JSON.stringify(history));
+    updateSessionTable();
+  } else {
+    alert("Please enter a valid date format: YYYY-MM-DD");
+    td.textContent = history[index].date; // Revert to original
+  }
+}
+</script>
+
+</body>
 </html>
