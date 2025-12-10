@@ -1,3 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trim Tracker</title>
+<style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      text-align: center;
+    }
+    .lang-toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #777;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+    img.banner {
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+      font-size: 16px;
+      line-height: 1.5;
+      font-weight: bold;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 12px;
+      text-align: center;
+    }
+    input[type="text"], input[type="number"], input[type="date"] {
+      width: 100%;
+      padding: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: #222;
+      color: #fff;
+      border: 1px solid #555;
+    }
+    button {
+      padding: 8px 12px;
+      margin: 10px 5px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    button.delete-row {
+      background-color: #dc3545;
+    }
+    button.delete-row:hover {
+      background-color: #c82333;
+    }
+    button.clear-all {
+      background-color: #ffc107;
+      color: #111;
+    }
+    button.clear-all:hover {
+      background-color: #e0a800;
+    }
+    .collapsed {
+      display: none;
+    }
+    a.back-link {
+      display: inline-block;
+      margin-top: 30px;
+      color: #0af;
+      text-decoration: none;
+    }
+</style>
+</head>
+<body>
+<img alt="Trim Tracker Banner" class="banner" src="trim-tracker-banner.PNG"/>
+<p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
+  <strong>Nota:</strong> Tus datos se guardan localmente en tu navegador y permanecerán disponibles a menos que borres la memoria caché o cambies de dispositivo o navegador.
+</p>
+
+<table id="sessionTable">
+  <thead>
+    <tr>
+      <th>Fecha</th>
+      <th>Cepa</th>
+      <th>Gramos</th>
+      <th>Total</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
+
+<button onclick="addRow()">Agregar Fila</button>
+<button class="clear-all" onclick="clearAllRows()">Borrar Todo</button>
+<button onclick="exportCSV()">Exportar CSV</button>
+<input accept=".csv" id="csvFileInput" onchange="importCSV(event)" style="display: none;" type="file"/>
+<button onclick="document.getElementById('csvFileInput').click()">Importar CSV</button>
+
+<a class="back-link" href="index.html" id="backLink">← Regresar a la Calculadora</a>
+
+<div id="dailyTotals" style="margin-top: 30px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
+  <h3>Totales Diarios</h3>
+  <ul id="totalsList" style="list-style: none; padding: 0;"></ul>
+</div>
+
 <script>
   const lang = document.documentElement.lang;
   const storageKey = `trimTrackerData-${lang}`;
@@ -91,10 +209,10 @@
     updateTotal();
 
     const delBtn = document.createElement('button');
-    delBtn.textContent = 'Delete'; // could localize
+    delBtn.textContent = 'Delete'; // still English text; you can change if you want
     delBtn.className = 'delete-row';
     delBtn.onclick = () => {
-      if (confirm('Delete this row?')) { // could localize
+      if (confirm('Delete this row?')) {
         row.remove();
         debounceSave();
         updateDailyTotals();
@@ -212,8 +330,7 @@
       console.warn('#totalsList element not found. Daily totals list not updated.');
     }
 
-    // ❌ We **do not** call updateView() here anymore,
-    // so typing doesn't blow away the focused input.
+    // NOTE: we DO NOT call updateView() here
   }
 
   function clearAllRows() {
@@ -365,3 +482,5 @@
     });
   });
 </script>
+</body>
+</html>
