@@ -121,6 +121,13 @@
 <body>
 
 <img alt="NorCal Logo" src="norcal_icon.png"/>
+
+<!-- 🔹 New Trim Tracker daily total display (Mexican Spanish) -->
+<div id="trackerSummary" style="margin-top:0.4em;font-size:0.95em;color:#0f0;">
+  <strong>Total de hoy en Trim Tracker:</strong>
+  <span id="trackerTotalDisplay">0g</span>
+</div>
+
 <p>Ingresa el total de gramos cortados:</p>
 <input id="grams" placeholder="e.g. 1200" type="number"/>
 <br/>
@@ -213,7 +220,6 @@
     <label>Horas trabajadas en total: <input id="totalHours" step="0.1" type="number"/></label><br/>
     <label>Fecha de inicio: <input id="startDate" type="date"/></label><br/>
     <label>Fecha de fin: <input id="endDate" type="date"/></label><br/>
-    <!-- 🔁 Translated button text -->
     <button onclick="calculateAverages()">Calcular promedios</button>
     <div id="averageResults" style="margin-top: 0.6em; text-align: left;"></div>
   </div>
@@ -294,7 +300,6 @@
     lastCalculated = null;
   }
 
-  // 🔁 Translated calculateAverages() to Mexican Spanish
   function calculateAverages() {
     const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
     const totalHours = parseFloat(document.getElementById("totalHours").value);
@@ -356,6 +361,22 @@
   }
 </script>
 
+<!-- 🔹 New helper: update Trim Tracker total display -->
+<script>
+  function updateTrackerTotalDisplay() {
+    const todayISO = new Date().toISOString().split('T')[0];
+    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+    const displayEl = document.getElementById('trackerTotalDisplay');
+    if (!displayEl) return;
+
+    if (trackerTotal) {
+      displayEl.textContent = trackerTotal + 'g';
+    } else {
+      displayEl.textContent = '0g';
+    }
+  }
+</script>
+
 <script>
   // Auto pay period starting from April 14, 2025 (Monday)
   function getCurrentPayPeriod() {
@@ -414,6 +435,8 @@
       localStorage.setItem('trimHistory', JSON.stringify(history));
     }
     updateSessionTable();
+    // 🔹 Refresh tracker total display on load
+    updateTrackerTotalDisplay();
   });
 </script>
 
@@ -427,6 +450,8 @@
     } else {
       alert("No se encontró un total del Trim Tracker para hoy.");
     }
+    // 🔹 Also update the display whenever this button is used
+    updateTrackerTotalDisplay();
   });
 </script>
 
