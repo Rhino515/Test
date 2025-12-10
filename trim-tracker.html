@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Trim Tracker</title>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Trim Tracker</title>
+<style>
     body {
       background-color: #111;
       color: #fff;
@@ -85,39 +86,33 @@
   </style>
 </head>
 <body>
-  <button class="lang-toggle" onclick="toggleLanguage()">Español</button>
-  <img src="trim-tracker-banner.PNG" alt="Trim Tracker Banner" class="banner" />
-
-  <p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
-    <strong>Note:</strong> Your data is saved locally in your browser and will remain available unless you clear your cache or switch devices or browsers.
-  </p>
-
-  <table id="sessionTable">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Strain</th>
-        <th>Grams</th>
-        <th>Total</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-  </table>
-
-  <button onclick="addRow()">Add Row</button>
-  <button class="clear-all" onclick="clearAllRows()">Clear All</button>
-  <button onclick="exportCSV()">Export CSV</button>
-  <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="importCSV(event)">
-  <button onclick="document.getElementById('csvFileInput').click()">Import CSV</button>
-  <a id="backLink" class="back-link" href="index.html">← Back to Calculator</a>
-
-  <div id="dailyTotals" style="margin-top: 30px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
-    <h3>Daily Totals</h3>
-    <ul id="totalsList" style="list-style: none; padding: 0;"></ul>
-  </div>
-
-  <script>
+<img alt="Trim Tracker Banner" class="banner" src="trim-tracker-banner.PNG"/>
+<p style="color: #ccc; max-width: 700px; margin: 0 auto 20px;">
+<strong>Nota:</strong> Tus datos se guardan localmente en tu navegador y permanecerán disponibles a menos que borres la memoria caché o cambies de dispositivo o navegador.
+</p>
+<table id="sessionTable">
+<thead>
+<tr>
+<th>Fecha</th>
+<th>Cepa</th>
+<th>Gramos</th>
+<th>Total</th>
+<th>Acciones</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+<button onclick="addRow()">Agregar Fila</button>
+<button class="clear-all" onclick="clearAllRows()">Borrar Todo</button>
+<button onclick="exportCSV()">Exportar CSV</button>
+<input accept=".csv" id="csvFileInput" onchange="importCSV(event)" style="display: none;" type="file"/>
+<button onclick="document.getElementById('csvFileInput').click()">Importar CSV</button>
+<a class="back-link" href="index.html" id="backLink">← Regresar a la Calculadora</a>
+<div id="dailyTotals" style="margin-top: 30px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
+<h3>Totales Diarios</h3>
+<ul id="totalsList" style="list-style: none; padding: 0;"></ul>
+</div>
+<script>
     const lang = document.documentElement.lang;
     const storageKey = `trimTrackerData-${lang}`;
     let saveTimeout;
@@ -130,6 +125,7 @@
       }, 300);
     }
 
+    // ✅ UPDATED: grams inputs now recalc totals + save
     function createGramInput(onChangeFunc, value = '') {
       const input = document.createElement('input');
       input.type = 'number';
@@ -137,7 +133,14 @@
       input.step = '0.01';
       input.placeholder = 'g';
       input.value = value;
-      input.oninput = () => { onChangeFunc(); debounceSave(); };
+
+      input.oninput = () => {
+        if (typeof onChangeFunc === 'function') {
+          onChangeFunc();       // recalc row total + daily totals
+        }
+        debounceSave();         // save to localStorage
+      };
+
       return input;
     }
 
@@ -147,9 +150,7 @@
 
       const dateInput = document.createElement('input');
       dateInput.type = 'date';
-      // Set default date to today in PST
-      const todayPST = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-      dateInput.value = data.date || todayPST.toISOString().slice(0, 10);
+      dateInput.value = data.date || new Date().toISOString().slice(0, 10);
       if (skipViewUpdate) dateInput.dataset.skipCollapse = 'true';
       dateInput.oninput = () => {
         delete dateInput.dataset.skipCollapse;
@@ -226,8 +227,7 @@
       const tbody = document.getElementById('tableBody');
       // Filter out the collapsed header rows before re-rendering
       const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.classList.contains('collapsed-row-header'));
-      // Get today's date in PST
-      const todayPST = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })).toISOString().slice(0, 10);
+      const today = new Date().toISOString().slice(0, 10);
       const dateGroups = {};
 
       rows.forEach(row => {
@@ -243,12 +243,12 @@
 
       // Sort dates descending (newest first)
       Object.keys(dateGroups).sort((a, b) => b.localeCompare(a)).forEach(date => {
-        const isToday = date === todayPST;
+        const isToday = date === today;
         let totalGrams = 0;
         dateGroups[date].forEach(row => {
           const totalCell = row.querySelector('td:nth-child(4)');
           const grams = parseFloat(totalCell?.innerText || 0);
-          totalGrams += isNaN(grams) ? 0 : grams;
+          totalGrms = isNaN(grams) ? totalGrams : totalGrams + grams;
         });
 
         // Create and append the header row for past dates
@@ -291,7 +291,6 @@
           });
         }
       });
-      // Ensure the "add row" button is visible at the bottom if needed (depends on your HTML structure)
       // This updateView only rebuilds the tbody.
     }
 
@@ -309,100 +308,89 @@
         }
       });
 
-      // Get today's date in PST
-      const todayPST = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })).toISOString().slice(0, 10);
+      const today = new Date().toISOString().slice(0, 10);
 
-      // --- FIX APPLIED HERE ---
-      const todayStorageKey = 'trimTrackerDailyTotal-' + todayPST; // Use the dated key
+      // Save today's total under trimTrackerDailyTotal-YYYY-MM-DD
+      const todayStorageKey = 'trimTrackerDailyTotal-' + today;
 
-      if (totalsMap[todayPST] !== undefined) { // Check if today has entries
-         // Save today's total using the dated key, rounded to 2 decimal places
-        localStorage.setItem(todayStorageKey, totalsMap[todayPST].toFixed(2));
+      if (totalsMap[today] !== undefined) {
+        localStorage.setItem(todayStorageKey, totalsMap[today].toFixed(2));
       } else {
-         // If no entries for today, remove the dated key
         localStorage.removeItem(todayStorageKey);
       }
-      // --- END FIX ---
 
+      // Update visible list of totals
+      const totalsList = document.getElementById('totalsList');
+      if (totalsList) {
+        totalsList.innerHTML = '';
+        Object.entries(totalsMap)
+          .sort((a, b) => b[0].localeCompare(a[0]))
+          .forEach(([date, total]) => {
+            const li = document.createElement('li');
+            li.textContent = `${date}: ${total.toFixed(2)}g`;
+            totalsList.appendChild(li);
+          });
+      } else {
+        console.warn("#totalsList element not found. Daily totals list not updated.");
+      }
 
-      // Update the list displaying all daily totals (optional, but good for verification)
-      const totalsList = document.getElementById('totalsList'); // Make sure you have an element with this ID
-       if (totalsList) { // Check if the element exists
-            totalsList.innerHTML = '';
-            // Sort dates for the totals list (optional)
-            Object.entries(totalsMap).sort((a, b) => b[0].localeCompare(a[0])).forEach(([date, total]) => {
-                const li = document.createElement('li');
-                li.textContent = `${date}: ${total.toFixed(2)}g`;
-                totalsList.appendChild(li);
-            });
-        } else {
-           console.warn("#totalsList element not found. Daily totals list not updated.");
-        }
-
-      // Re-render the table view to update header totals if they exist
-       updateView();
+      updateView();
     }
 
 
     function clearAllRows() {
-      // Localize confirmation message
       const confirmMsg = lang === 'es' ? "¿Estás seguro de que deseas borrar todas las filas?" : "Are you sure you want to delete all rows?";
       if (confirm(confirmMsg)) {
         const tbody = document.getElementById('tableBody');
-        if(tbody) tbody.innerHTML = ''; // Clear the table body
-        addRow({}, true); // Add a default row, skip view update initially
-        debounceSave(); // Save the cleared state
-        updateDailyTotals(); // Update totals and view
+        if (tbody) tbody.innerHTML = '';
+        addRow({}, true);
+        debounceSave();
+        updateDailyTotals();
       }
     }
 
     function saveData() {
       const rows = document.querySelectorAll('#tableBody tr');
       const data = Array.from(rows)
-        .filter(row => !row.classList.contains('collapsed-row-header')) // Don't save header rows as data entries
+        .filter(row => !row.classList.contains('collapsed-row-header'))
         .map(row => {
           const date = row.querySelector('input[type="date"]')?.value || '';
           const strain = row.querySelector('input[type="text"]')?.value || '';
-          // Get the values from the individual gram inputs
           const grams = Array.from(row.querySelectorAll('td:nth-child(3) input')).map(input => input.value);
           return { date, strain, grams };
         });
-      // Save the main tracker data structure
       localStorage.setItem(storageKey, JSON.stringify(data));
     }
 
     function loadData() {
       const stored = localStorage.getItem(storageKey);
       if (stored) {
-         try { // Add error handling for JSON parsing
-            const data = JSON.parse(stored);
-            // Ensure data is an array before processing
-            if (Array.isArray(data)) {
-                 data.forEach(entry => addRow(entry, true)); // Add rows from storage, skip initial view update
-            } else {
-                 console.error("Stored data is not an array:", data);
-                 addRow({}, true); // Add a default row if stored data is invalid
-            }
-         } catch (e) {
-             console.error("Error parsing stored data:", e);
-             addRow({}, true); // Add a default row if parsing fails
-         }
+        try {
+          const data = JSON.parse(stored);
+          if (Array.isArray(data)) {
+            data.forEach(entry => addRow(entry, true));
+          } else {
+            console.error("Stored data is not an array:", data);
+            addRow({}, true);
+          }
+        } catch (e) {
+          console.error("Error parsing stored data:", e);
+          addRow({}, true);
+        }
       } else {
-        addRow({}, true); // Add a default row if no data is stored
+        addRow({}, true);
       }
-       // updateView() is called after load in the DOMContentLoaded listener
     }
 
     function exportCSV() {
-      const rows = document.querySelectorAll('#tableBody tr:not(.collapsed-row-header)'); // Only export data rows
-      // Ensure CSV content is properly quoted
-      let csvContent = "Date,Strain,\"Grams (semicolon separated)\",Total\n"; // Updated header for clarity
+      const rows = document.querySelectorAll('#tableBody tr:not(.collapsed-row-header)');
+      let csvContent = "Date,Strain,\"Grams (semicolon separated)\",Total\n";
+
       rows.forEach(row => {
-        const date = `"${(row.querySelector('input[type="date"]')?.value || '').replace(/"/g, '""')}"`; // Quote and escape double quotes
-        const strain = `"${(row.querySelector('input[type="text"]')?.value || '').replace(/"/g, '""')}"`; // Quote and escape double quotes
-        // Get and join individual gram inputs, quote the entire string
+        const date = `"${(row.querySelector('input[type="date"]')?.value || '').replace(/"/g, '""')}"`;
+        const strain = `"${(row.querySelector('input[type="text"]')?.value || '').replace(/"/g, '""')}"`;
         const grams = `"${Array.from(row.querySelectorAll('td:nth-child(3) input')).map(input => input.value).join(';').replace(/"/g, '""')}"`;
-        const total = `"${(row.querySelector('td:nth-child(4)')?.innerText || '0').replace(/"/g, '""')}"`; // Quote the total
+        const total = `"${(row.querySelector('td:nth-child(4)')?.innerText || '0').replace(/"/g, '""')}"`;
 
         csvContent += `${date},${strain},${grams},${total}\n`;
       });
@@ -411,11 +399,11 @@
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', 'trim_tracker.csv'); // Changed filename for clarity
+      link.setAttribute('download', 'trim_tracker.csv');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url); // Clean up the object URL
+      URL.revokeObjectURL(url);
     }
 
     function importCSV(event) {
@@ -424,84 +412,69 @@
 
       const reader = new FileReader();
       reader.onload = function(e) {
-         try { // Add error handling for file reading and parsing
-            const text = e.target.result;
-            const lines = text.split('\n').slice(1); // Skip header
-            let importedCount = 0;
-            let skippedCount = 0;
+        try {
+          const text = e.target.result;
+          const lines = text.split('\n').slice(1);
+          let importedCount = 0;
+          let skippedCount = 0;
 
-            lines.forEach(line => {
-              const trimmedLine = line.trim();
-              if (!trimmedLine) return; // Skip empty lines
+          lines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return;
 
-              // Simple CSV parsing assuming no commas *within* quoted fields (except the semicolon list)
-              // A more robust parser would be needed for complex CSV
-              const columns = trimmedLine.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
+            const columns = trimmedLine.match(/(".*?"|[^",]+)(?=\s*,|\s*$)/g);
 
-              if (columns && columns.length >= 3) {
-                 const date = columns[0].replace(/^"|"$/g, '').trim();
-                 const strain = columns[1].replace(/^"|"$/g, '').trim();
-                 // Split the grams string by semicolon, keeping original indices
-                 const gramsString = columns[2].replace(/^"|"$/g, '');
-                 const grams = gramsString.split(';').map(g => g.trim()); // Keep as strings initially
+            if (columns && columns.length >= 3) {
+              const date = columns[0].replace(/^"|"$/g, '').trim();
+              const strain = columns[1].replace(/^"|"$/g, '').trim();
+              const gramsString = columns[2].replace(/^"|"$/g, '');
+              const grams = gramsString.split(';').map(g => g.trim());
 
-                // Basic date validation
-                if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-                     addRow({ date, strain, grams }, true); // Add row, skip initial view update
-                     importedCount++;
-                } else {
-                     console.warn("Skipping invalid row (date format):", line);
-                     skippedCount++;
-                }
+              if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                addRow({ date, strain, grams }, true);
+                importedCount++;
               } else {
-                  console.warn("Skipping invalid row (column count):", line);
-                  skippedCount++;
+                console.warn("Skipping invalid row (date format):", line);
+                skippedCount++;
               }
-            });
-
-            // Update totals and view after all rows are added
-            updateDailyTotals();
-            updateView();
-
-            // Provide feedback to the user
-            let feedbackMsg = lang === 'es' ? `Importación completada. ${importedCount} fila(s) importada(s).` : `Import completed. ${importedCount} row(s) imported.`;
-            if (skippedCount > 0) {
-                 feedbackMsg += lang === 'es' ? ` ${skippedCount} fila(s) omitida(s) debido a errores.` : ` ${skippedCount} row(s) skipped due to errors.`;
+            } else {
+              console.warn("Skipping invalid row (column count):", line);
+              skippedCount++;
             }
-            alert(feedbackMsg);
+          });
 
-         } catch (e) {
-            console.error("Error importing CSV:", e);
-            alert(lang === 'es' ? "Error al importar el archivo CSV." : "Error importing CSV file.");
-         }
+          updateDailyTotals();
+          updateView();
+
+          let feedbackMsg = lang === 'es'
+            ? `Importación completada. ${importedCount} fila(s) importada(s).`
+            : `Import completed. ${importedCount} row(s) imported.`;
+          if (skippedCount > 0) {
+            feedbackMsg += lang === 'es'
+              ? ` ${skippedCount} fila(s) omitida(s) debido a errores.`
+              : ` ${skippedCount} row(s) skipped due to errors.`;
+          }
+          alert(feedbackMsg);
+        } catch (e) {
+          console.error("Error importing CSV:", e);
+          alert(lang === 'es' ? "Error al importar el archivo CSV." : "Error importing CSV file.");
+        }
       };
       reader.onerror = function() {
-         console.error("Error reading file:", reader.error);
-         alert(lang === 'es' ? "Error al leer el archivo." : "Error reading file.");
+        console.error("Error reading file:", reader.error);
+        alert(lang === 'es' ? "Error al leer el archivo." : "Error reading file.");
       };
       reader.readAsText(file);
-       // Reset the file input so the same file can be imported again if needed
       event.target.value = '';
-    }
-
-    // Function to toggle language (remains the same)
-    function toggleLanguage() {
-      const currentURL = window.location.href;
-      if (currentURL.includes('trim-tracker-es.html')) {
-        window.location.href = currentURL.replace('trim-tracker-es.html', 'trim-tracker.html');
-      } else {
-        window.location.href = 'trim-tracker-es.html';
-      }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       loadData();
-      // Use a timeout or requestAnimationFrame to ensure the DOM is updated before calculating totals and view
       requestAnimationFrame(() => {
-           updateDailyTotals();
-           updateView(); // Ensure the view is updated after loading and calculating totals
+        updateDailyTotals();
+        updateView();
       });
     });
-  </script>
+</script>
 </body>
 </html>
