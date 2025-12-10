@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <title>NorCal Trim Calculator</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<link rel="manifest" href="manifest.json"/>
-<meta name="theme-color" content="#000000"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<link href="manifest.json" rel="manifest"/>
+<meta content="#000000" name="theme-color"/>
 <style>
   body {
     background-color: black;
@@ -120,30 +120,31 @@
 </head>
 <body>
 
-<img src="norcal_icon.png" alt="NorCal Logo"/>
+<img alt="NorCal Logo" src="norcal_icon.png"/>
 
-<!-- live display of today's Trim Tracker total -->
-<div id="trackerDailyTotalDisplay"
-     style="margin-top:0.4em;font-size:0.95em;color:#0f0;font-weight:bold;">
+<!-- 🔹 New Trim Tracker daily total display (Mexican Spanish) -->
+<div id="trackerSummary" style="margin-top:0.4em;font-size:0.95em;color:#0f0;">
+  <strong>Total de hoy en Trim Tracker:</strong>
+  <span id="trackerTotalDisplay">0g</span>
 </div>
 
-<p>Enter the total grams trimmed:</p>
-<input id="grams" type="number" placeholder="e.g. 1200"/>
+<p>Ingresa el total de gramos cortados:</p>
+<input id="grams" placeholder="e.g. 1200" type="number"/>
 <br/>
-<button id="import-tracker-total">Add Today's Total from Trim Tracker</button>
+<button id="import-tracker-total">Agregar el Total de Hoy del Trim Tracker</button>
 <br/>
-<button onclick="calculate()">Calculate</button>
+<button onclick="calculate()">Calcular</button>
 <br/>
-<button onclick="saveToHistory()">Save to history</button>
+<button onclick="saveToHistory()">Guardar en el historial</button>
 <p id="result"></p>
 
 <div class="install-links">
-  <a href="trim-tracker.html">Go to Trim Tracker</a>
-  <a class="nav-button" href="help.html">How to Use the App</a>
+  <a href="trim-tracker.html">Ir al Trim Tracker</a>
+  <a class="nav-button" href="help.html">Cómo Usar la App</a>
 </div>
 
 <div style="margin-top: 0.6em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
-  <strong>Note:</strong> For the Trim Tracker import function to work correctly, use the calculator and the tracker in the same language. Mixing languages can cause problems with data syncing.
+  <strong>Nota:</strong> Para que la función de importar desde el Trim Tracker funcione correctamente, usa el calculador y el rastreador solo en el idioma que prefieras. Mezclar idiomas puede causar problemas con la sincronización de datos.
 </div>
 
 <div id="payPeriodLabel" style="margin-top: 0.6em; color: #0f0; font-weight: bold;"></div>
@@ -151,10 +152,10 @@
 <table id="sessionTable">
   <thead>
     <tr>
-      <th>Date</th>
-      <th>Grams</th>
-      <th>Bonus Pay</th>
-      <th>Action</th>
+      <th>Fecha y Día</th>
+      <th>Gramos</th>
+      <th>Pago de Bono</th>
+      <th>Acción</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -167,36 +168,28 @@
 </table>
 
 <div style="margin-top: 0.6em;">
-  <input id="csvInput" type="file" accept=".csv" onchange="importCSV(event)" style="display:none"/>
-  <button style="background-color:#28a745;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;"
-          onclick="document.getElementById('csvInput').click()">
-    Import CSV
-  </button>
+  <input accept=".csv" id="csvInput" onchange="importCSV(event)" style="display:none" type="file"/>
+  <button onclick="document.getElementById('csvInput').click()" style="background-color:#28a745;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Importar CSV</button>
 </div>
 
 <div style="margin-top: 0.6em;">
-  <button style="background-color:green;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;"
-          onclick="downloadCSV()">
-    Export CSV
-  </button>
+  <button onclick="downloadCSV()" style="background-color:green;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Exportar CSV</button>
 </div>
 
 <div style="margin-top: 0.6em;">
-  <button style="background-color:red;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;"
-          onclick="clearCurrentPayPeriod()">
-    Clear Current Pay Period
-  </button>
+  <button onclick="clearCurrentPayPeriod()" style="background-color:red;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;">Borrar el período de pago actual</button>
 </div>
 <div style="margin-top: 0.6em;">
-  <button style="background-color:#b30000;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;"
-          onclick="clearAllPastPayPeriods()">
-    Clear All Past Pay Periods
+  <button onclick="clearAllPastPayPeriods()" 
+    style="background-color:#b30000;color:white;padding: 0.5em 1em;
+    border:none;border-radius:4px;cursor:pointer;">
+    Borrar Todos los Períodos de Pago Pasados
   </button>
 </div>
 
 <script>
   function clearAllPastPayPeriods() {
-    const confirmMsg = "Are you sure you want to clear ALL past pay periods? This cannot be undone.";
+    const confirmMsg = "¿Estás seguro de que quieres borrar TODOS los períodos de pago pasados? Esto no se puede deshacer.";
     if (!confirm(confirmMsg)) return;
 
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
@@ -218,41 +211,41 @@
 </script>
 
 <div style="margin-top: 1.2em; border-top: 1px solid #444; padding-top: 1em;">
-  <h2 style="color:#0f0; cursor:pointer;" onclick="togglePayCalc()">Hourly Pay Averages ▼</h2>
+  <h2 onclick="togglePayCalc()" style="color:#0f0; cursor:pointer;">Promedios de Pago por Hora ▼</h2>
   <div id="payCalcSection" style="display:none;">
-    <p>Enter your hourly pay and regular/overtime hours, then choose a date range:</p>
-    <label>Hourly pay: <input id="hourlyRate" type="number" step="0.01"/></label><br/>
+    <p>Ingresa tu pago por hora y tus horas regulares/extra, luego elige un rango de fechas:</p>
+    <label>Pago por hora: <input id="hourlyRate" step="0.01" type="number"/></label><br/>
 
-    <!-- regular + overtime hours with hours + minutes -->
+    <!-- 🔹 Horas regulares: horas + minutos -->
     <label>
-      Regular hours:
-      <input id="regularHours" type="number" min="0" step="1" placeholder="Hours"/>
-      <input id="regularMinutes" type="number" min="0" max="59" step="1" placeholder="Minutes"/>
+      Horas regulares:
+      <input id="regularHours" type="number" min="0" step="1" placeholder="Horas"/>
+      <input id="regularMinutes" type="number" min="0" max="59" step="1" placeholder="Minutos"/>
     </label><br/>
 
+    <!-- 🔹 Horas extra: horas + minutos -->
     <label>
-      Overtime hours:
-      <input id="overtimeHours" type="number" min="0" step="1" placeholder="Hours"/>
-      <input id="overtimeMinutes" type="number" min="0" max="59" step="1" placeholder="Minutes"/>
+      Horas extra:
+      <input id="overtimeHours" type="number" min="0" step="1" placeholder="Horas"/>
+      <input id="overtimeMinutes" type="number" min="0" max="59" step="1" placeholder="Minutos"/>
     </label><br/>
 
-    <label>Start date: <input id="startDate" type="date"/></label><br/>
-    <label>End date: <input id="endDate" type="date"/></label><br/>
-    <button onclick="calculateAverages()">Calculate averages</button>
+    <label>Fecha de inicio: <input id="startDate" type="date"/></label><br/>
+    <label>Fecha de fin: <input id="endDate" type="date"/></label><br/>
+    <button onclick="calculateAverages()">Calcular promedios</button>
     <div id="averageResults" style="margin-top: 0.6em; text-align: left;"></div>
   </div>
 </div>
 
 <div style="margin-top: 4em; padding-top: 2em; border-top: 1px solid #444;">
-  <h2 style="color: #0f0;">About the Creator</h2>
+  <h2 style="color: #0f0;">Acerca del Creador</h2>
   <p style="max-width: 600px; margin: 0 auto; font-size: 1em; line-height: 1.6;">
-    Hi, my name is Andrew and I work as a professional trimmer at NorCal Cannabis.
-    I created the NorCal Trim Calculator to help simplify bonus calculations and make it easier
-    for trimmers to track their daily progress.
+    Hola, mi nombre es Andrew y trabajo como recortador profesional en NorCal Cannabis.
+    Creé la Calculadora de Trim de NorCal para ayudar a simplificar los cálculos del bono y facilitarles a los recortadores
+    el seguimiento de su progreso diario.
     <br/><br/>
-    This tool is designed to be practical, easy to use, and efficient — helping workers stay
-    organized and informed. My goal is to support the trimming community with simple tech tools
-    that really make a difference on the job.
+    Esta herramienta fue diseñada para ser práctica, fácil de usar y eficiente — ayudando a los trabajadores a mantenerse organizados e informados.
+    Mi objetivo es apoyar a la comunidad de trimming con soluciones tecnológicas simples que realmente hagan la diferencia en el trabajo.
   </p>
 </div>
 
@@ -274,7 +267,7 @@
   function calculate() {
     const grams = parseFloat(document.getElementById('grams').value);
     if (isNaN(grams) || grams <= 0) {
-      document.getElementById('result').innerText = 'Please enter a valid amount of grams.';
+      document.getElementById('result').innerText = 'Por favor ingresa una cantidad válida de gramos.';
       return;
     }
 
@@ -297,7 +290,7 @@
       grams = lastCalculated.grams;
       bonusPay = lastCalculated.bonusPay;
     } else {
-      alert("Please calculate a valid bonus before saving to history.");
+      alert("Primero calcula un bono válido antes de guardar en el historial.");
       return;
     }
 
@@ -319,7 +312,7 @@
     lastCalculated = null;
   }
 
-  // uses regular + overtime hours (hours + minutes)
+  // 🔹 Actualizado: usa horas regulares + extra (horas + minutos)
   function calculateAverages() {
     const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
 
@@ -336,7 +329,7 @@
     const totalHoursWorked = totalRegularHours + totalOvertimeHours;
 
     if (isNaN(hourlyRate) || isNaN(startDate) || isNaN(endDate) || totalHoursWorked <= 0) {
-      alert("Please fill out all fields, including regular and overtime hours.");
+      alert("Por favor llena todos los campos, incluyendo horas regulares y horas extra.");
       return;
     }
 
@@ -359,15 +352,15 @@
     let dayDiff = Math.max(1, (endDate - startDate) / (1000 * 60 * 60 * 24) + 1);
 
     let results = `
-      <p><strong>Total bonus pay:</strong> $${bonusTotal.toFixed(2)}</p>
-      <p><strong>Regular pay:</strong> $${regularPay.toFixed(2)}</p>
-      <p><strong>Overtime pay:</strong> $${overtimePay.toFixed(2)}</p>
-      <p><strong>Total hourly pay (wages only):</strong> $${hourlyTotal.toFixed(2)}</p>
-      <p><strong>Total pay (hourly + bonus):</strong> $${totalPay.toFixed(2)}</p>
-      <p><strong>Average daily pay:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
-      <p><strong>Average weekly pay:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p>
-      <p><strong>Average bi-weekly pay:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p>
-      <p><strong>Average hourly rate (with bonus):</strong> $${(totalHoursWorked > 0 ? (totalPay / totalHoursWorked) : 0).toFixed(2)}</p>
+      <p><strong>Pago de bono total:</strong> $${bonusTotal.toFixed(2)}</p>
+      <p><strong>Pago regular:</strong> $${regularPay.toFixed(2)}</p>
+      <p><strong>Pago de horas extra:</strong> $${overtimePay.toFixed(2)}</p>
+      <p><strong>Pago total por hora (solo sueldo):</strong> $${hourlyTotal.toFixed(2)}</p>
+      <p><strong>Pago total (sueldo + bono):</strong> $${totalPay.toFixed(2)}</p>
+      <p><strong>Promedio diario:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
+      <p><strong>Promedio semanal:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p>
+      <p><strong>Promedio quincenal:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p>
+      <p><strong>Promedio por hora (con bono):</strong> $${(totalHoursWorked > 0 ? (totalPay / totalHoursWorked) : 0).toFixed(2)}</p>
     `;
     document.getElementById("averageResults").innerHTML = results;
   }
@@ -380,13 +373,29 @@
   }
 
   function deleteEntry(index) {
-    const confirmMsg = "Are you sure you want to delete this entry?";
+    const confirmMsg = "¿Estás seguro de que deseas eliminar esta entrada?";
     if (!confirm(confirmMsg)) return;
 
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
     history.splice(index, 1);
     localStorage.setItem('trimHistory', JSON.stringify(history));
     updateSessionTable();
+  }
+</script>
+
+<!-- 🔹 New helper: update Trim Tracker total display -->
+<script>
+  function updateTrackerTotalDisplay() {
+    const todayISO = new Date().toISOString().split('T')[0];
+    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+    const displayEl = document.getElementById('trackerTotalDisplay');
+    if (!displayEl) return;
+
+    if (trackerTotal) {
+      displayEl.textContent = trackerTotal + 'g';
+    } else {
+      displayEl.textContent = '0g';
+    }
   }
 </script>
 
@@ -429,20 +438,6 @@
     };
   }
 
-  // show today's Trim Tracker total at the top
-  function updateTrackerDailyTotal() {
-    const todayISO = new Date().toISOString().split('T')[0];
-    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
-    const el = document.getElementById('trackerDailyTotalDisplay');
-    if (!el) return;
-
-    if (trackerTotal) {
-      el.textContent = "Today's Trim Tracker total: " + trackerTotal + "g";
-    } else {
-      el.textContent = "Today's Trim Tracker total: 0g";
-    }
-  }
-
   window.addEventListener('load', () => {
     const period = getCurrentPayPeriod();
     const label = document.getElementById("payPeriodLabel");
@@ -462,7 +457,8 @@
       localStorage.setItem('trimHistory', JSON.stringify(history));
     }
     updateSessionTable();
-    updateTrackerDailyTotal();  // show today's total on load
+    // 🔹 Refresh tracker total display on load
+    updateTrackerTotalDisplay();
   });
 </script>
 
@@ -474,16 +470,16 @@
       document.getElementById('grams').value = trackerTotal;
       alert("Imported " + trackerTotal + "g from Trim Tracker.");
     } else {
-      alert("No Trim Tracker total found for today.");
+      alert("No se encontró un total del Trim Tracker para hoy.");
     }
-    // refresh the display in case it changed
-    updateTrackerDailyTotal();
+    // 🔹 Also update the display whenever this button is used
+    updateTrackerTotalDisplay();
   });
 </script>
 
 <script>
   function clearCurrentPayPeriod() {
-    const confirmMsg = "Are you sure you want to clear all entries for the current pay period?";
+    const confirmMsg = "¿Estás seguro de que deseas borrar todas las entradas del período de pago actual?";
     if (!confirm(confirmMsg)) return;
 
     const period = getCurrentPayPeriod();
@@ -506,7 +502,7 @@
   function downloadCSV() {
     const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
     if (history.length === 0) {
-      alert("No data to export.");
+      alert("No hay datos para exportar.");
       return;
     }
 
@@ -565,11 +561,11 @@
       }
 
       if (imported.length === 0 && errorCount > 0) {
-        alert("Invalid or empty CSV file. No valid entries were imported.");
+        alert("Archivo CSV inválido o vacío. No se importaron entradas válidas.");
         return;
       }
       if (imported.length === 0 && errorCount === 0) {
-        alert("Empty CSV file.");
+        alert("Archivo CSV vacío.");
         return;
       }
 
@@ -646,7 +642,7 @@
         <td contenteditable="true" onblur="editDate(${index}, this)">${entry.date}</td>
         <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
         <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
-        <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
+        <td><button onclick="deleteEntry(${index})" class="delete-button">Eliminar</button></td>`;
       tbody.appendChild(row);
       totalBonusPay += parseFloat(entry.bonusPay || 0);
     });
