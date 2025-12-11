@@ -97,6 +97,8 @@
   .clear-all-button:hover {
     background-color: darkorange;
   }
+
+  /* UPDATED: header layout + green amount */
   .past-period-header {
     background-color: #444;
     color: white;
@@ -105,7 +107,18 @@
     margin-top: 1em;
     border-radius: 4px;
     text-align: left;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
+  .past-period-amount {
+    color: #0f0;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
   .past-period-content {
     display: none;
     margin-left: 1em;
@@ -180,7 +193,7 @@
   <button onclick="clearCurrentPayPeriod()" style="background-color:red;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;">Borrar el período de pago actual</button>
 </div>
 <div style="margin-top: 0.6em;">
-  <button onclick="clearAllPastPayPeriods()" 
+  <button onclick="clearAllPastPayPeriods()"
     style="background-color:#b30000;color:white;padding: 0.5em 1em;
     border:none;border-radius:4px;cursor:pointer;">
     Borrar Todos los Períodos de Pago Pasados
@@ -216,14 +229,12 @@
     <p>Ingresa tu pago por hora y tus horas regulares/extra, luego elige un rango de fechas:</p>
     <label>Pago por hora: <input id="hourlyRate" step="0.01" type="number"/></label><br/>
 
-    <!-- 🔹 Horas regulares: horas + minutos -->
     <label>
       Horas regulares:
       <input id="regularHours" type="number" min="0" step="1" placeholder="Horas"/>
       <input id="regularMinutes" type="number" min="0" max="59" step="1" placeholder="Minutos"/>
     </label><br/>
 
-    <!-- 🔹 Horas extra: horas + minutos -->
     <label>
       Horas extra:
       <input id="overtimeHours" type="number" min="0" step="1" placeholder="Horas"/>
@@ -250,7 +261,6 @@
 </div>
 
 <script>
-  // store last calculated result so we can save it later if user wants
   let lastCalculated = null;
 
   function calculateBonus(grams) {
@@ -273,8 +283,6 @@
 
     const bonusPay = calculateBonus(grams);
     document.getElementById('result').innerText = 'Bonus Pay: $' + bonusPay.toFixed(2);
-
-    // remember the last valid calculation, but do NOT save to history
     lastCalculated = { grams: grams, bonusPay: bonusPay };
   }
 
@@ -283,10 +291,8 @@
     let bonusPay;
 
     if (!isNaN(grams) && grams > 0) {
-      // use current input
       bonusPay = calculateBonus(grams);
     } else if (lastCalculated) {
-      // fall back to last calculated result if input is empty
       grams = lastCalculated.grams;
       bonusPay = lastCalculated.bonusPay;
     } else {
@@ -307,12 +313,10 @@
     const scrollTarget = document.getElementById('sessionTable');
     if (scrollTarget) scrollTarget.scrollIntoView({ behavior: 'smooth' });
 
-    // clear input after saving
     document.getElementById('grams').value = '';
     lastCalculated = null;
   }
 
-  // 🔹 Actualizado: usa horas regulares + extra (horas + minutos)
   function calculateAverages() {
     const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
 
@@ -383,7 +387,6 @@
   }
 </script>
 
-<!-- 🔹 New helper: update Trim Tracker total display -->
 <script>
   function updateTrackerTotalDisplay() {
     const todayISO = new Date().toISOString().split('T')[0];
@@ -400,7 +403,6 @@
 </script>
 
 <script>
-  // Auto pay period starting from April 14, 2025 (Monday)
   function getCurrentPayPeriod() {
     const base = new Date("2025-04-13T00:00:00");
     const today = new Date();
@@ -457,7 +459,6 @@
       localStorage.setItem('trimHistory', JSON.stringify(history));
     }
     updateSessionTable();
-    // 🔹 Refresh tracker total display on load
     updateTrackerTotalDisplay();
   });
 </script>
@@ -472,7 +473,6 @@
     } else {
       alert("No se encontró un total del Trim Tracker para hoy.");
     }
-    // 🔹 Also update the display whenever this button is used
     updateTrackerTotalDisplay();
   });
 </script>
@@ -653,17 +653,32 @@
 
     Object.keys(grouped).filter(key => key !== currentPeriod.start).forEach(key => {
       const group = grouped[key];
+
+      // NEW: sum this pay period's total bonus and show it in green on the header
+      const periodTotal = group.entries.reduce((sum, pair) => {
+        const entry = pair[0];
+        return sum + parseFloat(entry.bonusPay || 0);
+      }, 0);
+      const amountHTML = `<span class="past-period-amount">$${periodTotal.toFixed(2)}</span>`;
+
       const header = document.createElement('div');
       header.className = 'past-period-header';
-      header.textContent = group.label + ' [+]';
+
+      const setHeader = (open) => {
+        header.innerHTML = `<span>${group.label} ${open ? '[-]' : '[+]'}</span>${amountHTML}`;
+      };
+
+      setHeader(false);
+
       header.addEventListener('click', function () {
         const content = this.nextElementSibling;
         const open = content.classList.toggle('open');
-        this.textContent = group.label + (open ? ' [-]' : ' [+]');
+        setHeader(open);
       });
 
       const content = document.createElement('div');
       content.className = 'past-period-content';
+
       group.entries.forEach(([entry, index]) => {
         const row = document.createElement('tr');
         row.innerHTML = `
