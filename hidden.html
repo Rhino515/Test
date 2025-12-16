@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shift Tools</title>
 
-  <!-- Clean, modern thin clock font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600;800&display=swap" rel="stylesheet">
 
   <style>
@@ -28,7 +27,6 @@
     .tiny { font-size:12px; color:#aaa; }
     .pill { display:inline-block; padding:6px 10px; border-radius:999px; background:#151515; border:1px solid #262626; font-size:12px; }
 
-    /* HERO CLOCK */
     .hero {
       margin-top:12px;
       display:flex;
@@ -63,7 +61,6 @@
       margin-top:4px;
     }
 
-    /* STATUS + PROGRESS STRIP */
     .strip {
       display:flex;
       gap:10px;
@@ -72,7 +69,7 @@
       margin-top:8px;
     }
 
-    /* ✅ GOAL BAR (new) */
+    /* GOAL BAR */
     .goalWrap {
       width:min(900px, 100%);
       margin-top:4px;
@@ -97,7 +94,7 @@
     #goalFill {
       height:100%;
       width:0%;
-      background:#b30000; /* will be updated by JS */
+      background:#b30000;
       transition:width .35s ease, background .35s ease;
     }
     .goalHint {
@@ -125,7 +122,6 @@
     .statValue { font-size:22px; font-weight:800; margin-top:6px; }
     .statSub { color:#aaa; font-size:12px; margin-top:4px; }
 
-    /* ACTION BUTTONS (✅ green + stays near clock) */
     .actions {
       width:min(900px, 100%);
       display:flex;
@@ -167,7 +163,6 @@
     .inlineRow { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
     .dangerBox { border:1px solid #400; background:#120; padding:12px; border-radius:12px; margin-top:10px; }
 
-    /* LOG */
     .logWrap { width:min(980px, 100%); margin:12px auto 0; }
     .logHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .logHeader h2 { margin:0; color:#fff; font-size:16px; letter-spacing:.02em; }
@@ -179,7 +174,6 @@
     .right { text-align:right; }
     input, select { width:100%; padding:10px; border-radius:12px; border:1px solid #333; background:#0f0f0f; color:#fff; font-size:15px; margin-top:6px; }
 
-    /* SETTINGS MODAL */
     .modalOverlay {
       position:fixed; inset:0;
       background:rgba(0,0,0,.65);
@@ -216,7 +210,6 @@
 
     label { display:block; margin-top:10px; color:#bbb; font-size:12px; text-transform: uppercase; letter-spacing: .08em;}
 
-    /* TAP CLOCK TO EXPAND */
     body.clockZoom .hero { padding: 28px 14px; }
     body.clockZoom .clock {
       font-size: clamp(120px, 24vw, 220px);
@@ -239,7 +232,6 @@
       </div>
     </div>
 
-    <!-- HERO -->
     <div class="hero" id="hero">
       <div id="clock" class="clock" title="Tap to expand">--:--</div>
       <div id="ampm" class="ampm">—</div>
@@ -256,7 +248,6 @@
         <span class="pill" id="nextUp">—</span>
       </div>
 
-      <!-- ✅ GOAL BAR (new, simple) -->
       <div class="goalWrap">
         <div class="goalHeader">
           <span id="goalLabel">Goal: —</span>
@@ -277,13 +268,14 @@
         <div class="statBox">
           <div class="statLabel">Bucked</div>
           <div class="statValue"><span id="countBucked">0</span></div>
-          <div class="statSub">Avg: <span id="avgMin">0</span> min/serving</div>
+          <!-- ✅ FIXED: Bucked-only avg -->
+          <div class="statSub">Avg: <span id="avgMinBucked">0</span> min/serving</div>
         </div>
         <div class="statBox">
           <div class="statLabel">Branch</div>
           <div class="statValue"><span id="countBranch">0</span></div>
-          <!-- ✅ no more clutter here -->
-          <div class="statSub" id="goalStatus">Tracking shown above.</div>
+          <!-- ✅ FIXED: Branch-only avg -->
+          <div class="statSub">Avg: <span id="avgMinBranch">0</span> min/serving</div>
         </div>
       </div>
 
@@ -316,7 +308,6 @@
     </div>
   </div>
 
-  <!-- LOG (always open) -->
   <div class="logWrap" id="logSection">
     <div class="card">
       <div class="logHeader">
@@ -346,7 +337,6 @@
 
 </div>
 
-<!-- SETTINGS MODAL -->
 <div class="modalOverlay" id="settingsOverlay" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
     <div class="modalTop">
@@ -360,8 +350,6 @@
     </div>
 
     <div class="modalGrid">
-
-      <!-- PRESETS -->
       <div class="card">
         <h2 style="margin:0 0 8px; color:#fff; font-size:16px;">Serving Presets</h2>
 
@@ -409,7 +397,6 @@
         <div class="muted">Defaults control what the big buttons use on the main screen.</div>
       </div>
 
-      <!-- SCHEDULE -->
       <div class="card">
         <h2 style="margin:0 0 8px; color:#fff; font-size:16px;">Schedule</h2>
 
@@ -477,7 +464,6 @@
         <div class="muted">If they tell you to start later, edit start times and save.</div>
       </div>
 
-      <!-- GOALS -->
       <div class="card">
         <h2 style="margin:0 0 8px; color:#fff; font-size:16px;">Goals by Checkpoint</h2>
 
@@ -515,19 +501,11 @@
 </div>
 
 <script>
-/* =============================
-   STORAGE
-============================= */
 const STORE_KEY = "shiftTools_v3_goalBar";
 
-function loadState() {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch(e) { return null; }
-}
+function loadState() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch(e) { return null; } }
 function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
-/* =============================
-   DEFAULTS
-============================= */
 const defaultState = {
   schedule: {
     w1s: "06:00", w1e: "08:30", b1m: 10,
@@ -537,21 +515,15 @@ const defaultState = {
     shiftEnd: "14:30"
   },
   goals: { gB1: 0, gL: 0, gB2: 0, gE: 0 },
-
-  servingDefaults: {
-    bucked: { goalMin: 30, grams: 400 },
-    branch: { goalMin: 25, grams: 200 }
-  },
+  servingDefaults: { bucked: { goalMin: 30, grams: 400 }, branch: { goalMin: 25, grams: 200 } },
   servingPresets: { bucked: [], branch: [] },
   activePresetId: { bucked: "standard", branch: "standard" },
-
   activeServing: null,
   today: {}
 };
 
 let state = loadState() || defaultState;
 
-/* ========= MIGRATION ========= */
 (function migrate() {
   if (!state.servingDefaults) state.servingDefaults = defaultState.servingDefaults;
   if (!state.servingPresets) state.servingPresets = { bucked: [], branch: [] };
@@ -561,9 +533,6 @@ let state = loadState() || defaultState;
   saveState();
 })();
 
-/* =============================
-   HELPERS
-============================= */
 const el = (id) => document.getElementById(id);
 function pad2(n){ return String(n).padStart(2, "0"); }
 
@@ -601,15 +570,9 @@ function uid() {
   return (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2));
 }
 
-/* =============================
-   TAP CLOCK TO EXPAND
-============================= */
 function toggleClockZoom() { document.body.classList.toggle("clockZoom"); }
 el("clock").addEventListener("click", toggleClockZoom);
 
-/* =============================
-   SETTINGS MODAL
-============================= */
 function openSettings() {
   const o = el("settingsOverlay");
   o.classList.add("open");
@@ -625,16 +588,10 @@ el("closeSettings").addEventListener("click", closeSettings);
 el("settingsOverlay").addEventListener("click", (e) => { if (e.target === el("settingsOverlay")) closeSettings(); });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el("settingsOverlay").classList.contains("open")) closeSettings(); });
 
-/* =============================
-   LOG BUTTON: scroll only
-============================= */
 el("toggleLog").addEventListener("click", () => {
   el("logSection").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
-/* =============================
-   PRESETS
-============================= */
 function buildPresetLabel(p) { return `${p.name} — ${p.goalMin}m / ${p.grams}g`; }
 
 function getStandardPreset(type) {
@@ -694,7 +651,6 @@ el("defaultPresetBranch").addEventListener("change", () => {
   updateMainPresetLabels();
 });
 
-/* Manage presets UI */
 function renderPresetManageList() {
   const type = el("presetTypeManage").value;
   const sel = el("presetSelectManage");
@@ -772,9 +728,6 @@ el("deleteServingPreset").addEventListener("click", () => {
   renderDefaultPresetDropdowns();
 });
 
-/* =============================
-   SCHEDULE + PHASE ENGINE
-============================= */
 function buildBlocksFromSchedule(s) {
   const w1s = timeToDateToday(s.w1s), w1e = timeToDateToday(s.w1e);
   const b1e = new Date(w1e.getTime() + Number(s.b1m||0)*60000);
@@ -816,22 +769,10 @@ function phaseLabel(key, label) {
   return [label || "OFF", "⚫"];
 }
 
-/* =============================
-   ACTIVE SERVING
-============================= */
 function getActiveServing() { return state.activeServing; }
 
-function setActiveServing(obj) {
-  state.activeServing = obj;
-  saveState();
-  syncActiveUI();
-}
-
-function clearActiveServing() {
-  state.activeServing = null;
-  saveState();
-  syncActiveUI();
-}
+function setActiveServing(obj) { state.activeServing = obj; saveState(); syncActiveUI(); }
+function clearActiveServing() { state.activeServing = null; saveState(); syncActiveUI(); }
 
 function startServing(type) {
   if (getActiveServing()) return;
@@ -877,7 +818,6 @@ function finishServing() {
 function handleTap(type) {
   const a = getActiveServing();
   if (!a) { startServing(type); return; }
-
   if (a.type === type) { finishServing(); return; }
 
   const ok = confirm(`You have an active ${a.type.toUpperCase()} running.\n\nFinish it and start ${type.toUpperCase()}?`);
@@ -931,45 +871,36 @@ function syncActiveUI() {
   el("cancelActive").classList.remove("hide");
 }
 
-/* =============================
-   GOAL BAR COLOR (Red → Yellow → Green)
-============================= */
+/* GOAL BAR COLOR */
 function lerp(a,b,t){ return a + (b-a)*t; }
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 function rgb(r,g,b){ return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
-
-// progress 0..1
 function colorForProgress(p) {
   p = clamp01(p);
-  // Red -> Yellow (0..0.6), Yellow -> Green (0.6..1)
   if (p <= 0.6) {
     const t = p / 0.6;
-    // red(179,0,0) -> yellow(240,200,0)
     return rgb(lerp(179,240,t), lerp(0,200,t), lerp(0,0,t));
   } else {
     const t = (p - 0.6) / 0.4;
-    // yellow(240,200,0) -> green(31,143,58)
     return rgb(lerp(240,31,t), lerp(200,143,t), lerp(0,58,t));
   }
 }
 
-/* =============================
-   LOG + TOTALS + GOALS (✅ simple UI)
-============================= */
 function renderLogAndTotals() {
   const log = getTodayLog();
   const body = el("logBody");
   body.innerHTML = "";
 
   let totalGrams = 0;
-  let totalMins = 0;
+
   let countB = 0, countBr = 0;
+  let minsB = 0, minsBr = 0;
 
   log.servings.forEach((s) => {
     totalGrams += Number(s.grams || 0);
-    totalMins += Number(s.minutes || 0);
-    if (s.type === "bucked") countB++;
-    if (s.type === "branch") countBr++;
+
+    if (s.type === "bucked") { countB++; minsB += Number(s.minutes || 0); }
+    if (s.type === "branch") { countBr++; minsBr += Number(s.minutes || 0); }
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -988,8 +919,10 @@ function renderLogAndTotals() {
   el("countBucked").textContent = countB;
   el("countBranch").textContent = countBr;
 
-  const avgMin = log.servings.length ? (totalMins / log.servings.length) : 0;
-  el("avgMin").textContent = avgMin.toFixed(1);
+  const avgB = countB ? (minsB / countB) : 0;
+  const avgBr = countBr ? (minsBr / countBr) : 0;
+  el("avgMinBucked").textContent = avgB.toFixed(1);
+  el("avgMinBranch").textContent = avgBr.toFixed(1);
 
   let gph = 0;
   if (log.firstStartMs && totalGrams > 0) {
@@ -1039,7 +972,6 @@ function updateGoalUI(totalGrams) {
   const target = checkpoints.find(x => now < x.at) || checkpoints[checkpoints.length - 1];
   const goal = Number(goals[target.key] || 0);
 
-  // If no goal set
   if (!goal || goal <= 0) {
     el("goalLabel").textContent = "Goal: —";
     el("goalDelta").textContent = "";
@@ -1054,11 +986,9 @@ function updateGoalUI(totalGrams) {
   const progressClamped = Math.min(1, Math.max(0, rawProgress));
   const pct = Math.min(100, Math.max(0, rawProgress * 100));
 
-  // bar fill + color
   el("goalFill").style.width = `${Math.min(100, pct)}%`;
   el("goalFill").style.background = colorForProgress(progressClamped);
 
-  // text
   const diff = totalGrams - goal;
   const ahead = diff >= 0;
   const gramsRemaining = Math.max(0, goal - totalGrams);
@@ -1067,21 +997,18 @@ function updateGoalUI(totalGrams) {
   el("goalLabel").textContent = `${target.label}: ${Math.round(totalGrams)}/${Math.round(goal)}g`;
   el("goalDelta").textContent = ahead ? `Ahead ${Math.round(diff)}g` : `Behind ${Math.round(gramsRemaining)}g`;
 
-  // simple catch-up hint under bar
   if (ahead) {
     el("goalHint").textContent = "On pace ✔";
   } else if (minsLeft <= 0) {
     el("goalHint").textContent = `Past checkpoint • Short ${Math.round(gramsRemaining)}g`;
   } else {
     const paceNeeded = Math.round((gramsRemaining / minsLeft) * 60); // g/hr
-
-    // optional “max min/serv” (kept short)
     const pB = getPresetById("bucked", state.activePresetId?.bucked || "standard");
     const pR = getPresetById("branch", state.activePresetId?.branch || "standard");
     const buckedServ = Math.max(1, Math.ceil(gramsRemaining / Math.max(1, Number(pB.grams || 0))));
     const branchServ = Math.max(1, Math.ceil(gramsRemaining / Math.max(1, Number(pR.grams || 0))));
-    const buckedMaxMin = (buckedServ > 0) ? (minsLeft / buckedServ) : 0;
-    const branchMaxMin = (branchServ > 0) ? (minsLeft / branchServ) : 0;
+    const buckedMaxMin = (minsLeft / buckedServ);
+    const branchMaxMin = (minsLeft / branchServ);
 
     el("goalHint").textContent =
       `Need ~${paceNeeded} g/hr • ${minsLeft}m left • Bucked ≤ ${buckedMaxMin.toFixed(1)}m/serv • Branch ≤ ${branchMaxMin.toFixed(1)}m/serv`;
@@ -1091,9 +1018,6 @@ function updateGoalUI(totalGrams) {
     `Target: ${target.label} • ${minsLeft}m left • Goal ${Math.round(goal)}g`;
 }
 
-/* =============================
-   CLOCK + PHASE
-============================= */
 function tickClock() {
   const now = new Date();
 
@@ -1134,7 +1058,6 @@ function tickClock() {
 
   if (getActiveServing()) syncActiveUI();
 
-  // keep goal bar fresh
   if (now.getSeconds() % 2 === 0) {
     const log = getTodayLog();
     const total = log.servings.reduce((sum,x)=>sum+Number(x.grams||0),0);
@@ -1142,9 +1065,6 @@ function tickClock() {
   }
 }
 
-/* =============================
-   SETTINGS SAVE
-============================= */
 const idsSchedule = ["w1s","w1e","b1m","w2s","w2e","lm","w3s","w3e","b2m","w4s","w4e","shiftEnd"];
 const idsGoals = ["gB1","gL","gB2","gE"];
 
@@ -1187,9 +1107,7 @@ el("clearToday").addEventListener("click", () => {
   renderLogAndTotals();
 });
 
-/* =============================
-   INIT
-============================= */
+/* INIT */
 applyScheduleToInputs();
 applyGoalsToInputs();
 
