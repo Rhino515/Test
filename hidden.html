@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shift Tools</title>
 
-  <!-- ✅ Digital-style font -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
-
   <style>
     body { background:#000; color:#fff; font-family: Arial, Helvetica, sans-serif; margin:0; padding:16px; }
     .wrap { max-width: 980px; margin: 0 auto; }
@@ -18,24 +15,20 @@
     .headerRow { display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .title { font-weight:900; letter-spacing:.3px; }
 
-    /* ✅ Digital / glowing mirror-clean clock */
+    /* ✅ Clean thin iPhone-style clock (NO glow, NO gradient) */
     .clock {
-      font-family: 'Orbitron', monospace;
-      font-size: 72px;
-      font-weight: 900;
-      letter-spacing: 4px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Rounded", "Helvetica Neue", Arial, sans-serif;
+      font-size: 84px;
+      font-weight: 200;
+      letter-spacing: 2px;
       line-height: 1;
-
-      /* “Mirror clean” white */
-      background: linear-gradient(180deg, #ffffff 0%, #eaeaea 50%, #ffffff 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-
-      /* Glow */
-      text-shadow:
-        0 0 6px rgba(255,255,255,0.6),
-        0 0 14px rgba(255,255,255,0.4),
-        0 0 30px rgba(255,255,255,0.25);
+      color: #fff;
+      text-shadow: none;
+      font-variant-numeric: tabular-nums;
+      -webkit-text-fill-color: currentColor;
+    }
+    @media (max-width: 420px){
+      .clock { font-size: 68px; }
     }
 
     .date { color:#aaa; margin-top:6px; }
@@ -46,13 +39,14 @@
     .sub { color:#bbb; margin-top:6px; }
     h2 { margin: 0 0 10px; color:#0f0; }
 
-    /* ✅ Optional: make countdown match the clock style */
+    /* ✅ Countdown: clean (no Orbitron, no glow) */
     #countdown {
-      font-family: 'Orbitron', monospace;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif;
       font-size: 28px;
-      font-weight: 700;
+      font-weight: 600;
       color:#e5e5e5;
-      text-shadow: 0 0 4px rgba(255,255,255,0.25);
+      text-shadow: none;
+      font-variant-numeric: tabular-nums;
     }
 
     label { display:block; margin-top:10px; color:#ccc; font-size:13px; text-transform: uppercase; letter-spacing: .06em;}
@@ -774,6 +768,8 @@ function tickClock() {
   const m = pad2(now.getMinutes());
   const ampm = h >= 12 ? "PM" : "AM";
   const h12 = (h % 12) === 0 ? 12 : (h % 12);
+
+  /* ✅ No “old update” styles—just clean text */
   el("clock").textContent = `${h12}:${m} ${ampm}`;
 
   el("date").textContent = now.toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"long", day:"numeric" });
