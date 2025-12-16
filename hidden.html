@@ -7,40 +7,92 @@
   <style>
     body { background:#000; color:#fff; font-family: Arial, Helvetica, sans-serif; margin:0; padding:16px; }
     .wrap { max-width: 980px; margin: 0 auto; }
+
     .top { display:flex; gap:12px; flex-wrap:wrap; align-items:stretch; }
     .card { background:#0b0b0b; border:1px solid #222; border-radius:14px; padding:14px; flex:1; min-width: 290px; }
+
+    .headerRow { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .title { font-weight:900; letter-spacing:.3px; }
     .clock { font-size:60px; font-weight:900; letter-spacing:1px; color:#0f0; line-height:1; }
     .date { color:#aaa; margin-top:6px; }
     .phase { margin-top:10px; font-size:18px; }
     .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#222; margin-left:8px; font-size:12px; }
+
     .big { font-size:28px; font-weight:900; margin-top:10px; }
     .sub { color:#bbb; margin-top:6px; }
     h2 { margin: 0 0 10px; color:#0f0; }
+
     label { display:block; margin-top:10px; color:#ccc; font-size:13px; text-transform: uppercase; letter-spacing: .06em;}
     input, select { width:100%; padding:10px; border-radius:10px; border:1px solid #444; background:#111; color:#fff; font-size:16px; margin-top:6px; }
+
     button { padding:10px 12px; border:0; border-radius:10px; cursor:pointer; font-weight:800; margin:6px 8px 0 0; }
     .green { background:#1f8f3a; color:#fff; }
     .red { background:#b30000; color:#fff; }
     .gray { background:#444; color:#fff; }
+
     .row { display:flex; gap:10px; flex-wrap:wrap; }
     .row > div { flex:1; min-width: 210px; }
+
     table { width:100%; border-collapse:collapse; margin-top:10px; }
     th, td { border:1px solid #333; padding:10px; text-align:left; }
     th { background:#111; }
-    tr.active { outline:2px solid #0f0; }
+
     .muted { color:#aaa; font-size:13px; margin-top:8px; }
     .right { text-align:right; }
     .tiny { font-size:12px; color:#aaa; }
     a { color:#0af; text-decoration:none; }
+
     .dangerBox { border:1px solid #400; background:#120; padding:12px; border-radius:12px; margin-top:10px; }
+
+    /* ============ SETTINGS MODAL ============ */
+    .modalOverlay {
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.65);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:16px;
+      z-index:9999;
+    }
+    .modalOverlay.open { display:flex; }
+    .modal {
+      width:min(980px, 100%);
+      max-height:90vh;
+      overflow:auto;
+      background:#070707;
+      border:1px solid #222;
+      border-radius:16px;
+      box-shadow:0 10px 40px rgba(0,0,0,.7);
+      padding:14px;
+    }
+    .modalTop {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding-bottom:10px;
+      border-bottom:1px solid #1a1a1a;
+      margin-bottom:10px;
+    }
+    .modalTop h2 { margin:0; }
+    .modalGrid { display:flex; gap:12px; flex-wrap:wrap; }
+    .modalGrid .card { min-width:290px; }
+    .modalHint { color:#aaa; font-size:13px; margin-top:6px; }
   </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- LIVE CLOCK + PHASE -->
+  <!-- MAIN (Simple) -->
   <div class="top">
     <div class="card">
+      <div class="headerRow">
+        <div class="title">Shift Tools</div>
+        <div>
+          <button class="gray" id="openSettings">⚙️ Settings</button>
+        </div>
+      </div>
+
       <div class="clock" id="clock">--:--</div>
       <div class="date" id="date">---</div>
 
@@ -53,7 +105,7 @@
       <div class="sub" id="nextUp">—</div>
 
       <div class="muted">
-        This page saves locally on your phone (no login). If you clear “Website Data”, it will erase it.
+        Saves locally on your phone (no login). If you clear “Website Data”, it will erase it.
       </div>
 
       <div style="margin-top:10px">
@@ -74,7 +126,6 @@
           </select>
         </div>
 
-        <!-- NEW: Preset dropdown -->
         <div>
           <label>Preset</label>
           <select id="presetSelect"></select>
@@ -100,126 +151,11 @@
         <button class="red" id="finishServing">Finish Serving</button>
         <button class="gray" id="resetServing">Reset</button>
 
-        <!-- NEW buttons -->
         <button class="gray" id="saveServingPreset">Save as Preset</button>
         <button class="red" id="deleteServingPreset">Delete Preset</button>
       </div>
 
-      <div class="muted">
-        Presets show in the dropdown. Standard is always available.
-      </div>
-    </div>
-  </div>
-
-  <!-- SCHEDULE + GOALS -->
-  <div class="top" style="margin-top:12px">
-    <div class="card">
-      <h2>Schedule (Editable)</h2>
-
-      <div class="row">
-        <div>
-          <label>Trim 1 start</label>
-          <input id="w1s" type="time" />
-        </div>
-        <div>
-          <label>Trim 1 end (Break 1 starts)</label>
-          <input id="w1e" type="time" />
-        </div>
-        <div>
-          <label>Break 1 minutes</label>
-          <input id="b1m" type="number" step="1" min="0" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Trim 2 start</label>
-          <input id="w2s" type="time" />
-        </div>
-        <div>
-          <label>Trim 2 end (Lunch starts)</label>
-          <input id="w2e" type="time" />
-        </div>
-        <div>
-          <label>Lunch minutes</label>
-          <input id="lm" type="number" step="1" min="0" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Trim 3 start</label>
-          <input id="w3s" type="time" />
-        </div>
-        <div>
-          <label>Trim 3 end (Break 2 starts)</label>
-          <input id="w3e" type="time" />
-        </div>
-        <div>
-          <label>Break 2 minutes</label>
-          <input id="b2m" type="number" step="1" min="0" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Final Trim start</label>
-          <input id="w4s" type="time" />
-        </div>
-        <div>
-          <label>Trimming ends</label>
-          <input id="w4e" type="time" />
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button class="green" id="saveSchedule" style="width:100%">Save Schedule</button>
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Shift end (Clock out)</label>
-          <input id="shiftEnd" type="time" />
-        </div>
-        <div></div>
-        <div></div>
-      </div>
-
-      <div class="muted">
-        Your preset is saved. If they tell you to start later, just edit the start times and save.
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Goals by Checkpoint</h2>
-
-      <div class="row">
-        <div>
-          <label>Goal by Break 1</label>
-          <input id="gB1" type="number" step="1" min="0" placeholder="grams" />
-        </div>
-        <div>
-          <label>Goal by Lunch</label>
-          <input id="gL" type="number" step="1" min="0" placeholder="grams" />
-        </div>
-      </div>
-
-      <div class="row">
-        <div>
-          <label>Goal by Break 2</label>
-          <input id="gB2" type="number" step="1" min="0" placeholder="grams" />
-        </div>
-        <div>
-          <label>Goal by End</label>
-          <input id="gE" type="number" step="1" min="0" placeholder="grams" />
-        </div>
-      </div>
-
-      <button class="green" id="saveGoals" style="width:100%">Save Goals</button>
-
-      <div class="card" style="margin-top:10px; padding:12px">
-        <div id="goalStatus" class="sub">Set your checkpoint goals to see progress.</div>
-      </div>
+      <div class="muted">Pick a preset so you don’t have to re-type grams every time.</div>
     </div>
   </div>
 
@@ -263,6 +199,134 @@
 
 </div>
 
+<!-- SETTINGS MODAL (hidden until you click Settings) -->
+<div class="modalOverlay" id="settingsOverlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Settings">
+    <div class="modalTop">
+      <div>
+        <h2>Settings</h2>
+        <div class="modalHint">Edit schedule + goals here. Main screen stays simple.</div>
+      </div>
+      <div>
+        <button class="gray" id="closeSettings">Close</button>
+      </div>
+    </div>
+
+    <div class="modalGrid">
+      <!-- SCHEDULE -->
+      <div class="card">
+        <h2>Schedule (Editable)</h2>
+
+        <div class="row">
+          <div>
+            <label>Trim 1 start</label>
+            <input id="w1s" type="time" />
+          </div>
+          <div>
+            <label>Trim 1 end (Break 1 starts)</label>
+            <input id="w1e" type="time" />
+          </div>
+          <div>
+            <label>Break 1 minutes</label>
+            <input id="b1m" type="number" step="1" min="0" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Trim 2 start</label>
+            <input id="w2s" type="time" />
+          </div>
+          <div>
+            <label>Trim 2 end (Lunch starts)</label>
+            <input id="w2e" type="time" />
+          </div>
+          <div>
+            <label>Lunch minutes</label>
+            <input id="lm" type="number" step="1" min="0" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Trim 3 start</label>
+            <input id="w3s" type="time" />
+          </div>
+          <div>
+            <label>Trim 3 end (Break 2 starts)</label>
+            <input id="w3e" type="time" />
+          </div>
+          <div>
+            <label>Break 2 minutes</label>
+            <input id="b2m" type="number" step="1" min="0" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Final Trim start</label>
+            <input id="w4s" type="time" />
+          </div>
+          <div>
+            <label>Trimming ends</label>
+            <input id="w4e" type="time" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="green" id="saveSchedule" style="width:100%">Save Schedule</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Shift end (Clock out)</label>
+            <input id="shiftEnd" type="time" />
+          </div>
+          <div></div>
+          <div></div>
+        </div>
+
+        <div class="muted">
+          If they tell you to start later, edit start times and save.
+        </div>
+      </div>
+
+      <!-- GOALS -->
+      <div class="card">
+        <h2>Goals by Checkpoint</h2>
+
+        <div class="row">
+          <div>
+            <label>Goal by Break 1</label>
+            <input id="gB1" type="number" step="1" min="0" placeholder="grams" />
+          </div>
+          <div>
+            <label>Goal by Lunch</label>
+            <input id="gL" type="number" step="1" min="0" placeholder="grams" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Goal by Break 2</label>
+            <input id="gB2" type="number" step="1" min="0" placeholder="grams" />
+          </div>
+          <div>
+            <label>Goal by End</label>
+            <input id="gE" type="number" step="1" min="0" placeholder="grams" />
+          </div>
+        </div>
+
+        <button class="green" id="saveGoals" style="width:100%">Save Goals</button>
+
+        <div class="card" style="margin-top:10px; padding:12px">
+          <div id="goalStatus" class="sub">Set your checkpoint goals to see progress.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 /* =============================
    STORAGE
@@ -289,29 +353,24 @@ const defaultState = {
   },
   goals: { gB1: 0, gL: 0, gB2: 0, gE: 0 },
 
-  // Standard presets (always there)
   servingDefaults: {
     bucked: { goalMin: 30, grams: 400 },
     branch: { goalMin: 25, grams: 200 }
   },
-
-  // NEW: Custom presets saved by user
-  servingPresets: {
-    bucked: [],
-    branch: []
-  },
+  servingPresets: { bucked: [], branch: [] },
 
   today: {}
 };
 
 let state = loadState() || defaultState;
 
-/* ========= MIGRATION (older saves) ========= */
+/* ========= MIGRATION ========= */
 (function migrate() {
   if (!state.servingDefaults) state.servingDefaults = defaultState.servingDefaults;
   if (!state.servingPresets) state.servingPresets = { bucked: [], branch: [] };
   if (!Array.isArray(state.servingPresets.bucked)) state.servingPresets.bucked = [];
   if (!Array.isArray(state.servingPresets.branch)) state.servingPresets.branch = [];
+  if (!state.schedule?.shiftEnd) state.schedule.shiftEnd = defaultState.schedule.shiftEnd;
   saveState();
 })();
 
@@ -356,19 +415,38 @@ function uid() {
   return (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(16).slice(2));
 }
 
-/* =============================
-   DOM
-============================= */
 const el = (id) => document.getElementById(id);
 
+// inputs
 const idsSchedule = ["w1s","w1e","b1m","w2s","w2e","lm","w3s","w3e","b2m","w4s","w4e","shiftEnd"];
 const idsGoals = ["gB1","gL","gB2","gE"];
 
 /* =============================
-   PRESETS UI
+   SETTINGS MODAL
+============================= */
+function openSettings() {
+  const o = el("settingsOverlay");
+  o.classList.add("open");
+  o.setAttribute("aria-hidden", "false");
+}
+function closeSettings() {
+  const o = el("settingsOverlay");
+  o.classList.remove("open");
+  o.setAttribute("aria-hidden", "true");
+}
+el("openSettings").addEventListener("click", openSettings);
+el("closeSettings").addEventListener("click", closeSettings);
+el("settingsOverlay").addEventListener("click", (e) => {
+  if (e.target === el("settingsOverlay")) closeSettings();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && el("settingsOverlay").classList.contains("open")) closeSettings();
+});
+
+/* =============================
+   PRESETS
 ============================= */
 function buildPresetLabel(p) {
-  // "Name — 30m / 400g"
   return `${p.name} — ${p.goalMin}m / ${p.grams}g`;
 }
 
@@ -390,24 +468,19 @@ function getPresetsForType(type) {
 function renderPresetDropdown() {
   const type = el("productType").value;
   const sel = el("presetSelect");
-
   const presets = getPresetsForType(type);
 
-  // keep current selection if still exists
   const current = sel.value || "standard";
-
   sel.innerHTML = "";
+
   presets.forEach(p => {
     const opt = document.createElement("option");
     opt.value = p.id;
-    opt.textContent = (p.id === "standard") ? buildPresetLabel(p) : buildPresetLabel(p);
+    opt.textContent = buildPresetLabel(p);
     sel.appendChild(opt);
   });
 
-  // restore selection if possible
-  const stillExists = presets.some(p => p.id === current);
-  sel.value = stillExists ? current : "standard";
-
+  sel.value = presets.some(p => p.id === current) ? current : "standard";
   applySelectedPresetToInputs();
   syncPresetButtons();
 }
@@ -421,15 +494,12 @@ function getSelectedPreset() {
 
 function applySelectedPresetToInputs() {
   const p = getSelectedPreset();
-  if (!p) return;
   el("goalMinutes").value = p.goalMin;
   el("estGrams").value = p.grams;
 }
 
 function syncPresetButtons() {
-  const id = el("presetSelect").value;
-  // can't delete standard
-  el("deleteServingPreset").disabled = (id === "standard");
+  el("deleteServingPreset").disabled = (el("presetSelect").value === "standard");
 }
 
 /* =============================
@@ -461,9 +531,7 @@ function buildBlocksFromSchedule(s) {
 }
 
 function currentBlock(blocks, now) {
-  for (const b of blocks) {
-    if (now >= b.start && now < b.end) return b;
-  }
+  for (const b of blocks) if (now >= b.start && now < b.end) return b;
   if (now < blocks[0].start) return { key:"OFF", label:"BEFORE SHIFT", start: now, end: blocks[0].start };
   const last = blocks[blocks.length-1];
   if (now >= last.end) return { key:"OFF", label:"SHIFT ENDED", start: last.end, end: now };
@@ -692,11 +760,7 @@ function tickClock() {
     if (idx >= 0 && idx < blocks.length - 1) next = blocks[idx + 1];
     if (!next && now < blocks[0].start) next = blocks[0];
 
-    if (next) {
-      el("nextUp").textContent = `Next: ${next.label} at ${fmtTime(next.start)}`;
-    } else {
-      el("nextUp").textContent = "Next: —";
-    }
+    el("nextUp").textContent = next ? `Next: ${next.label} at ${fmtTime(next.start)}` : "Next: —";
   } else {
     if (b.label === "BEFORE SHIFT") {
       el("countdown").textContent = `Starts in: ${fmtMMSS(b.end - now)}`;
@@ -727,7 +791,6 @@ function applyGoalsToInputs() {
   idsGoals.forEach(id => el(id).value = g[id] || 0);
 }
 
-/* --- Preset events --- */
 el("productType").addEventListener("change", () => {
   renderPresetDropdown();
   updateServingUI();
@@ -750,12 +813,7 @@ el("saveServingPreset").addEventListener("click", () => {
   const name = (prompt("Preset name (example: My Average, Small Nugs, Fast Pace):") || "").trim();
   if (!name) return;
 
-  const preset = {
-    id: uid(),
-    name,
-    goalMin: Math.round(goalMin),
-    grams: Math.round(grams)
-  };
+  const preset = { id: uid(), name, goalMin: Math.round(goalMin), grams: Math.round(grams) };
 
   state.servingPresets[type].push(preset);
   saveState();
@@ -764,7 +822,6 @@ el("saveServingPreset").addEventListener("click", () => {
   el("presetSelect").value = preset.id;
   applySelectedPresetToInputs();
   syncPresetButtons();
-
   alert("Preset saved.");
 });
 
@@ -772,26 +829,24 @@ el("deleteServingPreset").addEventListener("click", () => {
   const type = el("productType").value;
   const id = el("presetSelect").value;
   if (id === "standard") return;
-
   if (!confirm("Delete this preset?")) return;
 
   state.servingPresets[type] = (state.servingPresets[type] || []).filter(p => p.id !== id);
   saveState();
 
-  renderPresetDropdown(); // will fall back to standard if deleted
+  renderPresetDropdown();
   syncPresetButtons();
 });
 
-/* --- Serving timer events --- */
 el("startServing").addEventListener("click", startServingTimer);
 el("pauseServing").addEventListener("click", pauseServingTimer);
 el("resetServing").addEventListener("click", resetServingTimer);
 el("finishServing").addEventListener("click", finishServing);
 
-/* --- Schedule/Goals events --- */
 el("saveSchedule").addEventListener("click", () => {
   const s = {};
   idsSchedule.forEach(id => s[id] = el(id).value);
+
   s.b1m = Number(s.b1m || 0);
   s.lm  = Number(s.lm || 0);
   s.b2m = Number(s.b2m || 0);
@@ -818,10 +873,9 @@ el("clearToday").addEventListener("click", () => {
   renderLogAndTotals();
 });
 
-/* --- Init --- */
 applyScheduleToInputs();
 applyGoalsToInputs();
-renderPresetDropdown();        // builds preset list + applies selected preset
+renderPresetDropdown();
 syncPresetButtons();
 updateServingUI();
 renderLogAndTotals();
