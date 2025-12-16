@@ -69,6 +69,9 @@
       margin-top:8px;
     }
 
+    /* ✅ SHIFT TOGGLE: hide shift UI when OFF */
+    body.shiftOff .shiftOnly { display:none !important; }
+
     /* GOAL BAR */
     .goalWrap {
       width:min(900px, 100%);
@@ -227,6 +230,8 @@
     <div class="topRow">
       <div class="title">Shift Tools</div>
       <div>
+        <!-- ✅ ADDED -->
+        <button class="gray" id="toggleShift">🕒 Shift: ON</button>
         <button class="gray" id="toggleLog">📒 Log</button>
         <button class="gray" id="openSettings">⚙️ Settings</button>
       </div>
@@ -237,18 +242,21 @@
       <div id="ampm" class="ampm">—</div>
       <div id="date" class="date">---</div>
 
-      <div class="strip">
+      <!-- ✅ shift-only -->
+      <div class="strip shiftOnly">
         <span class="pill"><b>Status:</b> <span id="phaseText">—</span></span>
         <span class="pill" id="phasePill">⚫</span>
         <span class="pill" id="activePill">No active serving</span>
       </div>
 
-      <div class="strip">
+      <!-- ✅ shift-only -->
+      <div class="strip shiftOnly">
         <span class="pill" id="countdown">—</span>
         <span class="pill" id="nextUp">—</span>
       </div>
 
-      <div class="goalWrap">
+      <!-- ✅ shift-only -->
+      <div class="goalWrap shiftOnly">
         <div class="goalHeader">
           <span id="goalLabel">Goal: —</span>
           <span id="goalDelta">—</span>
@@ -268,13 +276,11 @@
         <div class="statBox">
           <div class="statLabel">Bucked</div>
           <div class="statValue"><span id="countBucked">0</span></div>
-          <!-- ✅ FIXED: Bucked-only avg -->
           <div class="statSub">Avg: <span id="avgMinBucked">0</span> min/serving</div>
         </div>
         <div class="statBox">
           <div class="statLabel">Branch</div>
           <div class="statValue"><span id="countBranch">0</span></div>
-          <!-- ✅ FIXED: Branch-only avg -->
           <div class="statSub">Avg: <span id="avgMinBranch">0</span> min/serving</div>
         </div>
       </div>
@@ -507,6 +513,9 @@ function loadState() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) 
 function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
 const defaultState = {
+  /* ✅ ADDED: shift mode toggle */
+  shiftEnabled: true,
+
   schedule: {
     w1s: "06:00", w1e: "08:30", b1m: 10,
     w2s: "08:40", w2e: "10:30", lm: 30,
@@ -525,6 +534,7 @@ const defaultState = {
 let state = loadState() || defaultState;
 
 (function migrate() {
+  if (typeof state.shiftEnabled !== "boolean") state.shiftEnabled = true; /* ✅ ADDED */
   if (!state.servingDefaults) state.servingDefaults = defaultState.servingDefaults;
   if (!state.servingPresets) state.servingPresets = { bucked: [], branch: [] };
   if (!state.activePresetId) state.activePresetId = { bucked: "standard", branch: "standard" };
@@ -590,6 +600,25 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el("sett
 
 el("toggleLog").addEventListener("click", () => {
   el("logSection").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+/* ✅ SHIFT TOGGLE LOGIC */
+function applyShiftUI() {
+  const on = state.shiftEnabled !== false;
+  document.body.classList.toggle("shiftOff", !on);
+  el("toggleShift").textContent = on ? "🕒 Shift: ON" : "🕒 Shift: OFF";
+}
+el("toggleShift").addEventListener("click", () => {
+  state.shiftEnabled = !(state.shiftEnabled !== false);
+  saveState();
+  applyShiftUI();
+
+  // refresh goal UI when turning ON
+  if (state.shiftEnabled) {
+    const log = getTodayLog();
+    const total = log.servings.reduce((sum,x)=>sum+Number(x.grams||0),0);
+    updateGoalUI(total);
+  }
 });
 
 function buildPresetLabel(p) { return `${p.name} — ${p.goalMin}m / ${p.grams}g`; }
@@ -958,6 +987,17 @@ function renderLogAndTotals() {
 }
 
 function updateGoalUI(totalGrams) {
+  /* ✅ SHIFT OFF: don’t show checkpoint tracking UI */
+  if (state.shiftEnabled === false) {
+    el("goalLabel").textContent = "Goal: —";
+    el("goalDelta").textContent = "";
+    el("goalFill").style.width = "0%";
+    el("goalFill").style.background = "#333";
+    el("goalHint").textContent = "Shift mode is OFF.";
+    el("goalStatusSettings").textContent = "Shift mode is OFF.";
+    return;
+  }
+
   const s = state.schedule;
   const now = new Date();
 
@@ -1002,7 +1042,7 @@ function updateGoalUI(totalGrams) {
   } else if (minsLeft <= 0) {
     el("goalHint").textContent = `Past checkpoint • Short ${Math.round(gramsRemaining)}g`;
   } else {
-    const paceNeeded = Math.round((gramsRemaining / minsLeft) * 60); // g/hr
+    const paceNeeded = Math.round((gramsRemaining / minsLeft) * 60);
     const pB = getPresetById("bucked", state.activePresetId?.bucked || "standard");
     const pR = getPresetById("branch", state.activePresetId?.branch || "standard");
     const buckedServ = Math.max(1, Math.ceil(gramsRemaining / Math.max(1, Number(pB.grams || 0))));
@@ -1030,29 +1070,32 @@ function tickClock() {
 
   el("date").textContent = now.toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 
-  const blocks = buildBlocksFromSchedule(state.schedule);
-  const b = currentBlock(blocks, now);
-  const [label, icon] = phaseLabel(b.key, b.label);
-  el("phaseText").textContent = label;
-  el("phasePill").textContent = icon;
+  // ✅ If shift mode is OFF, skip phase/countdown updates entirely
+  if (state.shiftEnabled !== false) {
+    const blocks = buildBlocksFromSchedule(state.schedule);
+    const b = currentBlock(blocks, now);
+    const [label, icon] = phaseLabel(b.key, b.label);
+    el("phaseText").textContent = label;
+    el("phasePill").textContent = icon;
 
-  if (b.end && b.start && b.end > now) {
-    const msLeft = b.end - now;
-    el("countdown").textContent = `Time left: ${fmtMMSS(msLeft)}`;
+    if (b.end && b.start && b.end > now) {
+      const msLeft = b.end - now;
+      el("countdown").textContent = `Time left: ${fmtMMSS(msLeft)}`;
 
-    const idx = blocks.findIndex(x => x.start.getTime() === b.start?.getTime() && x.end.getTime() === b.end?.getTime());
-    let next = null;
-    if (idx >= 0 && idx < blocks.length - 1) next = blocks[idx + 1];
-    if (!next && now < blocks[0].start) next = blocks[0];
+      const idx = blocks.findIndex(x => x.start.getTime() === b.start?.getTime() && x.end.getTime() === b.end?.getTime());
+      let next = null;
+      if (idx >= 0 && idx < blocks.length - 1) next = blocks[idx + 1];
+      if (!next && now < blocks[0].start) next = blocks[0];
 
-    el("nextUp").textContent = next ? `Next: ${next.label} @ ${fmtTime(next.start)}` : "Next: —";
-  } else {
-    if (b.label === "BEFORE SHIFT") {
-      el("countdown").textContent = `Starts in: ${fmtMMSS(b.end - now)}`;
-      el("nextUp").textContent = `Next: TRIM @ ${fmtTime(b.end)}`;
+      el("nextUp").textContent = next ? `Next: ${next.label} @ ${fmtTime(next.start)}` : "Next: —";
     } else {
-      el("countdown").textContent = "—";
-      el("nextUp").textContent = "Shift ended.";
+      if (b.label === "BEFORE SHIFT") {
+        el("countdown").textContent = `Starts in: ${fmtMMSS(b.end - now)}`;
+        el("nextUp").textContent = `Next: TRIM @ ${fmtTime(b.end)}`;
+      } else {
+        el("countdown").textContent = "—";
+        el("nextUp").textContent = "Shift ended.";
+      }
     }
   }
 
@@ -1115,6 +1158,9 @@ renderPresetManageList();
 renderDefaultPresetDropdowns();
 syncActiveUI();
 renderLogAndTotals();
+
+/* ✅ ADDED: apply shift UI on load */
+applyShiftUI();
 
 tickClock();
 setInterval(tickClock, 250);
