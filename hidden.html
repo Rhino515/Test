@@ -106,11 +106,11 @@
 
       <div class="row">
         <div>
-          <label>Work 1 start</label>
+          <label>Trim 1 start</label>
           <input id="w1s" type="time" />
         </div>
         <div>
-          <label>Work 1 end (Break 1 starts)</label>
+          <label>Trim 1 end (Break 1 starts)</label>
           <input id="w1e" type="time" />
         </div>
         <div>
@@ -121,11 +121,11 @@
 
       <div class="row">
         <div>
-          <label>Work 2 start</label>
+          <label>Trim 2 start</label>
           <input id="w2s" type="time" />
         </div>
         <div>
-          <label>Work 2 end (Lunch starts)</label>
+          <label>Trim 2 end (Lunch starts)</label>
           <input id="w2e" type="time" />
         </div>
         <div>
@@ -136,11 +136,11 @@
 
       <div class="row">
         <div>
-          <label>Work 3 start</label>
+          <label>Trim 3 start</label>
           <input id="w3s" type="time" />
         </div>
         <div>
-          <label>Work 3 end (Break 2 starts)</label>
+          <label>Trim 3 end (Break 2 starts)</label>
           <input id="w3e" type="time" />
         </div>
         <div>
@@ -151,17 +151,27 @@
 
       <div class="row">
         <div>
-          <label>Work 4 start</label>
+          <label>Final Trim start</label>
           <input id="w4s" type="time" />
         </div>
         <div>
-          <label>Work 4 end (Shift ends)</label>
+          <label>Trimming ends</label>
           <input id="w4e" type="time" />
         </div>
         <div>
           <label>&nbsp;</label>
           <button class="green" id="saveSchedule" style="width:100%">Save Schedule</button>
         </div>
+      </div>
+
+      <!-- NEW: Shift end time -->
+      <div class="row">
+        <div>
+          <label>Shift end (Clock out)</label>
+          <input id="shiftEnd" type="time" />
+        </div>
+        <div></div>
+        <div></div>
       </div>
 
       <div class="muted">
@@ -259,19 +269,19 @@ function saveState() {
    DEFAULTS (your workflow)
 ============================= */
 const defaultState = {
-  // Schedule default based on what you described
   schedule: {
     w1s: "06:00", w1e: "08:30", b1m: 10,
     w2s: "08:40", w2e: "10:30", lm: 30,
     w3s: "11:00", w3e: "13:30", b2m: 10,
-    w4s: "13:40", w4e: "14:15"
+    w4s: "13:40", w4e: "14:15",
+    shiftEnd: "14:30"   // NEW: clock-out time
   },
   goals: { gB1: 0, gL: 0, gB2: 0, gE: 0 },
   servingDefaults: {
     bucked: { goalMin: 30, grams: 400 },
     branch: { goalMin: 25, grams: 200 }
   },
-  today: {} // per-date logs
+  today: {}
 };
 
 let state = loadState() || defaultState;
@@ -318,16 +328,14 @@ function getTodayLog() {
 ============================= */
 const el = (id) => document.getElementById(id);
 
-// schedule inputs
-const idsSchedule = ["w1s","w1e","b1m","w2s","w2e","lm","w3s","w3e","b2m","w4s","w4e"];
-// goals inputs
+// schedule inputs (UPDATED)
+const idsSchedule = ["w1s","w1e","b1m","w2s","w2e","lm","w3s","w3e","b2m","w4s","w4e","shiftEnd"];
 const idsGoals = ["gB1","gL","gB2","gE"];
 
 /* =============================
    SCHEDULE PHASE ENGINE
 ============================= */
 function buildBlocksFromSchedule(s) {
-  // Blocks are in order: WORK1, BREAK1, WORK2, LUNCH, WORK3, BREAK2, WORK4, OFF
   const w1s = timeToDateToday(s.w1s), w1e = timeToDateToday(s.w1e);
   const b1e = new Date(w1e.getTime() + Number(s.b1m||0)*60000);
 
@@ -338,15 +346,19 @@ function buildBlocksFromSchedule(s) {
   const b2e = new Date(w3e.getTime() + Number(s.b2m||0)*60000);
 
   const w4s = timeToDateToday(s.w4s), w4e = timeToDateToday(s.w4e);
+  const shiftEnd = timeToDateToday(s.shiftEnd || s.w4e);
 
   return [
-    { key:"WORK",  label:"WORK",  start:w1s, end:w1e, checkpoint:"gB1" },
+    { key:"WORK",  label:"TRIM",  start:w1s, end:w1e, checkpoint:"gB1" },
     { key:"BREAK", label:"BREAK 1", start:w1e, end:b1e },
-    { key:"WORK",  label:"WORK",  start:w2s, end:w2e, checkpoint:"gL" },
+    { key:"WORK",  label:"TRIM",  start:w2s, end:w2e, checkpoint:"gL" },
     { key:"LUNCH", label:"LUNCH", start:w2e, end:le },
-    { key:"WORK",  label:"WORK",  start:w3s, end:w3e, checkpoint:"gB2" },
+    { key:"WORK",  label:"TRIM",  start:w3s, end:w3e, checkpoint:"gB2" },
     { key:"BREAK", label:"BREAK 2", start:w3e, end:b2e },
-    { key:"WORK",  label:"WORK",  start:w4s, end:w4e, checkpoint:"gE" }
+    { key:"WORK",  label:"TRIM",  start:w4s, end:w4e, checkpoint:"gE" },
+
+    // NEW phase after trimming
+    { key:"CLEANUP", label:"CLEAN UP / CLOCK OUT", start:w4e, end:shiftEnd }
   ];
 }
 
@@ -354,9 +366,7 @@ function currentBlock(blocks, now) {
   for (const b of blocks) {
     if (now >= b.start && now < b.end) return b;
   }
-  // If before first work:
   if (now < blocks[0].start) return { key:"OFF", label:"BEFORE SHIFT", start: now, end: blocks[0].start };
-  // If after last work:
   const last = blocks[blocks.length-1];
   if (now >= last.end) return { key:"OFF", label:"SHIFT ENDED", start: last.end, end: now };
   return { key:"OFF", label:"OFF", start: now, end: now };
@@ -365,11 +375,7 @@ function currentBlock(blocks, now) {
 /* =============================
    SERVING TIMER
 ============================= */
-let serving = {
-  running: false,
-  startedAt: null,
-  elapsedMs: 0
-};
+let serving = { running: false, startedAt: null, elapsedMs: 0 };
 let servingTicker = null;
 
 function updateServingUI() {
@@ -416,9 +422,7 @@ function resetServingTimer() {
 }
 
 function finishServing() {
-  // If not running, still allow finish with elapsed
   if (serving.running) pauseServingTimer();
-
   const ms = serving.elapsedMs;
   if (ms <= 0) return;
 
@@ -481,7 +485,6 @@ function renderLogAndTotals() {
   const avgMin = log.servings.length ? (totalMins / log.servings.length) : 0;
   el("avgMin").textContent = avgMin.toFixed(1);
 
-  // pace: grams/hour since firstStartMs
   let gph = 0;
   if (log.firstStartMs && totalGrams > 0) {
     const hours = (Date.now() - log.firstStartMs) / (1000*60*60);
@@ -489,10 +492,8 @@ function renderLogAndTotals() {
   }
   el("paceGph").textContent = gph.toFixed(0);
 
-  // Goals status vs checkpoints
   updateGoalStatus(totalGrams);
 
-  // Bind edits + deletes
   document.querySelectorAll(".gramsEdit").forEach(inp => {
     inp.addEventListener("change", (e) => {
       const id = e.target.getAttribute("data-id");
@@ -519,11 +520,8 @@ function renderLogAndTotals() {
 
 function updateGoalStatus(totalGrams) {
   const s = state.schedule;
-  const blocks = buildBlocksFromSchedule(s);
   const now = new Date();
 
-  // Determine which checkpoint is next / current based on schedule time
-  // We map checkpoints to times: Break1 start (=w1e), Lunch start (=w2e), Break2 start (=w3e), End (=w4e)
   const c = {
     gB1: timeToDateToday(s.w1e),
     gL:  timeToDateToday(s.w2e),
@@ -533,7 +531,6 @@ function updateGoalStatus(totalGrams) {
 
   const goals = state.goals;
 
-  // Find the nearest upcoming checkpoint (or last passed)
   const checkpoints = [
     { key:"gB1", label:"Break 1", at:c.gB1, goal:Number(goals.gB1||0) },
     { key:"gL",  label:"Lunch",   at:c.gL,  goal:Number(goals.gL||0) },
@@ -541,7 +538,6 @@ function updateGoalStatus(totalGrams) {
     { key:"gE",  label:"End",     at:c.gE,  goal:Number(goals.gE||0) }
   ];
 
-  // Choose “current target”: the next checkpoint that hasn’t happened yet; otherwise End.
   let target = checkpoints.find(x => now < x.at) || checkpoints[checkpoints.length - 1];
 
   if (!target.goal || target.goal <= 0) {
@@ -565,16 +561,16 @@ function updateGoalStatus(totalGrams) {
    LIVE CLOCK + PHASE UI
 ============================= */
 function phaseLabel(key, label) {
-  if (key === "WORK") return ["WORK", "🟢"];
+  if (key === "WORK") return ["TRIM", "🟢"];
   if (key === "BREAK") return [label, "🟡"];
   if (key === "LUNCH") return ["LUNCH", "🔵"];
+  if (key === "CLEANUP") return [label, "🟣"];
   return [label || "OFF", "⚫"];
 }
 
 function tickClock() {
   const now = new Date();
 
-  // Big clock
   const h = now.getHours();
   const m = pad2(now.getMinutes());
   const ampm = h >= 12 ? "PM" : "AM";
@@ -583,20 +579,16 @@ function tickClock() {
 
   el("date").textContent = now.toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 
-  // Phase
   const blocks = buildBlocksFromSchedule(state.schedule);
   const b = currentBlock(blocks, now);
   const [label, icon] = phaseLabel(b.key, b.label);
   el("phaseText").textContent = label;
   el("phasePill").textContent = icon;
 
-  // Countdown
   if (b.end && b.start && b.end > now) {
     const msLeft = b.end - now;
     el("countdown").textContent = `Time left: ${fmtMMSS(msLeft)}`;
 
-    // Next up
-    // Find next block start after current end
     const idx = blocks.findIndex(x => x.start.getTime() === b.start?.getTime() && x.end.getTime() === b.end?.getTime());
     let next = null;
     if (idx >= 0 && idx < blocks.length - 1) next = blocks[idx + 1];
@@ -608,18 +600,15 @@ function tickClock() {
       el("nextUp").textContent = "Next: —";
     }
   } else {
-    // Before shift or ended
     if (b.label === "BEFORE SHIFT") {
       el("countdown").textContent = `Starts in: ${fmtMMSS(b.end - now)}`;
-      el("nextUp").textContent = `Next: WORK at ${fmtTime(b.end)}`;
+      el("nextUp").textContent = `Next: TRIM at ${fmtTime(b.end)}`;
     } else {
       el("countdown").textContent = "—";
       el("nextUp").textContent = "Shift ended.";
     }
   }
 
-  // Refresh totals/goals occasionally
-  // (cheap + simple)
   if (now.getSeconds() % 10 === 0) {
     const log = getTodayLog();
     const total = log.servings.reduce((sum,x)=>sum+Number(x.grams||0),0);
@@ -632,7 +621,9 @@ function tickClock() {
 ============================= */
 function applyScheduleToInputs() {
   const s = state.schedule;
-  idsSchedule.forEach(id => el(id).value = s[id]);
+  idsSchedule.forEach(id => {
+    if (el(id)) el(id).value = s[id];
+  });
 }
 
 function applyGoalsToInputs() {
@@ -658,10 +649,9 @@ el("resetServing").addEventListener("click", resetServingTimer);
 el("finishServing").addEventListener("click", finishServing);
 
 el("saveSchedule").addEventListener("click", () => {
-  // Save values
   const s = {};
   idsSchedule.forEach(id => s[id] = el(id).value);
-  // Numbers
+
   s.b1m = Number(s.b1m || 0);
   s.lm  = Number(s.lm || 0);
   s.b2m = Number(s.b2m || 0);
@@ -688,18 +678,14 @@ el("clearToday").addEventListener("click", () => {
   renderLogAndTotals();
 });
 
-// Init schedule/goals inputs
 applyScheduleToInputs();
 applyGoalsToInputs();
 
-// Init serving defaults
 applyServingDefaults();
 updateServingUI();
 
-// Render log
 renderLogAndTotals();
 
-// Start live clock
 tickClock();
 setInterval(tickClock, 1000);
 </script>
