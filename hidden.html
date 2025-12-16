@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;600;800&display=swap" rel="stylesheet">
 
   <style>
-    /* ✅ ADDED: smooth scrolling */
     html { scroll-behavior: smooth; }
 
     body { background:#000; color:#fff; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin:0; padding:16px; }
@@ -18,6 +17,7 @@
     .card { background:#0b0b0b; border:1px solid #222; border-radius:16px; padding:14px; }
     .topRow { display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .title { font-weight:800; letter-spacing:.2px; opacity:.9; }
+
     button { padding:10px 12px; border:0; border-radius:12px; cursor:pointer; font-weight:800; margin:6px 8px 0 0; }
     .green { background:#1f8f3a; color:#fff; }
     .red { background:#b30000; color:#fff; }
@@ -41,8 +41,8 @@
     .clock {
       font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       font-size: 96px;
-      font-weight: 200;     /* thin */
-      letter-spacing: 2px;  /* airy */
+      font-weight: 200;
+      letter-spacing: 2px;
       line-height: 1;
       color:#fff;
       user-select:none;
@@ -72,12 +72,47 @@
       margin-top:8px;
     }
 
+    /* ✅ GOAL BAR (new) */
+    .goalWrap {
+      width:min(900px, 100%);
+      margin-top:4px;
+      text-align:left;
+    }
+    .goalHeader {
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      font-size:13px;
+      color:#d0d0d0;
+      margin-bottom:6px;
+    }
+    .goalBar {
+      width:100%;
+      height:10px;
+      background:#151515;
+      border-radius:999px;
+      overflow:hidden;
+      border:1px solid #262626;
+    }
+    #goalFill {
+      height:100%;
+      width:0%;
+      background:#b30000; /* will be updated by JS */
+      transition:width .35s ease, background .35s ease;
+    }
+    .goalHint {
+      margin-top:6px;
+      font-size:12px;
+      color:#9a9a9a;
+      line-height:1.25;
+    }
+
     .stats {
       display:grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap:10px;
       width:min(900px, 100%);
-      margin: 10px auto 0;
+      margin: 6px auto 0;
     }
     .statBox {
       background:#0a0a0a;
@@ -90,7 +125,7 @@
     .statValue { font-size:22px; font-weight:800; margin-top:6px; }
     .statSub { color:#aaa; font-size:12px; margin-top:4px; }
 
-    /* ACTION BUTTONS (tap-to-start / tap-to-finish) */
+    /* ACTION BUTTONS (✅ green + stays near clock) */
     .actions {
       width:min(900px, 100%);
       display:flex;
@@ -104,8 +139,8 @@
       min-width: 260px;
       padding:16px 14px;
       border-radius:18px;
-      border:1px solid #2a2a2a;
-      background:#101010;
+      border:1px solid #1f8f3a;
+      background:#0f1f14;
       color:#fff;
       font-weight:900;
       letter-spacing:.08em;
@@ -118,18 +153,21 @@
     .bigBtn:active { transform: scale(0.99); }
     .bigBtn .left { display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
     .bigBtn .name { font-size:16px; }
-    .bigBtn .hint { font-size:12px; color:#bdbdbd; font-weight:700; opacity:.85; text-transform:none; letter-spacing:0; }
-    .bigBtn .right { font-size:12px; color:#cfcfcf; font-weight:800; text-transform:none; letter-spacing:0; }
+    .bigBtn .hint { font-size:12px; color:#cfe8d7; font-weight:700; opacity:.9; text-transform:none; letter-spacing:0; }
+    .bigBtn .right { font-size:12px; color:#dff3e6; font-weight:800; text-transform:none; letter-spacing:0; }
+
     .bigBtn.active {
-      border-color:#ffffff55;
-      background:#141414;
-      outline:2px solid #ffffff33;
+      background:#1f8f3a;
+      border-color:#35c96f;
+      box-shadow: 0 0 0 2px rgba(31,143,58,.35);
     }
+    .bigBtn.active .hint,
+    .bigBtn.active .right { color:#fff; }
 
     .inlineRow { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
     .dangerBox { border:1px solid #400; background:#120; padding:12px; border-radius:12px; margin-top:10px; }
 
-    /* LOG (collapsible) */
+    /* LOG */
     .logWrap { width:min(980px, 100%); margin:12px auto 0; }
     .logHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .logHeader h2 { margin:0; color:#fff; font-size:16px; letter-spacing:.02em; }
@@ -141,7 +179,7 @@
     .right { text-align:right; }
     input, select { width:100%; padding:10px; border-radius:12px; border:1px solid #333; background:#0f0f0f; color:#fff; font-size:15px; margin-top:6px; }
 
-    /* ============ SETTINGS MODAL ============ */
+    /* SETTINGS MODAL */
     .modalOverlay {
       position:fixed; inset:0;
       background:rgba(0,0,0,.65);
@@ -178,9 +216,7 @@
 
     label { display:block; margin-top:10px; color:#bbb; font-size:12px; text-transform: uppercase; letter-spacing: .08em;}
 
-    /* =============================
-       TAP CLOCK TO EXPAND (added)
-    ============================= */
+    /* TAP CLOCK TO EXPAND */
     body.clockZoom .hero { padding: 28px 14px; }
     body.clockZoom .clock {
       font-size: clamp(120px, 24vw, 220px);
@@ -220,6 +256,18 @@
         <span class="pill" id="nextUp">—</span>
       </div>
 
+      <!-- ✅ GOAL BAR (new, simple) -->
+      <div class="goalWrap">
+        <div class="goalHeader">
+          <span id="goalLabel">Goal: —</span>
+          <span id="goalDelta">—</span>
+        </div>
+        <div class="goalBar">
+          <div id="goalFill"></div>
+        </div>
+        <div class="goalHint" id="goalHint">Set goals in Settings to track your pace.</div>
+      </div>
+
       <div class="stats">
         <div class="statBox">
           <div class="statLabel">Total grams today</div>
@@ -234,7 +282,8 @@
         <div class="statBox">
           <div class="statLabel">Branch</div>
           <div class="statValue"><span id="countBranch">0</span></div>
-          <div class="statSub" id="goalStatus">Set goals in Settings to see checkpoint progress.</div>
+          <!-- ✅ no more clutter here -->
+          <div class="statSub" id="goalStatus">Tracking shown above.</div>
         </div>
       </div>
 
@@ -267,7 +316,7 @@
     </div>
   </div>
 
-  <!-- LOG (always open now) -->
+  <!-- LOG (always open) -->
   <div class="logWrap" id="logSection">
     <div class="card">
       <div class="logHeader">
@@ -469,14 +518,12 @@
 /* =============================
    STORAGE
 ============================= */
-const STORE_KEY = "shiftTools_v2_clockHero";
+const STORE_KEY = "shiftTools_v3_goalBar";
 
 function loadState() {
   try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch(e) { return null; }
 }
-function saveState() {
-  localStorage.setItem(STORE_KEY, JSON.stringify(state));
-}
+function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
 /* =============================
    DEFAULTS
@@ -495,15 +542,10 @@ const defaultState = {
     bucked: { goalMin: 30, grams: 400 },
     branch: { goalMin: 25, grams: 200 }
   },
-
   servingPresets: { bucked: [], branch: [] },
-
-  // Which preset the big buttons use (per type)
   activePresetId: { bucked: "standard", branch: "standard" },
 
-  // Persist active serving so refresh won’t lose it
-  activeServing: null, // { type, startedAt, goalMin, grams, presetName }
-
+  activeServing: null,
   today: {}
 };
 
@@ -560,34 +602,9 @@ function uid() {
 }
 
 /* =============================
-   CATCH-UP PACE ✅ ADDED
-   Shows required pace + servings needed + max min/serv to hit next goal
+   TAP CLOCK TO EXPAND
 ============================= */
-function buildCatchUpHint(gramsRemaining, minsLeft) {
-  if (gramsRemaining <= 0 || minsLeft <= 0) return "";
-
-  const paceGph = gramsRemaining / (minsLeft / 60);
-
-  const pB = getPresetById("bucked", state.activePresetId?.bucked || "standard");
-  const pR = getPresetById("branch", state.activePresetId?.branch || "standard");
-
-  function perType(preset, label) {
-    const g = Number(preset?.grams || 0);
-    if (g <= 0) return `${label}: set grams`;
-    const servings = Math.max(1, Math.ceil(gramsRemaining / g));
-    const avgMin = minsLeft / servings;
-    return `${label}: ${servings} serv • ≤ ${avgMin.toFixed(1)} min/serv`;
-  }
-
-  return `Need ${gramsRemaining.toFixed(0)}g in ${minsLeft}m • Pace ${paceGph.toFixed(0)} g/hr • ${perType(pB,"Bucked")} • ${perType(pR,"Branch")}`;
-}
-
-/* =============================
-   TAP CLOCK TO EXPAND (added)
-============================= */
-function toggleClockZoom() {
-  document.body.classList.toggle("clockZoom");
-}
+function toggleClockZoom() { document.body.classList.toggle("clockZoom"); }
 el("clock").addEventListener("click", toggleClockZoom);
 
 /* =============================
@@ -609,7 +626,7 @@ el("settingsOverlay").addEventListener("click", (e) => { if (e.target === el("se
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el("settingsOverlay").classList.contains("open")) closeSettings(); });
 
 /* =============================
-   LOG BUTTON ✅ UPDATED: scroll only (log always visible)
+   LOG BUTTON: scroll only
 ============================= */
 el("toggleLog").addEventListener("click", () => {
   el("logSection").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -656,7 +673,6 @@ function renderDefaultPresetDropdowns() {
     sel.value = presets.some(p => p.id === state.activePresetId[type]) ? state.activePresetId[type] : "standard";
   });
 
-  // Update main-screen labels
   updateMainPresetLabels();
 }
 
@@ -749,7 +765,6 @@ el("deleteServingPreset").addEventListener("click", () => {
   if (!confirm("Delete this preset?")) return;
 
   state.servingPresets[type] = (state.servingPresets[type] || []).filter(p => p.id !== id);
-
   if (state.activePresetId[type] === id) state.activePresetId[type] = "standard";
 
   saveState();
@@ -802,7 +817,7 @@ function phaseLabel(key, label) {
 }
 
 /* =============================
-   ACTIVE SERVING (Option 1)
+   ACTIVE SERVING
 ============================= */
 function getActiveServing() { return state.activeServing; }
 
@@ -863,10 +878,7 @@ function handleTap(type) {
   const a = getActiveServing();
   if (!a) { startServing(type); return; }
 
-  if (a.type === type) {
-    finishServing();
-    return;
-  }
+  if (a.type === type) { finishServing(); return; }
 
   const ok = confirm(`You have an active ${a.type.toUpperCase()} running.\n\nFinish it and start ${type.toUpperCase()}?`);
   if (!ok) return;
@@ -920,7 +932,29 @@ function syncActiveUI() {
 }
 
 /* =============================
-   LOG + TOTALS + GOALS STATUS
+   GOAL BAR COLOR (Red → Yellow → Green)
+============================= */
+function lerp(a,b,t){ return a + (b-a)*t; }
+function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+function rgb(r,g,b){ return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`; }
+
+// progress 0..1
+function colorForProgress(p) {
+  p = clamp01(p);
+  // Red -> Yellow (0..0.6), Yellow -> Green (0.6..1)
+  if (p <= 0.6) {
+    const t = p / 0.6;
+    // red(179,0,0) -> yellow(240,200,0)
+    return rgb(lerp(179,240,t), lerp(0,200,t), lerp(0,0,t));
+  } else {
+    const t = (p - 0.6) / 0.4;
+    // yellow(240,200,0) -> green(31,143,58)
+    return rgb(lerp(240,31,t), lerp(200,143,t), lerp(0,58,t));
+  }
+}
+
+/* =============================
+   LOG + TOTALS + GOALS (✅ simple UI)
 ============================= */
 function renderLogAndTotals() {
   const log = getTodayLog();
@@ -964,7 +998,7 @@ function renderLogAndTotals() {
   }
   el("paceGph").textContent = gph.toFixed(0);
 
-  updateGoalStatus(totalGrams);
+  updateGoalUI(totalGrams);
 
   document.querySelectorAll(".gramsEdit").forEach(inp => {
     inp.addEventListener("change", (e) => {
@@ -990,52 +1024,71 @@ function renderLogAndTotals() {
   });
 }
 
-function updateGoalStatus(totalGrams) {
+function updateGoalUI(totalGrams) {
   const s = state.schedule;
   const now = new Date();
 
-  const c = {
-    gB1: timeToDateToday(s.w1e),
-    gL:  timeToDateToday(s.w2e),
-    gB2: timeToDateToday(s.w3e),
-    gE:  timeToDateToday(s.w4e)
-  };
-
-  const goals = state.goals;
-
   const checkpoints = [
-    { key:"gB1", label:"Break 1", at:c.gB1, goal:Number(goals.gB1||0) },
-    { key:"gL",  label:"Lunch",   at:c.gL,  goal:Number(goals.gL||0) },
-    { key:"gB2", label:"Break 2", at:c.gB2, goal:Number(goals.gB2||0) },
-    { key:"gE",  label:"End",     at:c.gE,  goal:Number(goals.gE||0) }
+    { key:"gB1", label:"Break 1", at: timeToDateToday(s.w1e) },
+    { key:"gL",  label:"Lunch",   at: timeToDateToday(s.w2e) },
+    { key:"gB2", label:"Break 2", at: timeToDateToday(s.w3e) },
+    { key:"gE",  label:"End",     at: timeToDateToday(s.w4e) }
   ];
 
-  let target = checkpoints.find(x => now < x.at) || checkpoints[checkpoints.length - 1];
+  const goals = state.goals || {};
+  const target = checkpoints.find(x => now < x.at) || checkpoints[checkpoints.length - 1];
+  const goal = Number(goals[target.key] || 0);
 
-  if (!target.goal || target.goal <= 0) {
-    el("goalStatus").textContent = "Set goals in Settings to see checkpoint progress.";
-    el("goalStatusSettings").textContent = "Set your goals and you’ll see progress on the main screen.";
+  // If no goal set
+  if (!goal || goal <= 0) {
+    el("goalLabel").textContent = "Goal: —";
+    el("goalDelta").textContent = "";
+    el("goalFill").style.width = "0%";
+    el("goalFill").style.background = "#333";
+    el("goalHint").textContent = "Set goals in Settings to track your pace.";
+    el("goalStatusSettings").textContent = "Set your goals and you’ll see the bar update live.";
     return;
   }
 
-  const diff = totalGrams - target.goal;
-  const status = diff >= 0
-    ? `Ahead by ${Math.abs(diff).toFixed(0)}g`
-    : `Behind by ${Math.abs(diff).toFixed(0)}g`;
+  const rawProgress = totalGrams / goal;
+  const progressClamped = Math.min(1, Math.max(0, rawProgress));
+  const pct = Math.min(100, Math.max(0, rawProgress * 100));
 
-  const minsLeft = Math.max(0, Math.round((target.at - now)/60000));
+  // bar fill + color
+  el("goalFill").style.width = `${Math.min(100, pct)}%`;
+  el("goalFill").style.background = colorForProgress(progressClamped);
 
-  // ✅ ADDED: catch-up hint (pace + servings needed + max min/serv)
-  const gramsRemaining = Math.max(0, target.goal - totalGrams);
-  const hint = buildCatchUpHint(gramsRemaining, minsLeft);
+  // text
+  const diff = totalGrams - goal;
+  const ahead = diff >= 0;
+  const gramsRemaining = Math.max(0, goal - totalGrams);
+  const minsLeft = Math.max(0, Math.round((target.at - now) / 60000));
 
-  el("goalStatus").textContent =
-    `${target.label}: ${totalGrams.toFixed(0)} / ${target.goal.toFixed(0)}g • ${status} • ${minsLeft}m left` +
-    (hint ? ` • ${hint}` : "");
+  el("goalLabel").textContent = `${target.label}: ${Math.round(totalGrams)}/${Math.round(goal)}g`;
+  el("goalDelta").textContent = ahead ? `Ahead ${Math.round(diff)}g` : `Behind ${Math.round(gramsRemaining)}g`;
+
+  // simple catch-up hint under bar
+  if (ahead) {
+    el("goalHint").textContent = "On pace ✔";
+  } else if (minsLeft <= 0) {
+    el("goalHint").textContent = `Past checkpoint • Short ${Math.round(gramsRemaining)}g`;
+  } else {
+    const paceNeeded = Math.round((gramsRemaining / minsLeft) * 60); // g/hr
+
+    // optional “max min/serv” (kept short)
+    const pB = getPresetById("bucked", state.activePresetId?.bucked || "standard");
+    const pR = getPresetById("branch", state.activePresetId?.branch || "standard");
+    const buckedServ = Math.max(1, Math.ceil(gramsRemaining / Math.max(1, Number(pB.grams || 0))));
+    const branchServ = Math.max(1, Math.ceil(gramsRemaining / Math.max(1, Number(pR.grams || 0))));
+    const buckedMaxMin = (buckedServ > 0) ? (minsLeft / buckedServ) : 0;
+    const branchMaxMin = (branchServ > 0) ? (minsLeft / branchServ) : 0;
+
+    el("goalHint").textContent =
+      `Need ~${paceNeeded} g/hr • ${minsLeft}m left • Bucked ≤ ${buckedMaxMin.toFixed(1)}m/serv • Branch ≤ ${branchMaxMin.toFixed(1)}m/serv`;
+  }
 
   el("goalStatusSettings").textContent =
-    `Current target: ${target.label} • ${minsLeft} minutes left` +
-    (hint ? ` • ${hint}` : "");
+    `Target: ${target.label} • ${minsLeft}m left • Goal ${Math.round(goal)}g`;
 }
 
 /* =============================
@@ -1081,10 +1134,11 @@ function tickClock() {
 
   if (getActiveServing()) syncActiveUI();
 
-  if (now.getSeconds() % 10 === 0) {
+  // keep goal bar fresh
+  if (now.getSeconds() % 2 === 0) {
     const log = getTodayLog();
     const total = log.servings.reduce((sum,x)=>sum+Number(x.grams||0),0);
-    updateGoalStatus(total);
+    updateGoalUI(total);
   }
 }
 
