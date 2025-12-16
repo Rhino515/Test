@@ -42,6 +42,10 @@
       letter-spacing: 2px;  /* airy */
       line-height: 1;
       color:#fff;
+      user-select:none;
+      -webkit-user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      cursor:pointer;
     }
     .ampm {
       font-weight:600;
@@ -170,6 +174,17 @@
     .modalGrid .card { min-width:290px; flex:1; }
 
     label { display:block; margin-top:10px; color:#bbb; font-size:12px; text-transform: uppercase; letter-spacing: .08em;}
+
+    /* =============================
+       TAP CLOCK TO EXPAND (added)
+    ============================= */
+    body.clockZoom .hero { padding: 28px 14px; }
+    body.clockZoom .clock {
+      font-size: clamp(120px, 24vw, 220px);
+      letter-spacing: 4px;
+      font-weight: 200;
+    }
+    body.clockZoom .stats { width:min(900px, 100%); }
   </style>
 </head>
 
@@ -186,8 +201,8 @@
     </div>
 
     <!-- HERO -->
-    <div class="hero">
-      <div id="clock" class="clock">--:--</div>
+    <div class="hero" id="hero">
+      <div id="clock" class="clock" title="Tap to expand">--:--</div>
       <div id="ampm" class="ampm">—</div>
       <div id="date" class="date">---</div>
 
@@ -542,6 +557,14 @@ function uid() {
 }
 
 /* =============================
+   TAP CLOCK TO EXPAND (added)
+============================= */
+function toggleClockZoom() {
+  document.body.classList.toggle("clockZoom");
+}
+el("clock").addEventListener("click", toggleClockZoom);
+
+/* =============================
    SETTINGS MODAL
 ============================= */
 function openSettings() {
@@ -686,7 +709,6 @@ el("saveServingPreset").addEventListener("click", () => {
   renderPresetManageList();
   renderDefaultPresetDropdowns();
 
-  // select newly created in manage list
   el("presetSelectManage").value = preset.id;
   applyManagePresetToInputs();
   syncManageDelete();
@@ -702,7 +724,6 @@ el("deleteServingPreset").addEventListener("click", () => {
 
   state.servingPresets[type] = (state.servingPresets[type] || []).filter(p => p.id !== id);
 
-  // If deleted preset was selected as default, revert default to standard
   if (state.activePresetId[type] === id) state.activePresetId[type] = "standard";
 
   saveState();
@@ -756,7 +777,6 @@ function phaseLabel(key, label) {
 
 /* =============================
    ACTIVE SERVING (Option 1)
-   Tap type = start, tap same type again = finish
 ============================= */
 function getActiveServing() { return state.activeServing; }
 
@@ -778,7 +798,6 @@ function startServing(type) {
   const presetId = state.activePresetId?.[type] || "standard";
   const p = getPresetById(type, presetId);
 
-  // Set firstStartMs for pace
   const log = getTodayLog();
   if (!log.firstStartMs) { log.firstStartMs = Date.now(); saveState(); }
 
@@ -819,17 +838,14 @@ function handleTap(type) {
   if (!a) { startServing(type); return; }
 
   if (a.type === type) {
-    // tap same button finishes
     finishServing();
     return;
   }
 
-  // different type tapped while active
   const ok = confirm(`You have an active ${a.type.toUpperCase()} running.\n\nFinish it and start ${type.toUpperCase()}?`);
   if (!ok) return;
 
   finishServing();
-  // start new immediately
   startServing(type);
 }
 
@@ -845,7 +861,6 @@ el("cancelActive").addEventListener("click", () => {
 function syncActiveUI() {
   const a = getActiveServing();
 
-  // reset
   el("btnBucked").classList.remove("active");
   el("btnBranch").classList.remove("active");
   el("hintBucked").textContent = "Tap to start";
@@ -865,8 +880,7 @@ function syncActiveUI() {
     delta = ` • ${sign}${fmtMMSS(Math.abs(diff))} vs ${a.goalMin}:00`;
   }
 
-  const pill = `${a.type.toUpperCase()} • ${elapsed}${delta} • ${a.grams}g (${a.presetName})`;
-  el("activePill").textContent = pill;
+  el("activePill").textContent = `${a.type.toUpperCase()} • ${elapsed}${delta} • ${a.grams}g (${a.presetName})`;
 
   if (a.type === "bucked") {
     el("btnBucked").classList.add("active");
@@ -917,7 +931,6 @@ function renderLogAndTotals() {
   const avgMin = log.servings.length ? (totalMins / log.servings.length) : 0;
   el("avgMin").textContent = avgMin.toFixed(1);
 
-  // pace: grams/hour since firstStartMs
   let gph = 0;
   if (log.firstStartMs && totalGrams > 0) {
     const hours = (Date.now() - log.firstStartMs) / (1000*60*60);
@@ -996,7 +1009,6 @@ function updateGoalStatus(totalGrams) {
 function tickClock() {
   const now = new Date();
 
-  // clock
   const h = now.getHours();
   const m = pad2(now.getMinutes());
   const ampm = h >= 12 ? "PM" : "AM";
@@ -1006,14 +1018,12 @@ function tickClock() {
 
   el("date").textContent = now.toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"long", day:"numeric" });
 
-  // phase
   const blocks = buildBlocksFromSchedule(state.schedule);
   const b = currentBlock(blocks, now);
   const [label, icon] = phaseLabel(b.key, b.label);
   el("phaseText").textContent = label;
   el("phasePill").textContent = icon;
 
-  // countdown + next up
   if (b.end && b.start && b.end > now) {
     const msLeft = b.end - now;
     el("countdown").textContent = `Time left: ${fmtMMSS(msLeft)}`;
@@ -1034,10 +1044,8 @@ function tickClock() {
     }
   }
 
-  // active serving UI (live timer)
   if (getActiveServing()) syncActiveUI();
 
-  // refresh totals/goals occasionally
   if (now.getSeconds() % 10 === 0) {
     const log = getTodayLog();
     const total = log.servings.reduce((sum,x)=>sum+Number(x.grams||0),0);
