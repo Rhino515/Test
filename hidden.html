@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shift Tools</title>
+  <style>
+    body { background:#000; color:#fff; font-family: Arial, Helvetica, sans-serif; margin:0; padding:16px; }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .top { display:flex; gap:12px; flex-wrap:wrap; align-items:stretch; }
+    .card { background:#0b0b0b; border:1px solid #222; border-radius:14px; padding:14px; flex:1; min-width: 290px; }
+    .clock { font-size:60px; font-weight:900; letter-spacing:1px; color:#0f0; line-height:1; }
+    .date { color:#aaa; margin-top:6px; }
+    .phase { margin-top:10px; font-size:18px; }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#222; margin-left:8px; font-size:12px; }
+    .big { font-size:28px; font-weight:900; margin-top:10px; }
+    .sub { color:#bbb; margin-top:6px; }
+    h2 { margin: 0 0 10px; color:#0f0; }
+    label { display:block; margin-top:10px; color:#ccc; font-size:13px; text-transform: uppercase; letter-spacing: .06em;}
+    input, select { width:100%; padding:10px; border-radius:10px; border:1px solid #444; background:#111; color:#fff; font-size:16px; margin-top:6px; }
+    button { padding:10px 12px; border:0; border-radius:10px; cursor:pointer; font-weight:800; margin:6px 8px 0 0; }
+    .green { background:#1f8f3a; color:#fff; }
+    .red { background:#b30000; color:#fff; }
+    .gray { background:#444; color:#fff; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .row > div { flex:1; min-width: 210px; }
+    table { width:100%; border-collapse:collapse; margin-top:10px; }
+    th, td { border:1px solid #333; padding:10px; text-align:left; }
+    th { background:#111; }
+    tr.active { outline:2px solid #0f0; }
+    .muted { color:#aaa; font-size:13px; margin-top:8px; }
+    .right { text-align:right; }
+    .tiny { font-size:12px; color:#aaa; }
+    a { color:#0af; text-decoration:none; }
+    .dangerBox { border:1px solid #400; background:#120; padding:12px; border-radius:12px; margin-top:10px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LIVE CLOCK + PHASE -->
+  <div class="top">
+    <div class="card">
+      <div class="clock" id="clock">--:--</div>
+      <div class="date" id="date">---</div>
+
+      <div class="phase">
+        <b>Status:</b> <span id="phaseText">—</span>
+        <span class="pill" id="phasePill">—</span>
+      </div>
+
+      <div class="big" id="countdown">—</div>
+      <div class="sub" id="nextUp">—</div>
+
+      <div class="muted">
+        This page saves locally on your phone (no login). If you clear “Website Data”, it will erase it.
+      </div>
+
+      <div style="margin-top:10px">
+        <a href="index.html">← Back to Calculator</a>
+      </div>
+    </div>
+
+    <!-- SERVING TIMER -->
+    <div class="card">
+      <h2>Serving Timer</h2>
+
+      <div class="row">
+        <div>
+          <label>Product type</label>
+          <select id="productType">
+            <option value="bucked">Bucked (goal 30m, est 400g)</option>
+            <option value="branch">Branch (goal 25m, est 200g)</option>
+          </select>
+        </div>
+        <div>
+          <label>Goal minutes</label>
+          <input id="goalMinutes" type="number" step="1" min="1" />
+        </div>
+        <div>
+          <label>Estimated grams</label>
+          <input id="estGrams" type="number" step="1" min="0" />
+        </div>
+      </div>
+
+      <div class="big" id="servingTimer">00:00</div>
+      <div class="sub" id="servingDelta">Target: —</div>
+
+      <div>
+        <button class="green" id="startServing">Start</button>
+        <button class="gray" id="pauseServing">Pause</button>
+        <button class="red" id="finishServing">Finish Serving</button>
+        <button class="gray" id="resetServing">Reset</button>
+      </div>
+
+      <div class="muted">
+        Start when you receive product. Finish when you turn it in. It logs time + grams.
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHEDULE + GOALS -->
+  <div class="top" style="margin-top:12px">
+    <div class="card">
+      <h2>Schedule (Editable)</h2>
+
+      <div class="row">
+        <div>
+          <label>Work 1 start</label>
+          <input id="w1s" type="time" />
+        </div>
+        <div>
+          <label>Work 1 end (Break 1 starts)</label>
+          <input id="w1e" type="time" />
+        </div>
+        <div>
+          <label>Break 1 minutes</label>
+          <input id="b1m" type="number" step="1" min="0" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Work 2 start</label>
+          <input id="w2s" type="time" />
+        </div>
+        <div>
+          <label>Work 2 end (Lunch starts)</label>
+          <input id="w2e" type="time" />
+        </div>
+        <div>
+          <label>Lunch minutes</label>
+          <input id="lm" type="number" step="1" min="0" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Work 3 start</label>
+          <input id="w3s" type="time" />
+        </div>
+        <div>
+          <label>Work 3 end (Break 2 starts)</label>
+          <input id="w3e" type="time" />
+        </div>
+        <div>
+          <label>Break 2 minutes</label>
+          <input id="b2m" type="number" step="1" min="0" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Work 4 start</label>
+          <input id="w4s" type="time" />
+        </div>
+        <div>
+          <label>Work 4 end (Shift ends)</label>
+          <input id="w4e" type="time" />
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="green" id="saveSchedule" style="width:100%">Save Schedule</button>
+        </div>
+      </div>
+
+      <div class="muted">
+        Your preset is saved. If they tell you to start later, just edit the start times and save.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Goals by Checkpoint</h2>
+
+      <div class="row">
+        <div>
+          <label>Goal by Break 1</label>
+          <input id="gB1" type="number" step="1" min="0" placeholder="grams" />
+        </div>
+        <div>
+          <label>Goal by Lunch</label>
+          <input id="gL" type="number" step="1" min="0" placeholder="grams" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Goal by Break 2</label>
+          <input id="gB2" type="number" step="1" min="0" placeholder="grams" />
+        </div>
+        <div>
+          <label>Goal by End</label>
+          <input id="gE" type="number" step="1" min="0" placeholder="grams" />
+        </div>
+      </div>
+
+      <button class="green" id="saveGoals" style="width:100%">Save Goals</button>
+
+      <div class="card" style="margin-top:10px; padding:12px">
+        <div id="goalStatus" class="sub">Set your checkpoint goals to see progress.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG + TOTALS -->
+  <div class="card" style="margin-top:12px">
+    <h2>Today’s Serving Log</h2>
+
+    <div class="row">
+      <div class="card" style="margin:0; padding:12px">
+        <div><b>Total estimated grams today:</b> <span id="totalGrams">0</span> g</div>
+        <div class="tiny">Bucked: <span id="countBucked">0</span> • Branch: <span id="countBranch">0</span></div>
+      </div>
+      <div class="card" style="margin:0; padding:12px">
+        <div><b>Pace:</b> <span id="paceGph">0</span> g/hour</div>
+        <div class="tiny">Based on your first serving start time today.</div>
+      </div>
+      <div class="card" style="margin:0; padding:12px">
+        <div><b>Avg time/serving:</b> <span id="avgMin">0</span> min</div>
+        <div class="tiny">Across all servings today.</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Finished</th>
+          <th>Type</th>
+          <th class="right">Minutes</th>
+          <th class="right">Grams (editable)</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="logBody"></tbody>
+    </table>
+
+    <div class="dangerBox">
+      <button class="red" id="clearToday">Clear Today’s Log</button>
+      <span class="tiny">Only clears the log for today on this device.</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* =============================
+   STORAGE
+============================= */
+const STORE_KEY = "shiftTools_v1";
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || null; } catch(e) { return null; }
+}
+function saveState() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+}
+
+/* =============================
+   DEFAULTS (your workflow)
+============================= */
+const defaultState = {
+  // Schedule default based on what you described
+  schedule: {
+    w1s: "06:00", w1e: "08:30", b1m: 10,
+    w2s: "08:40", w2e: "10:30", lm: 30,
+    w3s: "11:00", w3e: "13:30", b2m: 10,
+    w4s: "13:40", w4e: "14:15"
+  },
+  goals: { gB1: 0, gL: 0, gB2: 0, gE: 0 },
+  servingDefaults: {
+    bucked: { goalMin: 30, grams: 400 },
+    branch: { goalMin: 25, grams: 200 }
+  },
+  today: {} // per-date logs
+};
+
+let state = loadState() || defaultState;
+
+/* =============================
+   HELPERS
+============================= */
+function pad2(n){ return String(n).padStart(2, "0"); }
+
+function timeToDateToday(hhmm) {
+  const [h,m] = hhmm.split(":").map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return d;
+}
+
+function fmtTime(d) {
+  let h = d.getHours();
+  const m = pad2(d.getMinutes());
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12; if (h === 0) h = 12;
+  return `${h}:${m} ${ampm}`;
+}
+
+function fmtMMSS(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const m = pad2(Math.floor(total / 60));
+  const s = pad2(total % 60);
+  return `${m}:${s}`;
+}
+
+function todayKey() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function getTodayLog() {
+  const k = todayKey();
+  if (!state.today[k]) state.today[k] = { servings: [], firstStartMs: null };
+  return state.today[k];
+}
+
+/* =============================
+   DOM
+============================= */
+const el = (id) => document.getElementById(id);
+
+// schedule inputs
+const idsSchedule = ["w1s","w1e","b1m","w2s","w2e","lm","w3s","w3e","b2m","w4s","w4e"];
+// goals inputs
+const idsGoals = ["gB1","gL","gB2","gE"];
+
+/* =============================
+   SCHEDULE PHASE ENGINE
+============================= */
+function buildBlocksFromSchedule(s) {
+  // Blocks are in order: WORK1, BREAK1, WORK2, LUNCH, WORK3, BREAK2, WORK4, OFF
+  const w1s = timeToDateToday(s.w1s), w1e = timeToDateToday(s.w1e);
+  const b1e = new Date(w1e.getTime() + Number(s.b1m||0)*60000);
+
+  const w2s = timeToDateToday(s.w2s), w2e = timeToDateToday(s.w2e);
+  const le  = new Date(w2e.getTime() + Number(s.lm||0)*60000);
+
+  const w3s = timeToDateToday(s.w3s), w3e = timeToDateToday(s.w3e);
+  const b2e = new Date(w3e.getTime() + Number(s.b2m||0)*60000);
+
+  const w4s = timeToDateToday(s.w4s), w4e = timeToDateToday(s.w4e);
+
+  return [
+    { key:"WORK",  label:"WORK",  start:w1s, end:w1e, checkpoint:"gB1" },
+    { key:"BREAK", label:"BREAK 1", start:w1e, end:b1e },
+    { key:"WORK",  label:"WORK",  start:w2s, end:w2e, checkpoint:"gL" },
+    { key:"LUNCH", label:"LUNCH", start:w2e, end:le },
+    { key:"WORK",  label:"WORK",  start:w3s, end:w3e, checkpoint:"gB2" },
+    { key:"BREAK", label:"BREAK 2", start:w3e, end:b2e },
+    { key:"WORK",  label:"WORK",  start:w4s, end:w4e, checkpoint:"gE" }
+  ];
+}
+
+function currentBlock(blocks, now) {
+  for (const b of blocks) {
+    if (now >= b.start && now < b.end) return b;
+  }
+  // If before first work:
+  if (now < blocks[0].start) return { key:"OFF", label:"BEFORE SHIFT", start: now, end: blocks[0].start };
+  // If after last work:
+  const last = blocks[blocks.length-1];
+  if (now >= last.end) return { key:"OFF", label:"SHIFT ENDED", start: last.end, end: now };
+  return { key:"OFF", label:"OFF", start: now, end: now };
+}
+
+/* =============================
+   SERVING TIMER
+============================= */
+let serving = {
+  running: false,
+  startedAt: null,
+  elapsedMs: 0
+};
+let servingTicker = null;
+
+function updateServingUI() {
+  const ms = serving.running ? (Date.now() - serving.startedAt + serving.elapsedMs) : serving.elapsedMs;
+  el("servingTimer").textContent = fmtMMSS(ms);
+
+  const goalMin = Number(el("goalMinutes").value || 0);
+  const goalMs = goalMin * 60000;
+  if (goalMs > 0) {
+    const diff = ms - goalMs;
+    const sign = diff > 0 ? "+" : "-";
+    el("servingDelta").textContent = `Target: ${goalMin}:00 • ${sign}${fmtMMSS(Math.abs(diff))} vs target`;
+  } else {
+    el("servingDelta").textContent = "Target: —";
+  }
+}
+
+function startServingTimer() {
+  if (serving.running) return;
+  serving.running = true;
+  serving.startedAt = Date.now();
+  if (!getTodayLog().firstStartMs) {
+    getTodayLog().firstStartMs = Date.now();
+    saveState();
+  }
+  servingTicker = setInterval(updateServingUI, 250);
+  updateServingUI();
+}
+
+function pauseServingTimer() {
+  if (!serving.running) return;
+  serving.elapsedMs += (Date.now() - serving.startedAt);
+  serving.startedAt = null;
+  serving.running = false;
+  if (servingTicker) clearInterval(servingTicker);
+  servingTicker = null;
+  updateServingUI();
+}
+
+function resetServingTimer() {
+  pauseServingTimer();
+  serving.elapsedMs = 0;
+  updateServingUI();
+}
+
+function finishServing() {
+  // If not running, still allow finish with elapsed
+  if (serving.running) pauseServingTimer();
+
+  const ms = serving.elapsedMs;
+  if (ms <= 0) return;
+
+  const type = el("productType").value;
+  const grams = Number(el("estGrams").value || 0);
+
+  const entry = {
+    id: crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random(),
+    finishedAt: new Date().toISOString(),
+    type,
+    minutes: +(ms / 60000).toFixed(2),
+    grams: +grams.toFixed(0)
+  };
+
+  const log = getTodayLog();
+  log.servings.push(entry);
+  saveState();
+
+  resetServingTimer();
+  renderLogAndTotals();
+}
+
+/* =============================
+   LOG + TOTALS + GOALS STATUS
+============================= */
+function renderLogAndTotals() {
+  const log = getTodayLog();
+  const body = el("logBody");
+  body.innerHTML = "";
+
+  let totalGrams = 0;
+  let totalMins = 0;
+  let countB = 0, countBr = 0;
+
+  log.servings.forEach((s) => {
+    totalGrams += Number(s.grams || 0);
+    totalMins += Number(s.minutes || 0);
+    if (s.type === "bucked") countB++;
+    if (s.type === "branch") countBr++;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${fmtTime(new Date(s.finishedAt))}</td>
+      <td>${s.type === "bucked" ? "Bucked" : "Branch"}</td>
+      <td class="right">${s.minutes.toFixed(2)}</td>
+      <td class="right">
+        <input data-id="${s.id}" class="gramsEdit" type="number" step="1" min="0" value="${s.grams}">
+      </td>
+      <td>
+        <button class="red deleteOne" data-id="${s.id}">Delete</button>
+      </td>
+    `;
+    body.appendChild(tr);
+  });
+
+  el("totalGrams").textContent = totalGrams.toFixed(0);
+  el("countBucked").textContent = countB;
+  el("countBranch").textContent = countBr;
+
+  const avgMin = log.servings.length ? (totalMins / log.servings.length) : 0;
+  el("avgMin").textContent = avgMin.toFixed(1);
+
+  // pace: grams/hour since firstStartMs
+  let gph = 0;
+  if (log.firstStartMs && totalGrams > 0) {
+    const hours = (Date.now() - log.firstStartMs) / (1000*60*60);
+    if (hours > 0) gph = totalGrams / hours;
+  }
+  el("paceGph").textContent = gph.toFixed(0);
+
+  // Goals status vs checkpoints
+  updateGoalStatus(totalGrams);
+
+  // Bind edits + deletes
+  document.querySelectorAll(".gramsEdit").forEach(inp => {
+    inp.addEventListener("change", (e) => {
+      const id = e.target.getAttribute("data-id");
+      const val = Number(e.target.value || 0);
+      const log2 = getTodayLog();
+      const item = log2.servings.find(x => x.id === id);
+      if (item) item.grams = Math.max(0, Math.round(val));
+      saveState();
+      renderLogAndTotals();
+    });
+  });
+
+  document.querySelectorAll(".deleteOne").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const id = e.target.getAttribute("data-id");
+      if (!confirm("Delete this serving?")) return;
+      const log2 = getTodayLog();
+      log2.servings = log2.servings.filter(x => x.id !== id);
+      saveState();
+      renderLogAndTotals();
+    });
+  });
+}
+
+function updateGoalStatus(totalGrams) {
+  const s = state.schedule;
+  const blocks = buildBlocksFromSchedule(s);
+  const now = new Date();
+
+  // Determine which checkpoint is next / current based on schedule time
+  // We map checkpoints to times: Break1 start (=w1e), Lunch start (=w2e), Break2 start (=w3e), End (=w4e)
+  const c = {
+    gB1: timeToDateToday(s.w1e),
+    gL:  timeToDateToday(s.w2e),
+    gB2: timeToDateToday(s.w3e),
+    gE:  timeToDateToday(s.w4e)
+  };
+
+  const goals = state.goals;
+
+  // Find the nearest upcoming checkpoint (or last passed)
+  const checkpoints = [
+    { key:"gB1", label:"Break 1", at:c.gB1, goal:Number(goals.gB1||0) },
+    { key:"gL",  label:"Lunch",   at:c.gL,  goal:Number(goals.gL||0) },
+    { key:"gB2", label:"Break 2", at:c.gB2, goal:Number(goals.gB2||0) },
+    { key:"gE",  label:"End",     at:c.gE,  goal:Number(goals.gE||0) }
+  ];
+
+  // Choose “current target”: the next checkpoint that hasn’t happened yet; otherwise End.
+  let target = checkpoints.find(x => now < x.at) || checkpoints[checkpoints.length - 1];
+
+  if (!target.goal || target.goal <= 0) {
+    el("goalStatus").textContent = "Set your checkpoint goals to see progress.";
+    return;
+  }
+
+  const diff = totalGrams - target.goal;
+  const status = diff >= 0
+    ? `✅ Ahead by ${Math.abs(diff).toFixed(0)}g`
+    : `⛔ Behind by ${Math.abs(diff).toFixed(0)}g`;
+
+  const minsLeft = Math.max(0, Math.round((target.at - now)/60000));
+
+  el("goalStatus").innerHTML =
+    `<b>Target by ${target.label}:</b> ${totalGrams.toFixed(0)}g / ${target.goal.toFixed(0)}g — ${status}<br>` +
+    `<span class="tiny">Time until ${target.label}: ${minsLeft} min</span>`;
+}
+
+/* =============================
+   LIVE CLOCK + PHASE UI
+============================= */
+function phaseLabel(key, label) {
+  if (key === "WORK") return ["WORK", "🟢"];
+  if (key === "BREAK") return [label, "🟡"];
+  if (key === "LUNCH") return ["LUNCH", "🔵"];
+  return [label || "OFF", "⚫"];
+}
+
+function tickClock() {
+  const now = new Date();
+
+  // Big clock
+  const h = now.getHours();
+  const m = pad2(now.getMinutes());
+  const ampm = h >= 12 ? "PM" : "AM";
+  const h12 = (h % 12) === 0 ? 12 : (h % 12);
+  el("clock").textContent = `${h12}:${m} ${ampm}`;
+
+  el("date").textContent = now.toLocaleDateString(undefined, { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+
+  // Phase
+  const blocks = buildBlocksFromSchedule(state.schedule);
+  const b = currentBlock(blocks, now);
+  const [label, icon] = phaseLabel(b.key, b.label);
+  el("phaseText").textContent = label;
+  el("phasePill").textContent = icon;
+
+  // Countdown
+  if (b.end && b.start && b.end > now) {
+    const msLeft = b.end - now;
+    el("countdown").textContent = `Time left: ${fmtMMSS(msLeft)}`;
+
+    // Next up
+    // Find next block start after current end
+    const idx = blocks.findIndex(x => x.start.getTime() === b.start?.getTime() && x.end.getTime() === b.end?.getTime());
+    let next = null;
+    if (idx >= 0 && idx < blocks.length - 1) next = blocks[idx + 1];
+    if (!next && now < blocks[0].start) next = blocks[0];
+
+    if (next) {
+      el("nextUp").textContent = `Next: ${next.label} at ${fmtTime(next.start)}`;
+    } else {
+      el("nextUp").textContent = "Next: —";
+    }
+  } else {
+    // Before shift or ended
+    if (b.label === "BEFORE SHIFT") {
+      el("countdown").textContent = `Starts in: ${fmtMMSS(b.end - now)}`;
+      el("nextUp").textContent = `Next: WORK at ${fmtTime(b.end)}`;
+    } else {
+      el("countdown").textContent = "—";
+      el("nextUp").textContent = "Shift ended.";
+    }
+  }
+
+  // Refresh totals/goals occasionally
+  // (cheap + simple)
+  if (now.getSeconds() % 10 === 0) {
+    const log = getTodayLog();
+    const total = log.servings.reduce((sum,x)=>sum+Number(x.grams||0),0);
+    updateGoalStatus(total);
+  }
+}
+
+/* =============================
+   UI INIT + EVENTS
+============================= */
+function applyScheduleToInputs() {
+  const s = state.schedule;
+  idsSchedule.forEach(id => el(id).value = s[id]);
+}
+
+function applyGoalsToInputs() {
+  const g = state.goals;
+  idsGoals.forEach(id => el(id).value = g[id] || 0);
+}
+
+function applyServingDefaults() {
+  const type = el("productType").value;
+  const d = state.servingDefaults[type];
+  el("goalMinutes").value = d.goalMin;
+  el("estGrams").value = d.grams;
+}
+
+el("productType").addEventListener("change", () => {
+  applyServingDefaults();
+  updateServingUI();
+});
+
+el("startServing").addEventListener("click", startServingTimer);
+el("pauseServing").addEventListener("click", pauseServingTimer);
+el("resetServing").addEventListener("click", resetServingTimer);
+el("finishServing").addEventListener("click", finishServing);
+
+el("saveSchedule").addEventListener("click", () => {
+  // Save values
+  const s = {};
+  idsSchedule.forEach(id => s[id] = el(id).value);
+  // Numbers
+  s.b1m = Number(s.b1m || 0);
+  s.lm  = Number(s.lm || 0);
+  s.b2m = Number(s.b2m || 0);
+
+  state.schedule = s;
+  saveState();
+  alert("Schedule saved.");
+});
+
+el("saveGoals").addEventListener("click", () => {
+  const g = {};
+  idsGoals.forEach(id => g[id] = Number(el(id).value || 0));
+  state.goals = g;
+  saveState();
+  alert("Goals saved.");
+  renderLogAndTotals();
+});
+
+el("clearToday").addEventListener("click", () => {
+  if (!confirm("Clear today’s serving log?")) return;
+  const k = todayKey();
+  state.today[k] = { servings: [], firstStartMs: null };
+  saveState();
+  renderLogAndTotals();
+});
+
+// Init schedule/goals inputs
+applyScheduleToInputs();
+applyGoalsToInputs();
+
+// Init serving defaults
+applyServingDefaults();
+updateServingUI();
+
+// Render log
+renderLogAndTotals();
+
+// Start live clock
+tickClock();
+setInterval(tickClock, 1000);
+</script>
+</body>
+</html>
