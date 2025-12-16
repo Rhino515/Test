@@ -267,8 +267,8 @@
     </div>
   </div>
 
-  <!-- LOG (collapsible) -->
-  <div class="logWrap hide" id="logSection">
+  <!-- LOG (always open now) -->
+  <div class="logWrap" id="logSection">
     <div class="card">
       <div class="logHeader">
         <h2>Today’s Serving Log</h2>
@@ -560,6 +560,29 @@ function uid() {
 }
 
 /* =============================
+   CATCH-UP PACE ✅ ADDED
+   Shows required pace + servings needed + max min/serv to hit next goal
+============================= */
+function buildCatchUpHint(gramsRemaining, minsLeft) {
+  if (gramsRemaining <= 0 || minsLeft <= 0) return "";
+
+  const paceGph = gramsRemaining / (minsLeft / 60);
+
+  const pB = getPresetById("bucked", state.activePresetId?.bucked || "standard");
+  const pR = getPresetById("branch", state.activePresetId?.branch || "standard");
+
+  function perType(preset, label) {
+    const g = Number(preset?.grams || 0);
+    if (g <= 0) return `${label}: set grams`;
+    const servings = Math.max(1, Math.ceil(gramsRemaining / g));
+    const avgMin = minsLeft / servings;
+    return `${label}: ${servings} serv • ≤ ${avgMin.toFixed(1)} min/serv`;
+  }
+
+  return `Need ${gramsRemaining.toFixed(0)}g in ${minsLeft}m • Pace ${paceGph.toFixed(0)} g/hr • ${perType(pB,"Bucked")} • ${perType(pR,"Branch")}`;
+}
+
+/* =============================
    TAP CLOCK TO EXPAND (added)
 ============================= */
 function toggleClockZoom() {
@@ -586,20 +609,10 @@ el("settingsOverlay").addEventListener("click", (e) => { if (e.target === el("se
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && el("settingsOverlay").classList.contains("open")) closeSettings(); });
 
 /* =============================
-   LOG TOGGLE ✅ UPDATED: open + scroll to log
+   LOG BUTTON ✅ UPDATED: scroll only (log always visible)
 ============================= */
 el("toggleLog").addEventListener("click", () => {
-  const log = el("logSection");
-  const willOpen = log.classList.contains("hide"); // true if it's currently hidden
-
-  log.classList.toggle("hide");
-
-  // If we just opened it, scroll to it
-  if (willOpen) {
-    requestAnimationFrame(() => {
-      log.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
-  }
+  el("logSection").scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 /* =============================
@@ -1012,8 +1025,17 @@ function updateGoalStatus(totalGrams) {
 
   const minsLeft = Math.max(0, Math.round((target.at - now)/60000));
 
-  el("goalStatus").textContent = `${target.label}: ${totalGrams.toFixed(0)} / ${target.goal.toFixed(0)}g • ${status} • ${minsLeft}m left`;
-  el("goalStatusSettings").textContent = `Current target: ${target.label} • ${minsLeft} minutes left`;
+  // ✅ ADDED: catch-up hint (pace + servings needed + max min/serv)
+  const gramsRemaining = Math.max(0, target.goal - totalGrams);
+  const hint = buildCatchUpHint(gramsRemaining, minsLeft);
+
+  el("goalStatus").textContent =
+    `${target.label}: ${totalGrams.toFixed(0)} / ${target.goal.toFixed(0)}g • ${status} • ${minsLeft}m left` +
+    (hint ? ` • ${hint}` : "");
+
+  el("goalStatusSettings").textContent =
+    `Current target: ${target.label} • ${minsLeft} minutes left` +
+    (hint ? ` • ${hint}` : "");
 }
 
 /* =============================
