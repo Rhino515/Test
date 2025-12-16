@@ -91,10 +91,15 @@
         <button class="gray" id="pauseServing">Pause</button>
         <button class="red" id="finishServing">Finish Serving</button>
         <button class="gray" id="resetServing">Reset</button>
+
+        <!-- NEW: Save preset button -->
+        <button class="gray" id="saveServingPreset">Save as Preset</button>
       </div>
 
       <div class="muted">
         Start when you receive product. Finish when you turn it in. It logs time + grams.
+        <br>
+        Tip: Change goal minutes / grams and tap <b>Save as Preset</b> so it autofills next time.
       </div>
     </div>
   </div>
@@ -164,7 +169,7 @@
         </div>
       </div>
 
-      <!-- NEW: Shift end time -->
+      <!-- Shift end time -->
       <div class="row">
         <div>
           <label>Shift end (Clock out)</label>
@@ -274,7 +279,7 @@ const defaultState = {
     w2s: "08:40", w2e: "10:30", lm: 30,
     w3s: "11:00", w3e: "13:30", b2m: 10,
     w4s: "13:40", w4e: "14:15",
-    shiftEnd: "14:30"   // NEW: clock-out time
+    shiftEnd: "14:30"
   },
   goals: { gB1: 0, gL: 0, gB2: 0, gE: 0 },
   servingDefaults: {
@@ -328,7 +333,7 @@ function getTodayLog() {
 ============================= */
 const el = (id) => document.getElementById(id);
 
-// schedule inputs (UPDATED)
+// schedule inputs
 const idsSchedule = ["w1s","w1e","b1m","w2s","w2e","lm","w3s","w3e","b2m","w4s","w4e","shiftEnd"];
 const idsGoals = ["gB1","gL","gB2","gE"];
 
@@ -356,8 +361,6 @@ function buildBlocksFromSchedule(s) {
     { key:"WORK",  label:"TRIM",  start:w3s, end:w3e, checkpoint:"gB2" },
     { key:"BREAK", label:"BREAK 2", start:w3e, end:b2e },
     { key:"WORK",  label:"TRIM",  start:w4s, end:w4e, checkpoint:"gE" },
-
-    // NEW phase after trimming
     { key:"CLEANUP", label:"CLEAN UP / CLOCK OUT", start:w4e, end:shiftEnd }
   ];
 }
@@ -631,11 +634,13 @@ function applyGoalsToInputs() {
   idsGoals.forEach(id => el(id).value = g[id] || 0);
 }
 
+/* ========= UPDATED: safe + uses saved presets ========= */
 function applyServingDefaults() {
   const type = el("productType").value;
-  const d = state.servingDefaults[type];
-  el("goalMinutes").value = d.goalMin;
-  el("estGrams").value = d.grams;
+  const preset = (state.servingDefaults && state.servingDefaults[type]) ? state.servingDefaults[type] : null;
+  if (!preset) return;
+  el("goalMinutes").value = preset.goalMin;
+  el("estGrams").value = preset.grams;
 }
 
 el("productType").addEventListener("change", () => {
@@ -647,6 +652,32 @@ el("startServing").addEventListener("click", startServingTimer);
 el("pauseServing").addEventListener("click", pauseServingTimer);
 el("resetServing").addEventListener("click", resetServingTimer);
 el("finishServing").addEventListener("click", finishServing);
+
+/* ========= NEW: Save serving presets ========= */
+el("saveServingPreset").addEventListener("click", () => {
+  const type = el("productType").value;
+
+  const goalMin = Number(el("goalMinutes").value || 0);
+  const grams = Number(el("estGrams").value || 0);
+
+  if (goalMin <= 0) {
+    alert("Please enter a valid goal minutes number.");
+    return;
+  }
+  if (grams < 0) {
+    alert("Please enter a valid estimated grams number.");
+    return;
+  }
+
+  if (!state.servingDefaults) state.servingDefaults = {};
+  state.servingDefaults[type] = {
+    goalMin: Math.round(goalMin),
+    grams: Math.round(grams)
+  };
+
+  saveState();
+  alert(`Preset saved for ${type === "bucked" ? "Bucked" : "Branch"}.`);
+});
 
 el("saveSchedule").addEventListener("click", () => {
   const s = {};
@@ -678,14 +709,12 @@ el("clearToday").addEventListener("click", () => {
   renderLogAndTotals();
 });
 
+// Init
 applyScheduleToInputs();
 applyGoalsToInputs();
-
 applyServingDefaults();
 updateServingUI();
-
 renderLogAndTotals();
-
 tickClock();
 setInterval(tickClock, 1000);
 </script>
