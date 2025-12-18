@@ -127,18 +127,14 @@
   .secretBolt:hover { background:#0f0; color:#000; }
   .secretBolt:active { transform: scale(0.98); }
 
-  /* ✅ NEW: Make the pay averages header obviously expandable */
+  /* ✅ No big green square (no border/background box) */
   .collapsible-header {
-    background: #111;
-    border: 1px solid #0f0;
-    padding: 0.6em 0.8em;
-    border-radius: 6px;
     display: inline-flex;
     align-items: center;
     gap: 10px;
     user-select: none;
+    padding: 0.2em 0.2em;
   }
-  .collapsible-header:hover { background: #161616; }
   .collapse-indicator {
     color: #0f0;
     font-weight: bold;
@@ -146,7 +142,7 @@
     text-align: center;
   }
 
-  /* ✅ NEW: Make the most important line green */
+  /* ✅ Keep the important total line green (not a big box) */
   .important-green {
     color: #0f0;
     font-weight: 800;
@@ -158,7 +154,6 @@
 
 <img src="norcal_icon.png" alt="NorCal Logo"/>
 
-<!-- live display of today's Trim Tracker total -->
 <div id="trackerDailyTotalDisplay"
      style="margin-top:0.4em;font-size:0.95em;color:#0f0;font-weight:bold;">
 </div>
@@ -249,29 +244,37 @@
   }
 </script>
 
+<!-- ✅ Hourly Pay Averages + NEW saved work-entry history -->
 <div style="margin-top: 1.2em; border-top: 1px solid #444; padding-top: 1em;">
-  <!-- ✅ UPDATED: obvious expandable header + plus/minus -->
   <h2 class="collapsible-header" style="color:#0f0; cursor:pointer;" onclick="togglePayCalc()">
     <span id="payCalcIndicator" class="collapse-indicator">[+]</span>
     Hourly Pay Averages
   </h2>
 
   <div id="payCalcSection" style="display:none;">
+    <p style="margin-bottom:0.4em;">Save your daily hours so you can load yesterday fast.</p>
+
+    <!-- ✅ NEW: Work entry date + save/load -->
+    <div style="margin:0.6em auto; max-width:520px; text-align:left; border:1px solid #444; padding:0.8em; border-radius:6px;">
+      <div style="margin-bottom:0.5em;">
+        <label><strong>Work entry date:</strong>
+          <input id="workEntryDate" type="date" style="width:170px;"/>
+        </label>
+      </div>
+
+      <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:0.6em;">
+        <button type="button" onclick="saveWorkEntry()" style="background:#28a745;">Save Work Entry</button>
+        <button type="button" onclick="loadYesterdayWorkEntry()" style="background:#555;">Load Yesterday</button>
+        <button type="button" onclick="loadLastWorkEntry()" style="background:#555;">Load Last Saved</button>
+        <button type="button" onclick="clearWorkEntries()" style="background:#b30000;">Clear Work Entries</button>
+      </div>
+
+      <div id="workEntryStatus" style="font-size:0.95em;color:#aaa;"></div>
+    </div>
+
     <p>Enter your hourly pay and hours, then choose a date range:</p>
 
     <label>Hourly pay: <input id="hourlyRate" type="number" step="0.01"/></label><br/>
-
-    <!-- Optional multipliers (defaults: 1.5 and 2.0) -->
-    <div style="margin-top:0.6em;">
-      <label>OT multiplier:
-        <input id="otMultiplier" type="number" step="0.01" value="1.5" style="width:90px;"/>
-      </label>
-      <label style="margin-left:10px;">DT multiplier:
-        <input id="dtMultiplier" type="number" step="0.01" value="2" style="width:90px;"/>
-      </label>
-    </div>
-
-    <br/>
 
     <label>
       Regular hours:
@@ -285,7 +288,6 @@
       <input id="overtimeMinutes" type="number" min="0" max="59" step="1" placeholder="Minutes"/>
     </label><br/>
 
-    <!-- ✅ NEW: Double time -->
     <label>
       Double time hours:
       <input id="doubletimeHours" type="number" min="0" step="1" placeholder="Hours"/>
@@ -296,7 +298,17 @@
     <label>End date: <input id="endDate" type="date"/></label><br/>
 
     <button onclick="calculateAverages()">Calculate averages</button>
+    <button type="button" onclick="calculateForWorkEntryDate()" style="background:#555; margin-left:8px;">Calculate for Work Entry Date</button>
+
     <div id="averageResults" style="margin-top: 0.6em; text-align: left;"></div>
+
+    <!-- ✅ NEW: recent saved entries -->
+    <div style="margin-top:1em; text-align:left; max-width:680px; margin-left:auto; margin-right:auto;">
+      <div style="margin-bottom:0.4em; color:#0f0; font-weight:bold;">Recent saved work entries</div>
+      <div id="workEntryList" style="border:1px solid #444; padding:0.6em; border-radius:6px; background:#111;">
+        <div style="color:#aaa;">No saved entries yet.</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -373,7 +385,7 @@
     lastCalculated = null;
   }
 
-  // ✅ UPDATED: now includes Double Time + optional multipliers + green important line
+  // ✅ OT fixed at 1.5, DT fixed at 2.0
   function calculateAverages() {
     const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
 
@@ -385,9 +397,6 @@
 
     const doubletimeHours = parseFloat(document.getElementById("doubletimeHours").value) || 0;
     const doubletimeMinutes = parseFloat(document.getElementById("doubletimeMinutes").value) || 0;
-
-    const otMultiplier = parseFloat(document.getElementById("otMultiplier")?.value) || 1.5;
-    const dtMultiplier = parseFloat(document.getElementById("dtMultiplier")?.value) || 2.0;
 
     const startDate = new Date(document.getElementById("startDate").value);
     const endDate = new Date(document.getElementById("endDate").value);
@@ -407,27 +416,27 @@
     const filtered = history.filter(entry => {
       const entryDate = new Date(entry.date);
       entryDate.setHours(0, 0, 0, 0);
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(0, 0, 0, 0);
-      return entryDate >= startDate && entryDate <= endDate;
+      const s = new Date(startDate); s.setHours(0,0,0,0);
+      const e = new Date(endDate);   e.setHours(0,0,0,0);
+      return entryDate >= s && entryDate <= e;
     });
 
-    let bonusTotal = filtered.reduce((sum, entry) => sum + parseFloat(entry.bonusPay || 0), 0);
+    const bonusTotal = filtered.reduce((sum, entry) => sum + parseFloat(entry.bonusPay || 0), 0);
 
-    let regularPay = hourlyRate * totalRegularHours;
-    let overtimePay = hourlyRate * otMultiplier * totalOvertimeHours;
-    let doubletimePay = hourlyRate * dtMultiplier * totalDoubletimeHours;
+    const regularPay = hourlyRate * totalRegularHours;
+    const overtimePay = hourlyRate * 1.5 * totalOvertimeHours;
+    const doubletimePay = hourlyRate * 2.0 * totalDoubletimeHours;
 
-    let hourlyTotal = regularPay + overtimePay + doubletimePay;
-    let totalPay = bonusTotal + hourlyTotal;
+    const hourlyTotal = regularPay + overtimePay + doubletimePay;
+    const totalPay = bonusTotal + hourlyTotal;
 
-    let dayDiff = Math.max(1, (endDate - startDate) / (1000 * 60 * 60 * 24) + 1);
+    const dayDiff = Math.max(1, (endDate - startDate) / (1000 * 60 * 60 * 24) + 1);
 
-    let results = `
+    const results = `
       <p><strong>Total bonus pay:</strong> $${bonusTotal.toFixed(2)}</p>
       <p><strong>Regular pay:</strong> $${regularPay.toFixed(2)}</p>
-      <p><strong>Overtime pay:</strong> $${overtimePay.toFixed(2)}</p>
-      <p><strong>Double time pay:</strong> $${doubletimePay.toFixed(2)}</p>
+      <p><strong>Overtime pay (1.5x):</strong> $${overtimePay.toFixed(2)}</p>
+      <p><strong>Double time pay (2.0x):</strong> $${doubletimePay.toFixed(2)}</p>
       <p><strong>Total hourly pay (wages only):</strong> $${hourlyTotal.toFixed(2)}</p>
       <p class="important-green"><strong>Total pay (hourly + bonus):</strong> $${totalPay.toFixed(2)}</p>
       <p><strong>Average daily pay:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
@@ -438,7 +447,14 @@
     document.getElementById("averageResults").innerHTML = results;
   }
 
-  // ✅ UPDATED: plus/minus indicator
+  function calculateForWorkEntryDate() {
+    const d = document.getElementById("workEntryDate")?.value;
+    if (!d) { alert("Pick a work entry date first."); return; }
+    document.getElementById("startDate").value = d;
+    document.getElementById("endDate").value = d;
+    calculateAverages();
+  }
+
   function togglePayCalc() {
     const section = document.getElementById("payCalcSection");
     const indicator = document.getElementById("payCalcIndicator");
@@ -458,6 +474,160 @@
     localStorage.setItem('trimHistory', JSON.stringify(history));
     updateSessionTable();
   }
+</script>
+
+<!-- ✅ NEW: Work-entry saving system -->
+<script>
+  const WORK_KEY = "hourlyWorkHistory"; // [{date, hourlyRate, regH, regM, otH, otM, dtH, dtM, savedAt}]
+  const LAST_WORK_KEY = "hourlyWorkLastDate";
+
+  function isoToday() { return new Date().toISOString().split("T")[0]; }
+  function isoYesterday() { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().split("T")[0]; }
+
+  function getWorkHistory() { return JSON.parse(localStorage.getItem(WORK_KEY)) || []; }
+  function setWorkHistory(arr) { localStorage.setItem(WORK_KEY, JSON.stringify(arr)); }
+
+  function setStatus(msg) {
+    const el = document.getElementById("workEntryStatus");
+    if (el) el.textContent = msg || "";
+  }
+
+  function getNum(id, fallback=0) {
+    const v = parseFloat(document.getElementById(id)?.value);
+    return isNaN(v) ? fallback : v;
+  }
+
+  function setVal(id, val) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = (val === null || val === undefined) ? "" : val;
+  }
+
+  function renderWorkEntryList() {
+    const list = document.getElementById("workEntryList");
+    if (!list) return;
+
+    const hist = getWorkHistory()
+      .slice()
+      .sort((a,b) => (a.date < b.date ? 1 : -1))
+      .slice(0, 14);
+
+    if (hist.length === 0) {
+      list.innerHTML = `<div style="color:#aaa;">No saved entries yet.</div>`;
+      return;
+    }
+
+    list.innerHTML = hist.map(item => {
+      const totalH =
+        (item.regH + item.regM/60) +
+        (item.otH + item.otM/60) +
+        (item.dtH + item.dtM/60);
+
+      return `
+        <div style="display:flex; justify-content:space-between; gap:10px; padding:8px; border-bottom:1px solid #222;">
+          <div>
+            <div style="font-weight:bold;">${item.date}</div>
+            <div style="color:#aaa; font-size:0.95em;">
+              Rate: $${Number(item.hourlyRate).toFixed(2)} |
+              Reg ${item.regH}h ${item.regM}m |
+              OT ${item.otH}h ${item.otM}m |
+              DT ${item.dtH}h ${item.dtM}m |
+              Total ${totalH.toFixed(2)}h
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button type="button" style="background:#555;" onclick="loadWorkEntryByDate('${item.date}')">Load</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function saveWorkEntry() {
+    const date = document.getElementById("workEntryDate")?.value || isoToday();
+    const hourlyRate = getNum("hourlyRate", NaN);
+
+    const regH = getNum("regularHours", 0);
+    const regM = getNum("regularMinutes", 0);
+    const otH  = getNum("overtimeHours", 0);
+    const otM  = getNum("overtimeMinutes", 0);
+    const dtH  = getNum("doubletimeHours", 0);
+    const dtM  = getNum("doubletimeMinutes", 0);
+
+    const totalH = (regH + regM/60) + (otH + otM/60) + (dtH + dtM/60);
+
+    if (!date) { alert("Pick a work entry date."); return; }
+    if (isNaN(hourlyRate) || hourlyRate <= 0) { alert("Enter a valid hourly rate."); return; }
+    if (totalH <= 0) { alert("Enter at least some hours before saving."); return; }
+
+    let hist = getWorkHistory();
+    hist = hist.filter(x => x.date !== date);
+    hist.push({ date, hourlyRate, regH, regM, otH, otM, dtH, dtM, savedAt: Date.now() });
+
+    setWorkHistory(hist);
+    localStorage.setItem(LAST_WORK_KEY, date);
+
+    // auto set date range to that day
+    setVal("startDate", date);
+    setVal("endDate", date);
+
+    setStatus(`Saved work entry for ${date}.`);
+    renderWorkEntryList();
+  }
+
+  function loadWorkEntry(item) {
+    if (!item) return;
+
+    setVal("workEntryDate", item.date);
+    setVal("hourlyRate", item.hourlyRate);
+
+    setVal("regularHours", item.regH);
+    setVal("regularMinutes", item.regM);
+    setVal("overtimeHours", item.otH);
+    setVal("overtimeMinutes", item.otM);
+    setVal("doubletimeHours", item.dtH);
+    setVal("doubletimeMinutes", item.dtM);
+
+    setVal("startDate", item.date);
+    setVal("endDate", item.date);
+
+    localStorage.setItem(LAST_WORK_KEY, item.date);
+    setStatus(`Loaded work entry for ${item.date}.`);
+  }
+
+  function loadWorkEntryByDate(date) {
+    const hist = getWorkHistory();
+    const item = hist.find(x => x.date === date);
+    if (!item) { alert("No saved work entry for that date."); return; }
+    loadWorkEntry(item);
+  }
+
+  function loadYesterdayWorkEntry() {
+    loadWorkEntryByDate(isoYesterday());
+  }
+
+  function loadLastWorkEntry() {
+    const lastDate = localStorage.getItem(LAST_WORK_KEY);
+    if (lastDate) { loadWorkEntryByDate(lastDate); return; }
+
+    const hist = getWorkHistory().sort((a,b) => (a.date < b.date ? 1 : -1));
+    if (hist.length === 0) { alert("No saved work entries yet."); return; }
+    loadWorkEntry(hist[0]);
+  }
+
+  function clearWorkEntries() {
+    if (!confirm("Clear ALL saved work entries? (This does not delete trim bonus history.)")) return;
+    localStorage.removeItem(WORK_KEY);
+    localStorage.removeItem(LAST_WORK_KEY);
+    setStatus("Cleared saved work entries.");
+    renderWorkEntryList();
+  }
+
+  window.addEventListener("load", () => {
+    const d = document.getElementById("workEntryDate");
+    if (d && !d.value) d.value = isoToday();
+    renderWorkEntryList();
+  });
 </script>
 
 <script>
