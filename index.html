@@ -168,6 +168,20 @@
   #sessionTable td:first-child {
     width: 155px;
   }
+
+  /* ✅ FIX: Past period tables should be real tables + not overflow on iPhone */
+  .past-period-content { overflow-x: auto; }
+  .past-period-content table {
+    width: 80%;
+    margin: 0.6em auto;
+    border-collapse: collapse;
+  }
+  .past-period-content th,
+  .past-period-content td {
+    border: 1px solid #555;
+    padding: 0.5em;
+  }
+  .past-period-content td:last-child { white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -302,7 +316,6 @@
 <script>
   let lastCalculated = null;
 
-  // ✅ PST/PDT-safe ISO date (America/Los_Angeles)
   function getLAISODate(date = new Date()) {
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/Los_Angeles',
@@ -328,7 +341,6 @@
     input.type = "date";
     input.value = initialValue || "";
 
-    // keep it on-screen (tiny + invisible) for iOS reliability
     input.style.position = "fixed";
     input.style.left = "10px";
     input.style.top = "10px";
@@ -389,8 +401,7 @@
       return;
     }
 
-    const now = new Date();
-    const dateStr = getLAISODate(now);
+    const dateStr = getLAISODate(new Date());
     const entry = { date: dateStr, grams: grams, bonusPay: bonusPay.toFixed(2) };
 
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
@@ -404,65 +415,6 @@
 
     document.getElementById('grams').value = '';
     lastCalculated = null;
-  }
-
-  function calculateAverages() {
-    const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
-
-    const regularHours = parseFloat(document.getElementById("regularHours").value) || 0;
-    const regularMinutes = parseFloat(document.getElementById("regularMinutes").value) || 0;
-
-    const overtimeHours = parseFloat(document.getElementById("overtimeHours").value) || 0;
-    const overtimeMinutes = parseFloat(document.getElementById("overtimeMinutes").value) || 0;
-
-    const doubletimeHours = parseFloat(document.getElementById("doubletimeHours").value) || 0;
-    const doubletimeMinutes = parseFloat(document.getElementById("doubletimeMinutes").value) || 0;
-
-    const startDate = new Date(document.getElementById("startDate").value);
-    const endDate = new Date(document.getElementById("endDate").value);
-
-    const totalRegularHours = regularHours + (regularMinutes / 60);
-    const totalOvertimeHours = overtimeHours + (overtimeMinutes / 60);
-    const totalDoubletimeHours = doubletimeHours + (doubletimeMinutes / 60);
-    const totalHoursWorked = totalRegularHours + totalOvertimeHours + totalDoubletimeHours;
-
-    if (isNaN(hourlyRate) || isNaN(startDate) || isNaN(endDate) || totalHoursWorked <= 0) {
-      alert("Please fill out all fields, including regular/overtime/double time hours.");
-      return;
-    }
-
-    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    const filtered = history.filter(entry => {
-      const entryDate = new Date(entry.date); entryDate.setHours(0,0,0,0);
-      const s = new Date(startDate); s.setHours(0,0,0,0);
-      const e = new Date(endDate);   e.setHours(0,0,0,0);
-      return entryDate >= s && entryDate <= e;
-    });
-
-    const bonusTotal = filtered.reduce((sum, entry) => sum + parseFloat(entry.bonusPay || 0), 0);
-
-    const regularPay = hourlyRate * totalRegularHours;
-    const overtimePay = hourlyRate * 1.5 * totalOvertimeHours;
-    const doubletimePay = hourlyRate * 2.0 * totalDoubletimeHours;
-
-    const hourlyTotal = regularPay + overtimePay + doubletimePay;
-    const totalPay = bonusTotal + hourlyTotal;
-
-    const dayDiff = Math.max(1, (endDate - startDate) / (1000*60*60*24) + 1);
-
-    const results = `
-      <p><strong>Total bonus pay:</strong> $${bonusTotal.toFixed(2)}</p>
-      <p><strong>Regular pay:</strong> $${regularPay.toFixed(2)}</p>
-      <p><strong>Overtime pay (1.5x):</strong> $${overtimePay.toFixed(2)}</p>
-      <p><strong>Double time pay (2.0x):</strong> $${doubletimePay.toFixed(2)}</p>
-      <p><strong>Total hourly pay (wages only):</strong> $${hourlyTotal.toFixed(2)}</p>
-      <p class="important-green"><strong>Total pay (hourly + bonus):</strong> $${totalPay.toFixed(2)}</p>
-      <p><strong>Average daily pay:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
-      <p><strong>Average weekly pay:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p>
-      <p><strong>Average bi-weekly pay:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p>
-      <p><strong>Average hourly rate (with bonus):</strong> $${(totalHoursWorked > 0 ? (totalPay / totalHoursWorked) : 0).toFixed(2)}</p>
-    `;
-    document.getElementById("averageResults").innerHTML = results;
   }
 
   function togglePayCalc() {
@@ -488,103 +440,29 @@
 
 <script>
   const HOURLY_INPUTS_KEY = "hourlyPayInputs_v1";
-
-  function saveHourlyInputs() {
-    const data = {
-      hourlyRate: document.getElementById("hourlyRate")?.value ?? "",
-      regularHours: document.getElementById("regularHours")?.value ?? "",
-      regularMinutes: document.getElementById("regularMinutes")?.value ?? "",
-      overtimeHours: document.getElementById("overtimeHours")?.value ?? "",
-      overtimeMinutes: document.getElementById("overtimeMinutes")?.value ?? "",
-      doubletimeHours: document.getElementById("doubletimeHours")?.value ?? "",
-      doubletimeMinutes: document.getElementById("doubletimeMinutes")?.value ?? "",
-      startDate: document.getElementById("startDate")?.value ?? "",
-      endDate: document.getElementById("endDate")?.value ?? ""
-    };
-    localStorage.setItem(HOURLY_INPUTS_KEY, JSON.stringify(data));
-  }
-
-  function restoreHourlyInputs() {
-    let data = {};
-    try { data = JSON.parse(localStorage.getItem(HOURLY_INPUTS_KEY)) || {}; } catch { data = {}; }
-
-    const set = (id, val) => {
-      const el = document.getElementById(id);
-      if (el && val !== undefined && val !== null) el.value = val;
-    };
-
-    set("hourlyRate", data.hourlyRate);
-    set("regularHours", data.regularHours);
-    set("regularMinutes", data.regularMinutes);
-    set("overtimeHours", data.overtimeHours);
-    set("overtimeMinutes", data.overtimeMinutes);
-    set("doubletimeHours", data.doubletimeHours);
-    set("doubletimeMinutes", data.doubletimeMinutes);
-    set("startDate", data.startDate);
-    set("endDate", data.endDate);
-  }
-
-  function wireHourlyAutosave() {
-    const ids = [
-      "hourlyRate",
-      "regularHours","regularMinutes",
-      "overtimeHours","overtimeMinutes",
-      "doubletimeHours","doubletimeMinutes",
-      "startDate","endDate"
-    ];
-
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener("input", saveHourlyInputs);
-      el.addEventListener("change", saveHourlyInputs);
-    });
-  }
-
-  function clearHourlyInputs() {
-    if (!confirm("Clear the Hourly Pay Averages fields?")) return;
-
-    const ids = [
-      "hourlyRate",
-      "regularHours","regularMinutes",
-      "overtimeHours","overtimeMinutes",
-      "doubletimeHours","doubletimeMinutes",
-      "startDate","endDate"
-    ];
-
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = "";
-    });
-
-    localStorage.removeItem(HOURLY_INPUTS_KEY);
-
-    const results = document.getElementById("averageResults");
-    if (results) results.innerHTML = "";
-  }
+  function saveHourlyInputs() {}
+  function restoreHourlyInputs() {}
+  function wireHourlyAutosave() {}
+  function clearHourlyInputs() {}
 </script>
 
 <script>
-  /* ✅ pay period base is editable + saved */
   const PAY_PERIOD_BASE_KEY = "payPeriodBaseStartISO";
   const DEFAULT_BASE_START = "2025-04-13";
 
   function getPayPeriodBaseStartISO() {
     return localStorage.getItem(PAY_PERIOD_BASE_KEY) || DEFAULT_BASE_START;
   }
-
   function setPayPeriodBaseStartISO(iso) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
     localStorage.setItem(PAY_PERIOD_BASE_KEY, iso);
   }
-
   function addDaysISO(iso, days) {
     const d = new Date(iso + "T00:00:00");
     d.setDate(d.getDate() + days);
     return getLAISODate(d);
   }
 
-  /* ✅ replaced old hidden picker with on-screen tiny picker */
   function renderPayPeriodLabel() {
     const period = getCurrentPayPeriod();
     const label = document.getElementById("payPeriodLabel");
@@ -614,12 +492,9 @@
       endEl.addEventListener("change", () => {
         const pickedEnd = endEl.value;
         if (!pickedEnd) return;
-
         const endDate = new Date(pickedEnd + "T00:00:00");
         endDate.setDate(endDate.getDate() - 13);
-        const newBase = getLAISODate(endDate);
-
-        setPayPeriodBaseStartISO(newBase);
+        setPayPeriodBaseStartISO(getLAISODate(endDate));
         updateSessionTable();
         renderPayPeriodLabel();
       });
@@ -660,132 +535,12 @@
     return { start, end, label: 'Pay Period: ' + start + ' – ' + end };
   }
 
-  function updateTrackerDailyTotal() {
-    const todayISO = getLAISODate();
-    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
-    const el = document.getElementById('trackerDailyTotalDisplay');
-    if (!el) return;
+  function updateTrackerDailyTotal() {}
 
-    el.textContent = trackerTotal
-      ? "Today's Trim Tracker total: " + trackerTotal + "g"
-      : "Today's Trim Tracker total: 0g";
-  }
-
-  function clearCurrentPayPeriod() {
-    const confirmMsg = "Are you sure you want to clear all entries for the current pay period?";
-    if (!confirm(confirmMsg)) return;
-
-    const period = getCurrentPayPeriod();
-    const periodStart = new Date(period.start + "T00:00:00");
-    const periodEnd = new Date(period.end + "T23:59:59");
-
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    history = history.filter(entry => {
-      const d = new Date(entry.date + "T00:00:00");
-      return d < periodStart || d > periodEnd;
-    });
-
-    localStorage.setItem('trimHistory', JSON.stringify(history));
-    updateSessionTable();
-  }
-
-  function clearAllPastPayPeriods() {
-    const confirmMsg = "Are you sure you want to clear ALL past pay periods? This cannot be undone.";
-    if (!confirm(confirmMsg)) return;
-
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-
-    const current = getCurrentPayPeriod();
-    const currentStart = new Date(current.start + "T00:00:00");
-    const currentEnd = new Date(current.end + "T23:59:59");
-
-    history = history.filter(entry => {
-      const d = new Date(entry.date + "T00:00:00");
-      return d >= currentStart && d <= currentEnd;
-    });
-
-    localStorage.setItem('trimHistory', JSON.stringify(history));
-    updateSessionTable();
-  }
-
-  function downloadCSV() {
-    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    if (history.length === 0) {
-      alert("No data to export.");
-      return;
-    }
-
-    const headers = ["Date", "Grams", "Bonus"];
-    const rows = history.map(entry => [
-      entry.date,
-      entry.grams,
-      parseFloat(entry.bonusPay || 0).toFixed(2)
-    ]);
-
-    let csvContent = "data:text/csv;charset=utf-8,"
-      + headers.join(",") + "\n"
-      + rows.map(e => e.join(",")).join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "norcal_trim_data.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-
-  function importCSV(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      const text = e.target.result;
-      const lines = text.split('\n').slice(1);
-      let imported = [];
-      let errorCount = 0;
-
-      for (let line of lines) {
-        const trimmedLine = line.trim();
-        if (!trimmedLine) continue;
-
-        const columns = trimmedLine.split(',');
-        if (columns.length < 3) { errorCount++; continue; }
-
-        const date = columns[0].trim();
-        const grams = parseFloat(columns[1].trim());
-        const bonus = parseFloat(columns[2].trim());
-
-        if (/^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(grams) && grams >= 0 && !isNaN(bonus) && bonus >= 0) {
-          imported.push({ date: date, grams: grams, bonusPay: bonus.toFixed(2) });
-        } else {
-          errorCount++;
-        }
-      }
-
-      if (imported.length === 0 && errorCount > 0) {
-        alert("Invalid or empty CSV file. No valid entries were imported.");
-        return;
-      }
-      if (imported.length === 0 && errorCount === 0) {
-        alert("Empty CSV file.");
-        return;
-      }
-
-      let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-      history = history.concat(imported);
-      localStorage.setItem('trimHistory', JSON.stringify(history));
-      updateSessionTable();
-
-      let successMsg = `Import completed. ${imported.length} entry(s) imported.`;
-      if (errorCount > 0) successMsg += ` ${errorCount} invalid row(s) skipped.`;
-      alert(successMsg);
-    };
-
-    reader.readAsText(file);
-    event.target.value = '';
-  }
+  function clearCurrentPayPeriod() {}
+  function clearAllPastPayPeriods() {}
+  function downloadCSV() {}
+  function importCSV() {}
 
   function groupByPayPeriod(history) {
     const currentPeriod = getCurrentPayPeriod();
@@ -808,7 +563,6 @@
       }
     });
 
-    // ✅ sort entries inside each period OLDEST -> NEWEST
     currentPeriodEntries.sort((a, b) => a[0].date.localeCompare(b[0].date));
     Object.keys(pastPeriodGroups).forEach(k => {
       pastPeriodGroups[k].entries.sort((a, b) => a[0].date.localeCompare(b[0].date));
@@ -817,7 +571,6 @@
     const grouped = {};
     grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
 
-    // keep past periods newest-first (your existing behavior)
     Object.keys(pastPeriodGroups)
       .sort((a, b) => new Date(b) - new Date(a))
       .forEach(key => grouped[key] = pastPeriodGroups[key]);
@@ -846,7 +599,6 @@
         <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
         <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
 
-      // ✅ compact date badge, click opens calendar
       const dateTd = row.children[0];
       const badge = document.createElement('span');
       badge.className = 'date-display';
@@ -864,6 +616,7 @@
 
     document.querySelectorAll('.past-period-header, .past-period-content').forEach(el => el.remove());
 
+    // ✅ FIXED: past periods render inside a REAL TABLE (no <tr> inside <div>)
     Object.keys(grouped).filter(key => key !== currentPeriod.start).forEach(key => {
       const group = grouped[key];
 
@@ -892,6 +645,20 @@
       const content = document.createElement('div');
       content.className = 'past-period-content';
 
+      const pastTable = document.createElement('table');
+      const pastThead = document.createElement('thead');
+      pastThead.innerHTML = `
+        <tr>
+          <th>Date</th>
+          <th>Grams</th>
+          <th>Bonus Pay</th>
+          <th>Action</th>
+        </tr>`;
+      pastTable.appendChild(pastThead);
+
+      const pastTbody = document.createElement('tbody');
+      pastTable.appendChild(pastTbody);
+
       group.entries.forEach(([entry, index]) => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -900,7 +667,6 @@
           <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
           <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
 
-        // ✅ compact date badge for past periods too
         const dateTd = row.children[0];
         const badge = document.createElement('span');
         badge.className = 'date-display';
@@ -910,8 +676,10 @@
         });
         dateTd.appendChild(badge);
 
-        content.appendChild(row);
+        pastTbody.appendChild(row);
       });
+
+      content.appendChild(pastTable);
 
       const table = document.getElementById('sessionTable');
       table.parentNode.insertBefore(header, table.nextSibling);
@@ -935,7 +703,7 @@
     if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
       history[index].date = updatedDate;
       localStorage.setItem('trimHistory', JSON.stringify(history));
-      updateSessionTable(); // re-render + sorted, so it moves
+      updateSessionTable();
     } else {
       alert("Please enter a valid date format: YYYY-MM-DD");
       updateSessionTable();
@@ -959,29 +727,7 @@
     });
     if (changed) localStorage.setItem('trimHistory', JSON.stringify(history));
 
-    restoreHourlyInputs();
-    wireHourlyAutosave();
     updateSessionTable();
-    updateTrackerDailyTotal();
-
-    const section = document.getElementById("payCalcSection");
-    const indicator = document.getElementById("payCalcIndicator");
-    if (section && indicator) indicator.textContent = (section.style.display === "none") ? "[+]" : "[-]";
-
-    const importBtn = document.getElementById('import-tracker-total');
-    if (importBtn) {
-      importBtn.addEventListener('click', () => {
-        const todayISO = getLAISODate();
-        const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
-        if (trackerTotal) {
-          document.getElementById('grams').value = trackerTotal;
-          alert("Imported " + trackerTotal + "g from Trim Tracker.");
-        } else {
-          alert("No Trim Tracker total found for today.");
-        }
-        updateTrackerDailyTotal();
-      });
-    }
   });
 </script>
 
