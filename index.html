@@ -7,226 +7,209 @@
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#000000"/>
 <style>
-  body {
-    background-color: black;
-    color: white;
-    font-family: 'Montserrat', sans-serif;
-    text-align: center;
-    padding: 2em;
-  }
-  input {
-    font-size: 1.2em;
-    padding: 0.5em;
-    margin-top: 0.6em;
-    width: 150px;
-    background-color: #222;
-    color: #fff;
-    border: 1px solid #555;
-    border-radius: 4px;
-  }
-  button {
-    background-color: green;
-    color: white;
-    padding: 0.45em 1em;
-    border: none;
-    font-size: 1em;
-    margin-top: 0.6em;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  button:hover { background-color: darkgreen; }
-  img { margin-top: 0.6em; width: 200px; }
-  #result { margin-top: 0.6em; font-size: 1.2em; }
-
-  .install-links { margin-top: 0.6em; }
-  .install-links a {
-    display: inline-block;
-    margin: 0.5em;
-    padding: 0.5em 1em;
-    color: white;
-    background-color: #444;
-    text-decoration: none;
-    border-radius: 4px;
-  }
-  .install-links a:hover { background-color: #666; }
-
-  table {
-    margin: 2em auto;
-    border-collapse: collapse;
-    width: 80%;
-    max-width: 900px;
-    table-layout: fixed; /* ✅ prevents iPhone overflow + keeps delete inside */
+  body{
+    background:#000;
+    color:#fff;
+    font-family:'Montserrat',sans-serif;
+    text-align:center;
+    padding: 1.2em; /* ✅ smaller for iPhone */
   }
 
-  th, td {
-    border: 1px solid #555;
-    padding: 0.5em;
-    word-break: break-word;
+  input{
+    font-size:1.2em;
+    padding:0.5em;
+    margin-top:0.6em;
+    width:150px;
+    background:#222;
+    color:#fff;
+    border:1px solid #555;
+    border-radius:4px;
   }
 
-  th { background-color: #333; }
-  td[contenteditable="true"] { background-color: #222; }
+  button{
+    background:green;
+    color:#fff;
+    padding:0.45em 1em;
+    border:none;
+    font-size:1em;
+    margin-top:0.6em;
+    border-radius:4px;
+    cursor:pointer;
+  }
+  button:hover{ background:darkgreen; }
+  img{ margin-top:0.6em; width:200px; }
+  #result{ margin-top:0.6em; font-size:1.2em; }
 
-  .delete-button {
-    background-color: red;
-    color: white;
-    border: none;
-    padding: 0.3em 0.6em;
-    cursor: pointer;
-    border-radius: 4px;
+  .install-links{ margin-top:0.6em; }
+  .install-links a{
+    display:inline-block;
+    margin:0.5em;
+    padding:0.5em 1em;
+    color:#fff;
+    background:#444;
+    text-decoration:none;
+    border-radius:4px;
   }
-  .delete-button:hover { background-color: darkred; }
+  .install-links a:hover{ background:#666; }
 
-  .past-period-total {
-    color: #0f0;
-    font-weight: bold;
-    margin-left: 8px;
-  }
-
-  .creatorTitle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-  }
-  .secretBolt {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
-    background: #111;
-    border: 1px solid #0f0;
-    color: #0f0;
-    text-decoration: none;
-    font-size: 16px;
-    line-height: 1;
-    cursor: pointer;
-    user-select: none;
-  }
-  .secretBolt:hover { background:#0f0; color:#000; }
-  .secretBolt:active { transform: scale(0.98); }
-
-  .collapsible-header {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    user-select: none;
-    padding: 0.2em 0.2em;
-  }
-  .collapse-indicator {
-    color: #0f0;
-    font-weight: bold;
-    min-width: 34px;
-    text-align: center;
+  /* ✅ TABLES: full width + stable columns (no sideways scroll) */
+  table{
+    width:100%;
+    max-width:900px;
+    margin: 1.2em auto;
+    border-collapse:collapse;
+    table-layout:fixed;
   }
 
-  .important-green {
-    color: #0f0;
-    font-weight: 800;
-    font-size: 1.08em;
+  /* ✅ KEY FIX: stop vertical stacked letters */
+  th, td{
+    border:1px solid #555;
+    padding:0.5em;
+    white-space:nowrap;     /* prevents letter stacking */
+    word-break:normal;      /* prevents letter stacking */
+    overflow-wrap:normal;   /* prevents letter stacking */
+    text-align:center;
   }
 
-  /* ✅ Pay Period styling (cleaner + smaller) */
-  #payPeriodLabel{
-    margin-top: 0.7em;
+  th{ background:#333; }
+  td[contenteditable="true"]{ background:#222; }
+
+  /* ✅ Column widths (main table) */
+  #sessionTable th:nth-child(1), #sessionTable td:nth-child(1){ width:140px; }
+  #sessionTable th:nth-child(2), #sessionTable td:nth-child(2){ width:90px; }
+  #sessionTable th:nth-child(3), #sessionTable td:nth-child(3){ width:120px; }
+  #sessionTable th:nth-child(4), #sessionTable td:nth-child(4){ width:92px; }
+
+  .delete-button{
+    background:red;
+    color:#fff;
+    border:none;
+    padding:0.3em 0.6em;
+    cursor:pointer;
+    border-radius:4px;
+  }
+  .delete-button:hover{ background:darkred; }
+
+  .past-period-total{
     color:#0f0;
-    font-weight: 800;
-    font-size: 1.05em;
-    line-height: 1.2;
+    font-weight:bold;
+    margin-left:8px;
   }
 
-  /* ✅ Pay period date inputs (clickable, iPhone-friendly) */
-  .pp-inline-date {
-    background: transparent;
-    border: none;
-    color: #0f0;
-    font-weight: 900;
-    cursor: pointer;
-    padding: 0;
-    margin: 0 4px;
-    width: 132px;
-    font-size: 0.95em;
+  .creatorTitle{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+  }
+  .secretBolt{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:28px;
+    height:28px;
+    border-radius:999px;
+    background:#111;
+    border:1px solid #0f0;
+    color:#0f0;
+    text-decoration:none;
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    user-select:none;
+  }
+  .secretBolt:hover{ background:#0f0; color:#000; }
+  .secretBolt:active{ transform:scale(0.98); }
+
+  .important-green{
+    color:#0f0;
+    font-weight:800;
+    font-size:1.08em;
   }
 
-  /* ✅ Compact date badge in table */
-  .date-display {
-    display: inline-block;
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-    white-space: nowrap;
-    padding: 2px 6px;
-    border-radius: 4px;
-    background: #222;
-    border: 1px solid #555;
-    font-size: 0.95em;
+  /* ✅ Pay Period smaller + cleaner */
+  #payPeriodLabel{
+    margin-top:0.7em;
+    color:#0f0;
+    font-weight:800;
+    font-size:1.0em;
+    line-height:1.2;
   }
 
-  /* ✅ keep date column from being huge */
-  #sessionTable th:first-child,
-  #sessionTable td:first-child {
-    width: 155px;
+  .pp-inline-date{
+    background:transparent;
+    border:none;
+    color:#0f0;
+    font-weight:900;
+    cursor:pointer;
+    padding:0;
+    margin:0 4px;
+    width:132px;
+    font-size:0.95em;
   }
 
-  /* ✅ Keep Delete column visible */
-  #sessionTable th:last-child,
-  #sessionTable td:last-child {
-    width: 92px;
-    white-space: nowrap;
+  .date-display{
+    display:inline-block;
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer;
+    white-space:nowrap;
+    padding:2px 6px;
+    border-radius:4px;
+    background:#222;
+    border:1px solid #555;
+    font-size:0.95em;
   }
 
-  /* ✅ Past period header: cleaner + matches width */
+  /* ✅ Past period header matches main width */
   .past-period-header{
     background:#2b2b2b;
     border:1px solid #555;
     color:#fff;
-    padding: 0.55em 0.7em;
+    padding:0.55em 0.7em;
     cursor:pointer;
     margin: 1.1em auto 0.4em auto;
-    border-radius: 8px;
+    border-radius:8px;
     text-align:left;
-    width: 80%;
-    max-width: 900px;
-    font-size: 0.98em;
+    width:100%;
+    max-width:900px;
+    font-size:0.98em;
+    box-sizing:border-box;
   }
+  .past-period-header .toggle-indicator{ float:right; opacity:0.9; }
 
-  .past-period-header .toggle-indicator{
-    float:right;
-    opacity: 0.9;
-  }
-
-  /* ✅ Past period content: NOT a scroll box, same size as main table */
+  /* ✅ Past period content matches main width; no scroll box */
   .past-period-content{
     display:none;
-    margin: 0 auto;
-    padding: 0;
-    border: none;
-    width: 80%;
-    max-width: 900px;
+    width:100%;
+    max-width:900px;
+    margin:0 auto;
+    padding:0;
+    border:none;
+    box-sizing:border-box;
   }
   .past-period-content.open{ display:block; }
 
   .past-period-content table{
-    width: 100%;
-    border-collapse: collapse;
-    margin: 0.4em auto 0 auto;
-    table-layout: fixed; /* ✅ keeps Delete inside */
+    width:100%;
+    max-width:900px;
+    margin:0.4em auto 0 auto;
+    border-collapse:collapse;
+    table-layout:fixed;
   }
 
-  .past-period-content th,
-  .past-period-content td{
-    border: 1px solid #555;
-    padding: 0.45em;
-    font-size: 0.95em;
-    word-break: break-word;
-  }
+  /* ✅ Column widths (past tables too) */
+  .past-period-content th:nth-child(1), .past-period-content td:nth-child(1){ width:140px; }
+  .past-period-content th:nth-child(2), .past-period-content td:nth-child(2){ width:90px; }
+  .past-period-content th:nth-child(3), .past-period-content td:nth-child(3){ width:120px; }
+  .past-period-content th:nth-child(4), .past-period-content td:nth-child(4){ width:92px; }
 
-  .past-period-content th:last-child,
-  .past-period-content td:last-child{
-    width: 92px;
-    white-space: nowrap;
+  /* ✅ iPhone tight mode */
+  @media (max-width:420px){
+    body{ padding:0.8em; }
+    th, td{ padding:0.38em; font-size:0.92em; }
+    .date-display{ font-size:0.9em; }
+    #payPeriodLabel{ font-size:0.98em; }
   }
 </style>
 </head>
@@ -234,9 +217,7 @@
 
 <img src="norcal_icon.png" alt="NorCal Logo"/>
 
-<div id="trackerDailyTotalDisplay"
-     style="margin-top:0.4em;font-size:0.95em;color:#0f0;font-weight:bold;">
-</div>
+<div id="trackerDailyTotalDisplay" style="margin-top:0.4em;font-size:0.95em;color:#0f0;font-weight:bold;"></div>
 
 <p>Enter the total grams trimmed:</p>
 <input id="grams" type="number" placeholder="e.g. 1200"/>
@@ -258,10 +239,10 @@
 <table id="sessionTable">
   <thead>
     <tr>
-      <th style="width:155px;">Date</th>
+      <th>Date</th>
       <th>Grams</th>
       <th>Bonus Pay</th>
-      <th style="width:92px;">Action</th>
+      <th>Action</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -594,7 +575,6 @@
 
     document.querySelectorAll('.past-period-header, .past-period-content').forEach(el => el.remove());
 
-    /* ✅ Past periods: real table, full width, NO side-scroll */
     Object.keys(grouped).filter(key => key !== currentPeriod.start).forEach(key => {
       const group = grouped[key];
 
@@ -628,10 +608,10 @@
       const pastThead = document.createElement('thead');
       pastThead.innerHTML = `
         <tr>
-          <th style="width:155px;">Date</th>
+          <th>Date</th>
           <th>Grams</th>
           <th>Bonus Pay</th>
-          <th style="width:92px;">Action</th>
+          <th>Action</th>
         </tr>`;
       pastTable.appendChild(pastThead);
 
@@ -692,7 +672,6 @@
   window.addEventListener('load', () => {
     renderPayPeriodLabel();
 
-    // normalize stored dates
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
     let changed = false;
     history.forEach(entry => {
