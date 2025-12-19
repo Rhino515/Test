@@ -136,6 +136,15 @@
     font-weight: 800;
     font-size: 1.08em;
   }
+
+  /* ✅ clickable pay period dates */
+  .pp-date {
+    color:#0f0;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 900;
+  }
+  .pp-date:hover { opacity: 0.9; }
 </style>
 </head>
 <body>
@@ -497,41 +506,121 @@
 </script>
 
 <script>
+  /* ✅ NEW: pay period base is editable + saved */
+  const PAY_PERIOD_BASE_KEY = "payPeriodBaseStartISO";
+  const DEFAULT_BASE_START = "2025-04-13";
+
+  function getPayPeriodBaseStartISO() {
+    return localStorage.getItem(PAY_PERIOD_BASE_KEY) || DEFAULT_BASE_START;
+  }
+
+  function setPayPeriodBaseStartISO(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+    localStorage.setItem(PAY_PERIOD_BASE_KEY, iso);
+  }
+
+  function addDaysISO(iso, days) {
+    const d = new Date(iso + "T00:00:00");
+    d.setDate(d.getDate() + days);
+    return getLAISODate(d);
+  }
+
+  function openDatePicker(initialValue, onPick) {
+    const input = document.createElement("input");
+    input.type = "date";
+    input.value = initialValue || "";
+    input.style.position = "fixed";
+    input.style.left = "-9999px";
+    input.style.top = "-9999px";
+    document.body.appendChild(input);
+
+    input.addEventListener("change", () => {
+      const val = input.value;
+      document.body.removeChild(input);
+      if (val && typeof onPick === "function") onPick(val);
+    });
+
+    // iOS/Safari friendly
+    input.focus();
+    if (typeof input.showPicker === "function") {
+      try { input.showPicker(); } catch {}
+    }
+    input.click();
+  }
+
+  function renderPayPeriodLabel() {
+    const period = getCurrentPayPeriod();
+    const label = document.getElementById("payPeriodLabel");
+    if (!label) return;
+
+    label.innerHTML = `
+      Pay Period:
+      <span class="pp-date" id="ppStart">${period.start}</span>
+      –
+      <span class="pp-date" id="ppEnd">${period.end}</span>
+    `;
+
+    const startEl = document.getElementById("ppStart");
+    const endEl = document.getElementById("ppEnd");
+
+    if (startEl) {
+      startEl.addEventListener("click", () => {
+        openDatePicker(period.start, (picked) => {
+          // setting base start directly shifts the whole 14-day cycle
+          setPayPeriodBaseStartISO(picked);
+          updateSessionTable();
+          renderPayPeriodLabel();
+        });
+      });
+    }
+
+    if (endEl) {
+      endEl.addEventListener("click", () => {
+        openDatePicker(period.end, (pickedEnd) => {
+          // end = start + 13, so baseStart = pickedEnd - 13
+          const endDate = new Date(pickedEnd + "T00:00:00");
+          endDate.setDate(endDate.getDate() - 13);
+          const newBase = getLAISODate(endDate);
+          setPayPeriodBaseStartISO(newBase);
+          updateSessionTable();
+          renderPayPeriodLabel();
+        });
+      });
+    }
+  }
+
   function getCurrentPayPeriod() {
-    const base = new Date("2025-04-13T00:00:00");
-    const todayLA = new Date(getLAISODate() + "T00:00:00"); // ✅ LA date anchor
+    const baseISO = getPayPeriodBaseStartISO();
+    const base = new Date(baseISO + "T00:00:00");
+
+    const todayLA = new Date(getLAISODate() + "T00:00:00");
     const diffDays = Math.floor((todayLA - base) / (1000*60*60*24));
     const periodIndex = Math.floor(diffDays / 14);
-    const periodStart = new Date(base); periodStart.setDate(base.getDate() + periodIndex * 14);
-    const periodEnd = new Date(periodStart); periodEnd.setDate(periodStart.getDate() + 13);
+
+    const periodStart = new Date(base);
+    periodStart.setDate(base.getDate() + periodIndex * 14);
 
     const start = getLAISODate(periodStart);
-    const end = getLAISODate(periodEnd);
+    const end = addDaysISO(start, 13);
 
-    return {
-      start,
-      end,
-      label: 'Pay Period: ' + start + ' – ' + end
-    };
+    return { start, end, label: 'Pay Period: ' + start + ' – ' + end };
   }
 
   function getPayPeriodForDate(date) {
-    const base = new Date("2025-04-13T00:00:00");
+    const baseISO = getPayPeriodBaseStartISO();
+    const base = new Date(baseISO + "T00:00:00");
+
     const timeDiff = date.getTime() - base.getTime();
     const dayDiff = Math.floor(timeDiff / (1000*60*60*24));
     const periodOffset = Math.floor(dayDiff / 14);
 
-    const periodStart = new Date(base); periodStart.setDate(base.getDate() + periodOffset * 14);
-    const periodEnd = new Date(periodStart); periodEnd.setDate(periodStart.getDate() + 13);
+    const periodStart = new Date(base);
+    periodStart.setDate(base.getDate() + periodOffset * 14);
 
     const start = getLAISODate(periodStart);
-    const end = getLAISODate(periodEnd);
+    const end = addDaysISO(start, 13);
 
-    return {
-      start,
-      end,
-      label: 'Pay Period: ' + start + ' – ' + end
-    };
+    return { start, end, label: 'Pay Period: ' + start + ' – ' + end };
   }
 
   function updateTrackerDailyTotal() {
@@ -682,9 +771,16 @@
       }
     });
 
+    // ✅ sort entries inside each period OLDEST -> NEWEST
+    currentPeriodEntries.sort((a, b) => a[0].date.localeCompare(b[0].date));
+    Object.keys(pastPeriodGroups).forEach(k => {
+      pastPeriodGroups[k].entries.sort((a, b) => a[0].date.localeCompare(b[0].date));
+    });
+
     const grouped = {};
     grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
 
+    // keep past periods in newest-first order (your existing behavior)
     Object.keys(pastPeriodGroups)
       .sort((a, b) => new Date(b) - new Date(a))
       .forEach(key => grouped[key] = pastPeriodGroups[key]);
@@ -706,11 +802,25 @@
 
     currentEntries.forEach(([entry, index]) => {
       const row = document.createElement('tr');
+
       row.innerHTML = `
-        <td contenteditable="true" onblur="editDate(${index}, this)">${entry.date}</td>
+        <td></td>
         <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
         <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
         <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
+
+      // ✅ Date as calendar input (moves row after change because we re-render + sorted)
+      const dateTd = row.children[0];
+      const dateInput = document.createElement('input');
+      dateInput.type = 'date';
+      dateInput.value = entry.date;
+      dateInput.style.width = '160px';
+      dateInput.style.marginTop = '0';
+      dateInput.addEventListener('change', () => {
+        editDate(index, dateInput.value);
+      });
+      dateTd.appendChild(dateInput);
+
       tbody.appendChild(row);
       totalBonusPay += parseFloat(entry.bonusPay || 0);
     });
@@ -750,10 +860,22 @@
       group.entries.forEach(([entry, index]) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td contenteditable="true" onblur="editDate(${index}, this)">${entry.date}</td>
+          <td></td>
           <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
           <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
           <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
+
+        const dateTd = row.children[0];
+        const dateInput = document.createElement('input');
+        dateInput.type = 'date';
+        dateInput.value = entry.date;
+        dateInput.style.width = '160px';
+        dateInput.style.marginTop = '0';
+        dateInput.addEventListener('change', () => {
+          editDate(index, dateInput.value);
+        });
+        dateTd.appendChild(dateInput);
+
         content.appendChild(row);
       });
 
@@ -774,24 +896,22 @@
     }
   }
 
-  function editDate(index, td) {
+  // ✅ updated: accepts date string directly (from date input)
+  function editDate(index, updatedDate) {
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    const updatedDate = td.textContent.trim();
 
     if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
       history[index].date = updatedDate;
       localStorage.setItem('trimHistory', JSON.stringify(history));
-      updateSessionTable();
+      updateSessionTable(); // ✅ re-render + sorted, so it moves
     } else {
       alert("Please enter a valid date format: YYYY-MM-DD");
-      td.textContent = history[index].date;
+      updateSessionTable();
     }
   }
 
   window.addEventListener('load', () => {
-    const period = getCurrentPayPeriod();
-    const label = document.getElementById("payPeriodLabel");
-    if (label) label.textContent = period.label;
+    renderPayPeriodLabel();
 
     // ✅ normalize stored dates WITHOUT converting to UTC
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
