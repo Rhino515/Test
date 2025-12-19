@@ -138,22 +138,26 @@
     font-size: 1.08em;
   }
 
-  /* ✅ Pay Period: editable + iPhone friendly */
+  /* ✅ Pay Period: smaller + ISO badges (YYYY-MM-DD) */
   #payPeriodLabel{
     margin-top: 0.6em;
     color: #0f0;
     font-weight: bold;
+    font-size: 0.95em;
+    line-height: 1.1;
   }
-  .pp-inline-date {
-    background: transparent;
-    border: none;
-    color: #0f0;
+  .pp-date-badge{
+    display:inline-block;
     font-weight: 900;
-    cursor: pointer;
-    padding: 0;
-    margin: 0 4px;
-    width: 145px;
+    background:#111;
+    border:1px solid #0f0;
+    border-radius:6px;
+    padding: 2px 8px;
+    cursor:pointer;
+    color:#0f0;
+    white-space: nowrap;
   }
+  .pp-date-badge:hover{ background:#0f0; color:#000; }
 
   /* ✅ Compact date badge: shows YYYY- on first line, MM-DD on second */
   .date-display{
@@ -620,6 +624,7 @@
     return { start, end, label: `Pay Period: ${start} – ${end}` };
   }
 
+  /* ✅ Pay period shown as ISO (YYYY-MM-DD) badges (smaller + not bulky) */
   function renderPayPeriodLabel() {
     const period = getCurrentPayPeriod();
     const label = document.getElementById("payPeriodLabel");
@@ -627,33 +632,35 @@
 
     label.innerHTML = `
       Pay Period:
-      <input class="pp-inline-date" id="ppStartInput" type="date" value="${period.start}">
+      <span class="pp-date-badge" id="ppStartBadge">${period.start}</span>
       –
-      <input class="pp-inline-date" id="ppEndInput" type="date" value="${period.end}">
+      <span class="pp-date-badge" id="ppEndBadge">${period.end}</span>
     `;
 
-    const startEl = document.getElementById("ppStartInput");
-    const endEl = document.getElementById("ppEndInput");
+    const startBadge = document.getElementById("ppStartBadge");
+    const endBadge = document.getElementById("ppEndBadge");
 
-    if (startEl) {
-      startEl.addEventListener("change", () => {
-        const picked = startEl.value;
-        if (!picked) return;
-        setPayPeriodBaseStartISO(picked);
-        updateSessionTable();
-        renderPayPeriodLabel();
+    if (startBadge) {
+      startBadge.addEventListener("click", () => {
+        openDatePickerOnScreen(period.start, (picked) => {
+          if (!picked) return;
+          setPayPeriodBaseStartISO(picked);
+          updateSessionTable();
+          renderPayPeriodLabel();
+        });
       });
     }
 
-    if (endEl) {
-      endEl.addEventListener("change", () => {
-        const pickedEnd = endEl.value;
-        if (!pickedEnd) return;
-        const endDate = new Date(pickedEnd + "T00:00:00");
-        endDate.setDate(endDate.getDate() - 13);
-        setPayPeriodBaseStartISO(getLAISODate(endDate));
-        updateSessionTable();
-        renderPayPeriodLabel();
+    if (endBadge) {
+      endBadge.addEventListener("click", () => {
+        openDatePickerOnScreen(period.end, (pickedEnd) => {
+          if (!pickedEnd) return;
+          const endDate = new Date(pickedEnd + "T00:00:00");
+          endDate.setDate(endDate.getDate() - 13);
+          setPayPeriodBaseStartISO(getLAISODate(endDate));
+          updateSessionTable();
+          renderPayPeriodLabel();
+        });
       });
     }
   }
