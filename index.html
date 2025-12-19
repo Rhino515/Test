@@ -7,224 +7,165 @@
 <link rel="manifest" href="manifest.json"/>
 <meta name="theme-color" content="#000000"/>
 <style>
-  body{
-    background:#000;
-    color:#fff;
-    font-family:'Montserrat',sans-serif;
-    text-align:center;
-    padding: 1.2em;
+  body {
+    background-color: black;
+    color: white;
+    font-family: 'Montserrat', sans-serif;
+    text-align: center;
+    padding: 2em;
+  }
+  input {
+    font-size: 1.2em;
+    padding: 0.5em;
+    margin-top: 0.6em;
+    width: 150px;
+    background-color: #222;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+  }
+  button {
+    background-color: green;
+    color: white;
+    padding: 0.45em 1em;
+    border: none;
+    font-size: 1em;
+    margin-top: 0.6em;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  button:hover { background-color: darkgreen; }
+  img { margin-top: 0.6em; width: 200px; }
+  #result { margin-top: 0.6em; font-size: 1.2em; }
+
+  .install-links { margin-top: 0.6em; }
+  .install-links a {
+    display: inline-block;
+    margin: 0.5em;
+    padding: 0.5em 1em;
+    color: white;
+    background-color: #444;
+    text-decoration: none;
+    border-radius: 4px;
+  }
+  .install-links a:hover { background-color: #666; }
+
+  table {
+    margin: 2em auto;
+    border-collapse: collapse;
+    width: 80%;
+  }
+  th, td { border: 1px solid #555; padding: 0.5em; }
+  th { background-color: #333; }
+  td[contenteditable="true"] { background-color: #222; }
+
+  .delete-button {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 0.3em 0.6em;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  .delete-button:hover { background-color: darkred; }
+
+  .past-period-header {
+    background-color: #444;
+    color: white;
+    padding: 0.5em;
+    cursor: pointer;
+    margin-top: 1em;
+    border-radius: 4px;
+    text-align: left;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .past-period-content {
+    display: none;
+    width: 80%;
+    margin: 0 auto;
+  }
+  .past-period-content.open { display: block; }
+  .past-period-total {
+    color: #0f0;
+    font-weight: bold;
+    margin-left: 8px;
   }
 
-  input{
-    font-size:1.2em;
-    padding:0.5em;
-    margin-top:0.6em;
-    width:150px;
-    background:#222;
-    color:#fff;
-    border:1px solid #555;
-    border-radius:4px;
+  .creatorTitle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .secretBolt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: #111;
+    border: 1px solid #0f0;
+    color: #0f0;
+    text-decoration: none;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+  }
+  .secretBolt:hover { background:#0f0; color:#000; }
+  .secretBolt:active { transform: scale(0.98); }
+
+  .collapsible-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+    padding: 0.2em 0.2em;
+  }
+  .collapse-indicator {
+    color: #0f0;
+    font-weight: bold;
+    min-width: 34px;
+    text-align: center;
   }
 
-  button{
-    background:green;
-    color:#fff;
-    padding:0.45em 1em;
-    border:none;
-    font-size:1em;
-    margin-top:0.6em;
-    border-radius:4px;
-    cursor:pointer;
-  }
-  button:hover{ background:darkgreen; }
-  img{ margin-top:0.6em; width:200px; }
-  #result{ margin-top:0.6em; font-size:1.2em; }
-
-  .install-links{ margin-top:0.6em; }
-  .install-links a{
-    display:inline-block;
-    margin:0.5em;
-    padding:0.5em 1em;
-    color:#fff;
-    background:#444;
-    text-decoration:none;
-    border-radius:4px;
-  }
-  .install-links a:hover{ background:#666; }
-
-  /* ✅ TABLES: full width + stable columns (no sideways scroll) */
-  table{
-    width:100%;
-    max-width:900px;
-    margin: 1.2em auto;
-    border-collapse:collapse;
-    table-layout:fixed;
+  .important-green {
+    color: #0f0;
+    font-weight: 800;
+    font-size: 1.08em;
   }
 
-  /* ✅ stop vertical stacked letters */
-  th, td{
-    border:1px solid #555;
-    padding:0.5em;
-    white-space:nowrap;
-    word-break:normal;
-    overflow-wrap:normal;
-    text-align:center;
-  }
-
-  th{ background:#333; }
-  td[contenteditable="true"]{ background:#222; }
-
-  /* ✅ Column widths (main table) */
-  #sessionTable th:nth-child(1), #sessionTable td:nth-child(1){ width:140px; }
-  #sessionTable th:nth-child(2), #sessionTable td:nth-child(2){ width:90px; }
-  #sessionTable th:nth-child(3), #sessionTable td:nth-child(3){ width:120px; }
-  #sessionTable th:nth-child(4), #sessionTable td:nth-child(4){ width:92px; }
-
-  .delete-button{
-    background:red;
-    color:#fff;
-    border:none;
-    padding:0.3em 0.6em;
-    cursor:pointer;
-    border-radius:4px;
-  }
-  .delete-button:hover{ background:darkred; }
-
-  .past-period-total{
-    color:#0f0;
-    font-weight:bold;
-    margin-left:8px;
-  }
-
-  .creatorTitle{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
-  }
-  .secretBolt{
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    width:28px;
-    height:28px;
-    border-radius:999px;
-    background:#111;
-    border:1px solid #0f0;
-    color:#0f0;
-    text-decoration:none;
-    font-size:16px;
-    line-height:1;
-    cursor:pointer;
-    user-select:none;
-  }
-  .secretBolt:hover{ background:#0f0; color:#000; }
-  .secretBolt:active{ transform:scale(0.98); }
-
-  .important-green{
-    color:#0f0;
-    font-weight:800;
-    font-size:1.08em;
-  }
-
-  /* ✅ Pay Period smaller + cleaner */
+  /* ✅ Pay Period: editable + iPhone friendly */
   #payPeriodLabel{
-    margin-top:0.7em;
-    color:#0f0;
-    font-weight:800;
-    font-size:1.0em;
-    line-height:1.2;
+    margin-top: 0.6em;
+    color: #0f0;
+    font-weight: bold;
+  }
+  .pp-inline-date {
+    background: transparent;
+    border: none;
+    color: #0f0;
+    font-weight: 900;
+    cursor: pointer;
+    padding: 0;
+    margin: 0 4px;
+    width: 145px;
   }
 
-  .pp-inline-date{
-    background:transparent;
-    border:none;
-    color:#0f0;
-    font-weight:900;
-    cursor:pointer;
-    padding:0;
-    margin:0 4px;
-    width:132px;
-    font-size:0.95em;
-  }
-
+  /* ✅ Compact date badge: shows YYYY- on first line, MM-DD on second */
   .date-display{
     display:inline-block;
-    color:#fff;
     font-weight:bold;
-    cursor:pointer;
-    white-space:nowrap;
-    padding:2px 6px;
-    border-radius:4px;
     background:#222;
     border:1px solid #555;
-    font-size:0.95em;
-  }
-
-  /* ✅ Past period header matches main width */
-  .past-period-header{
-    background:#2b2b2b;
-    border:1px solid #555;
-    color:#fff;
-    padding:0.55em 0.7em;
+    border-radius:4px;
+    padding: 2px 6px;
     cursor:pointer;
-    margin: 1.1em auto 0.4em auto;
-    border-radius:8px;
-    text-align:left;
-    width:100%;
-    max-width:900px;
-    font-size:0.98em;
-    box-sizing:border-box;
-  }
-  .past-period-header .toggle-indicator{ float:right; opacity:0.9; }
-
-  /* ✅ Past period content matches main width; no scroll box */
-  .past-period-content{
-    display:none;
-    width:100%;
-    max-width:900px;
-    margin:0 auto;
-    padding:0;
-    border:none;
-    box-sizing:border-box;
-  }
-  .past-period-content.open{ display:block; }
-
-  .past-period-content table{
-    width:100%;
-    max-width:900px;
-    margin:0.4em auto 0 auto;
-    border-collapse:collapse;
-    table-layout:fixed;
-  }
-
-  /* ✅ Column widths (past tables too) */
-  .past-period-content th:nth-child(1), .past-period-content td:nth-child(1){ width:140px; }
-  .past-period-content th:nth-child(2), .past-period-content td:nth-child(2){ width:90px; }
-  .past-period-content th:nth-child(3), .past-period-content td:nth-child(3){ width:120px; }
-  .past-period-content th:nth-child(4), .past-period-content td:nth-child(4){ width:92px; }
-
-  /* ✅ Hourly Pay Averages header */
-  .collapsible-header{
-    display:inline-flex;
-    align-items:center;
-    gap:10px;
-    user-select:none;
-    padding:0.2em 0.2em;
-  }
-  .collapse-indicator{
-    color:#0f0;
-    font-weight:bold;
-    min-width:34px;
-    text-align:center;
-  }
-
-  /* ✅ iPhone tight mode */
-  @media (max-width:420px){
-    body{ padding:0.8em; }
-    th, td{ padding:0.38em; font-size:0.92em; }
-    .date-display{ font-size:0.9em; }
-    #payPeriodLabel{ font-size:0.98em; }
+    line-height: 1.05;
+    white-space: normal;
   }
 </style>
 </head>
@@ -232,7 +173,9 @@
 
 <img src="norcal_icon.png" alt="NorCal Logo"/>
 
-<div id="trackerDailyTotalDisplay" style="margin-top:0.4em;font-size:0.95em;color:#0f0;font-weight:bold;"></div>
+<div id="trackerDailyTotalDisplay"
+     style="margin-top:0.4em;font-size:0.95em;color:#0f0;font-weight:bold;">
+</div>
 
 <p>Enter the total grams trimmed:</p>
 <input id="grams" type="number" placeholder="e.g. 1200"/>
@@ -297,7 +240,6 @@
   </button>
 </div>
 
-<!-- ✅ Hourly Pay Averages (RESTORED) -->
 <div style="margin-top: 1.2em; border-top: 1px solid #444; padding-top: 1em;">
   <h2 class="collapsible-header" style="color:#0f0; cursor:pointer;" onclick="togglePayCalc()">
     <span id="payCalcIndicator" class="collapse-indicator">[+]</span>
@@ -359,6 +301,7 @@
 <script>
   let lastCalculated = null;
 
+  /* ✅ LA date (PST/PDT safe) */
   function getLAISODate(date = new Date()) {
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/Los_Angeles',
@@ -373,12 +316,17 @@
     return `${y}-${m}-${d}`;
   }
 
-  function formatMDY(iso) {
+  /* ✅ display as:
+     YYYY-
+     MM-DD
+  */
+  function formatCompactDateHTML(iso) {
     if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || "";
-    const [y, m, d] = iso.split("-");
-    return `${m}-${d}-${y}`;
+    const [y,m,d] = iso.split("-");
+    return `${y}-<br>${m}-${d}`;
   }
 
+  /* ✅ iPhone-friendly on-screen date picker */
   function openDatePickerOnScreen(initialValue, onPick) {
     const input = document.createElement("input");
     input.type = "date";
@@ -460,6 +408,16 @@
     lastCalculated = null;
   }
 
+  function togglePayCalc() {
+    const section = document.getElementById("payCalcSection");
+    const indicator = document.getElementById("payCalcIndicator");
+    if (!section) return;
+
+    const willOpen = section.style.display === "none";
+    section.style.display = willOpen ? "block" : "none";
+    if (indicator) indicator.textContent = willOpen ? "[-]" : "[+]";
+  }
+
   function deleteEntry(index) {
     const confirmMsg = "Are you sure you want to delete this entry?";
     if (!confirm(confirmMsg)) return;
@@ -472,336 +430,8 @@
 </script>
 
 <script>
-  const PAY_PERIOD_BASE_KEY = "payPeriodBaseStartISO";
-  const DEFAULT_BASE_START = "2025-04-13";
-
-  function getPayPeriodBaseStartISO() {
-    return localStorage.getItem(PAY_PERIOD_BASE_KEY) || DEFAULT_BASE_START;
-  }
-  function setPayPeriodBaseStartISO(iso) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
-    localStorage.setItem(PAY_PERIOD_BASE_KEY, iso);
-  }
-  function addDaysISO(iso, days) {
-    const d = new Date(iso + "T00:00:00");
-    d.setDate(d.getDate() + days);
-    return getLAISODate(d);
-  }
-
-  function renderPayPeriodLabel() {
-    const period = getCurrentPayPeriod();
-    const label = document.getElementById("payPeriodLabel");
-    if (!label) return;
-
-    label.innerHTML = `
-      Pay Period:
-      <input class="pp-inline-date" id="ppStartInput" type="date" value="${period.start}">
-      –
-      <input class="pp-inline-date" id="ppEndInput" type="date" value="${period.end}">
-    `;
-
-    const startEl = document.getElementById("ppStartInput");
-    const endEl = document.getElementById("ppEndInput");
-
-    if (startEl) {
-      startEl.addEventListener("change", () => {
-        const picked = startEl.value;
-        if (!picked) return;
-        setPayPeriodBaseStartISO(picked);
-        updateSessionTable();
-        renderPayPeriodLabel();
-      });
-    }
-
-    if (endEl) {
-      endEl.addEventListener("change", () => {
-        const pickedEnd = endEl.value;
-        if (!pickedEnd) return;
-        const endDate = new Date(pickedEnd + "T00:00:00");
-        endDate.setDate(endDate.getDate() - 13);
-        setPayPeriodBaseStartISO(getLAISODate(endDate));
-        updateSessionTable();
-        renderPayPeriodLabel();
-      });
-    }
-  }
-
-  function getCurrentPayPeriod() {
-    const baseISO = getPayPeriodBaseStartISO();
-    const base = new Date(baseISO + "T00:00:00");
-
-    const todayLA = new Date(getLAISODate() + "T00:00:00");
-    const diffDays = Math.floor((todayLA - base) / (1000*60*60*24));
-    const periodIndex = Math.floor(diffDays / 14);
-
-    const periodStart = new Date(base);
-    periodStart.setDate(base.getDate() + periodIndex * 14);
-
-    const start = getLAISODate(periodStart);
-    const end = addDaysISO(start, 13);
-
-    return { start, end, label: 'Pay Period: ' + start + ' – ' + end };
-  }
-
-  function getPayPeriodForDate(date) {
-    const baseISO = getPayPeriodBaseStartISO();
-    const base = new Date(baseISO + "T00:00:00");
-
-    const timeDiff = date.getTime() - base.getTime();
-    const dayDiff = Math.floor(timeDiff / (1000*60*60*24));
-    const periodOffset = Math.floor(dayDiff / 14);
-
-    const periodStart = new Date(base);
-    periodStart.setDate(base.getDate() + periodOffset * 14);
-
-    const start = getLAISODate(periodStart);
-    const end = addDaysISO(start, 13);
-
-    return { start, end, label: 'Pay Period: ' + start + ' – ' + end };
-  }
-
-  function groupByPayPeriod(history) {
-    const currentPeriod = getCurrentPayPeriod();
-    const currentStart = new Date(currentPeriod.start + "T00:00:00");
-    const currentEnd = new Date(currentPeriod.end + "T23:59:59");
-
-    const currentPeriodEntries = [];
-    const pastPeriodGroups = {};
-
-    history.forEach((entry, index) => {
-      const entryDate = new Date(entry.date + "T00:00:00");
-
-      if (entryDate >= currentStart && entryDate <= currentEnd) {
-        currentPeriodEntries.push([entry, index]);
-      } else if (entryDate < currentStart) {
-        const period = getPayPeriodForDate(entryDate);
-        const key = period.start;
-        if (!pastPeriodGroups[key]) pastPeriodGroups[key] = { label: period.label, entries: [] };
-        pastPeriodGroups[key].entries.push([entry, index]);
-      }
-    });
-
-    currentPeriodEntries.sort((a, b) => a[0].date.localeCompare(b[0].date));
-    Object.keys(pastPeriodGroups).forEach(k => {
-      pastPeriodGroups[k].entries.sort((a, b) => a[0].date.localeCompare(b[0].date));
-    });
-
-    const grouped = {};
-    grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
-
-    Object.keys(pastPeriodGroups)
-      .sort((a, b) => new Date(b) - new Date(a))
-      .forEach(key => grouped[key] = pastPeriodGroups[key]);
-
-    return grouped;
-  }
-
-  function updateSessionTable() {
-    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    const tbody = document.querySelector('#sessionTable tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = '';
-    let totalBonusPay = 0;
-
-    const grouped = groupByPayPeriod(history);
-    const currentPeriod = getCurrentPayPeriod();
-    const currentEntries = grouped[currentPeriod.start]?.entries || [];
-
-    currentEntries.forEach(([entry, index]) => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td></td>
-        <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
-        <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
-        <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
-
-      const dateTd = row.children[0];
-      const badge = document.createElement('span');
-      badge.className = 'date-display';
-      badge.textContent = formatMDY(entry.date);
-      badge.addEventListener('click', () => {
-        openDatePickerOnScreen(entry.date, (picked) => editDate(index, picked));
-      });
-      dateTd.appendChild(badge);
-
-      tbody.appendChild(row);
-      totalBonusPay += parseFloat(entry.bonusPay || 0);
-    });
-
-    document.getElementById('totalBonusPay').textContent = '$' + totalBonusPay.toFixed(2);
-
-    document.querySelectorAll('.past-period-header, .past-period-content').forEach(el => el.remove());
-
-    Object.keys(grouped).filter(key => key !== currentPeriod.start).forEach(key => {
-      const group = grouped[key];
-
-      const periodTotal = group.entries.reduce((sum, pair) => {
-        const entry = pair[0];
-        return sum + parseFloat(entry.bonusPay || 0);
-      }, 0);
-
-      const header = document.createElement('div');
-      header.className = 'past-period-header';
-      header.dataset.total = periodTotal.toFixed(2);
-
-      header.innerHTML = `
-        <span class="past-period-label">${group.label}</span>
-        <span class="past-period-total">$${header.dataset.total}</span>
-        <span class="toggle-indicator">[+]</span>
-      `;
-
-      header.addEventListener('click', function () {
-        const content = this.nextElementSibling;
-        const open = content.classList.toggle('open');
-        const ind = this.querySelector('.toggle-indicator');
-        if (ind) ind.textContent = open ? '[-]' : '[+]';
-      });
-
-      const content = document.createElement('div');
-      content.className = 'past-period-content';
-
-      const pastTable = document.createElement('table');
-
-      const pastThead = document.createElement('thead');
-      pastThead.innerHTML = `
-        <tr>
-          <th>Date</th>
-          <th>Grams</th>
-          <th>Bonus Pay</th>
-          <th>Action</th>
-        </tr>`;
-      pastTable.appendChild(pastThead);
-
-      const pastTbody = document.createElement('tbody');
-
-      group.entries.forEach(([entry, index]) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td></td>
-          <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
-          <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
-          <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
-
-        const dateTd = row.children[0];
-        const badge = document.createElement('span');
-        badge.className = 'date-display';
-        badge.textContent = formatMDY(entry.date);
-        badge.addEventListener('click', () => {
-          openDatePickerOnScreen(entry.date, (picked) => editDate(index, picked));
-        });
-        dateTd.appendChild(badge);
-
-        pastTbody.appendChild(row);
-      });
-
-      pastTable.appendChild(pastTbody);
-      content.appendChild(pastTable);
-
-      const table = document.getElementById('sessionTable');
-      table.parentNode.insertBefore(header, table.nextSibling);
-      table.parentNode.insertBefore(content, header.nextSibling);
-    });
-  }
-
-  function editGrams(index, td) {
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    const newGrams = parseFloat(td.textContent.trim());
-    if (!isNaN(newGrams)) {
-      history[index].grams = newGrams;
-      history[index].bonusPay = calculateBonus(newGrams).toFixed(2);
-      localStorage.setItem('trimHistory', JSON.stringify(history));
-      updateSessionTable();
-    }
-  }
-
-  function editDate(index, updatedDate) {
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
-      history[index].date = updatedDate;
-      localStorage.setItem('trimHistory', JSON.stringify(history));
-      updateSessionTable();
-    } else {
-      alert("Please enter a valid date format: YYYY-MM-DD");
-      updateSessionTable();
-    }
-  }
-</script>
-
-<!-- ✅ Hourly Pay Averages JS (RESTORED) -->
-<script>
+  /* ✅ Hourly autosave */
   const HOURLY_INPUTS_KEY = "hourlyPayInputs_v1";
-
-  function togglePayCalc() {
-    const section = document.getElementById("payCalcSection");
-    const indicator = document.getElementById("payCalcIndicator");
-    if (!section) return;
-
-    const willOpen = section.style.display === "none";
-    section.style.display = willOpen ? "block" : "none";
-    if (indicator) indicator.textContent = willOpen ? "[-]" : "[+]";
-  }
-
-  function calculateAverages() {
-    const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
-
-    const regularHours = parseFloat(document.getElementById("regularHours").value) || 0;
-    const regularMinutes = parseFloat(document.getElementById("regularMinutes").value) || 0;
-
-    const overtimeHours = parseFloat(document.getElementById("overtimeHours").value) || 0;
-    const overtimeMinutes = parseFloat(document.getElementById("overtimeMinutes").value) || 0;
-
-    const doubletimeHours = parseFloat(document.getElementById("doubletimeHours").value) || 0;
-    const doubletimeMinutes = parseFloat(document.getElementById("doubletimeMinutes").value) || 0;
-
-    const startDate = new Date(document.getElementById("startDate").value);
-    const endDate = new Date(document.getElementById("endDate").value);
-
-    const totalRegularHours = regularHours + (regularMinutes / 60);
-    const totalOvertimeHours = overtimeHours + (overtimeMinutes / 60);
-    const totalDoubletimeHours = doubletimeHours + (doubletimeMinutes / 60);
-    const totalHoursWorked = totalRegularHours + totalOvertimeHours + totalDoubletimeHours;
-
-    if (isNaN(hourlyRate) || isNaN(startDate) || isNaN(endDate) || totalHoursWorked <= 0) {
-      alert("Please fill out all fields, including regular/overtime/double time hours.");
-      return;
-    }
-
-    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    const filtered = history.filter(entry => {
-      const entryDate = new Date(entry.date); entryDate.setHours(0,0,0,0);
-      const s = new Date(startDate); s.setHours(0,0,0,0);
-      const e = new Date(endDate);   e.setHours(0,0,0,0);
-      return entryDate >= s && entryDate <= e;
-    });
-
-    const bonusTotal = filtered.reduce((sum, entry) => sum + parseFloat(entry.bonusPay || 0), 0);
-
-    const regularPay = hourlyRate * totalRegularHours;
-    const overtimePay = hourlyRate * 1.5 * totalOvertimeHours;
-    const doubletimePay = hourlyRate * 2.0 * totalDoubletimeHours;
-
-    const hourlyTotal = regularPay + overtimePay + doubletimePay;
-    const totalPay = bonusTotal + hourlyTotal;
-
-    const dayDiff = Math.max(1, (endDate - startDate) / (1000*60*60*24) + 1);
-
-    const results = `
-      <p><strong>Total bonus pay:</strong> $${bonusTotal.toFixed(2)}</p>
-      <p><strong>Regular pay:</strong> $${regularPay.toFixed(2)}</p>
-      <p><strong>Overtime pay (1.5x):</strong> $${overtimePay.toFixed(2)}</p>
-      <p><strong>Double time pay (2.0x):</strong> $${doubletimePay.toFixed(2)}</p>
-      <p><strong>Total hourly pay (wages only):</strong> $${hourlyTotal.toFixed(2)}</p>
-      <p class="important-green"><strong>Total pay (hourly + bonus):</strong> $${totalPay.toFixed(2)}</p>
-      <p><strong>Average daily pay:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
-      <p><strong>Average weekly pay:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p>
-      <p><strong>Average bi-weekly pay:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p>
-      <p><strong>Average hourly rate (with bonus):</strong> $${(totalHoursWorked > 0 ? (totalPay / totalHoursWorked) : 0).toFixed(2)}</p>
-    `;
-    document.getElementById("averageResults").innerHTML = results;
-
-    saveHourlyInputs();
-  }
 
   function saveHourlyInputs() {
     const data = {
@@ -876,12 +506,454 @@
     const results = document.getElementById("averageResults");
     if (results) results.innerHTML = "";
   }
+
+  function calculateAverages() {
+    const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
+
+    const regularHours = parseFloat(document.getElementById("regularHours").value) || 0;
+    const regularMinutes = parseFloat(document.getElementById("regularMinutes").value) || 0;
+
+    const overtimeHours = parseFloat(document.getElementById("overtimeHours").value) || 0;
+    const overtimeMinutes = parseFloat(document.getElementById("overtimeMinutes").value) || 0;
+
+    const doubletimeHours = parseFloat(document.getElementById("doubletimeHours").value) || 0;
+    const doubletimeMinutes = parseFloat(document.getElementById("doubletimeMinutes").value) || 0;
+
+    const startDate = new Date(document.getElementById("startDate").value);
+    const endDate = new Date(document.getElementById("endDate").value);
+
+    const totalRegularHours = regularHours + (regularMinutes / 60);
+    const totalOvertimeHours = overtimeHours + (overtimeMinutes / 60);
+    const totalDoubletimeHours = doubletimeHours + (doubletimeMinutes / 60);
+    const totalHoursWorked = totalRegularHours + totalOvertimeHours + totalDoubletimeHours;
+
+    if (isNaN(hourlyRate) || isNaN(startDate) || isNaN(endDate) || totalHoursWorked <= 0) {
+      alert("Please fill out all fields, including regular/overtime/double time hours.");
+      return;
+    }
+
+    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    const filtered = history.filter(entry => {
+      const entryDate = new Date(entry.date); entryDate.setHours(0,0,0,0);
+      const s = new Date(startDate); s.setHours(0,0,0,0);
+      const e = new Date(endDate);   e.setHours(0,0,0,0);
+      return entryDate >= s && entryDate <= e;
+    });
+
+    const bonusTotal = filtered.reduce((sum, entry) => sum + parseFloat(entry.bonusPay || 0), 0);
+
+    const regularPay = hourlyRate * totalRegularHours;
+    const overtimePay = hourlyRate * 1.5 * totalOvertimeHours;
+    const doubletimePay = hourlyRate * 2.0 * totalDoubletimeHours;
+
+    const hourlyTotal = regularPay + overtimePay + doubletimePay;
+    const totalPay = bonusTotal + hourlyTotal;
+
+    const dayDiff = Math.max(1, (endDate - startDate) / (1000*60*60*24) + 1);
+
+    const results = `
+      <p><strong>Total bonus pay:</strong> $${bonusTotal.toFixed(2)}</p>
+      <p><strong>Regular pay:</strong> $${regularPay.toFixed(2)}</p>
+      <p><strong>Overtime pay (1.5x):</strong> $${overtimePay.toFixed(2)}</p>
+      <p><strong>Double time pay (2.0x):</strong> $${doubletimePay.toFixed(2)}</p>
+      <p><strong>Total hourly pay (wages only):</strong> $${hourlyTotal.toFixed(2)}</p>
+      <p class="important-green"><strong>Total pay (hourly + bonus):</strong> $${totalPay.toFixed(2)}</p>
+      <p><strong>Average daily pay:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
+      <p><strong>Average weekly pay:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p>
+      <p><strong>Average bi-weekly pay:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p>
+      <p><strong>Average hourly rate (with bonus):</strong> $${(totalHoursWorked > 0 ? (totalPay / totalHoursWorked) : 0).toFixed(2)}</p>
+    `;
+    document.getElementById("averageResults").innerHTML = results;
+  }
 </script>
 
 <script>
+  /* ✅ Editable pay period base (saved) */
+  const PAY_PERIOD_BASE_KEY = "payPeriodBaseStartISO";
+  const DEFAULT_BASE_START = "2025-04-13";
+
+  function getPayPeriodBaseStartISO() {
+    return localStorage.getItem(PAY_PERIOD_BASE_KEY) || DEFAULT_BASE_START;
+  }
+  function setPayPeriodBaseStartISO(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+    localStorage.setItem(PAY_PERIOD_BASE_KEY, iso);
+  }
+
+  function addDaysISO(iso, days) {
+    const d = new Date(iso + "T00:00:00");
+    d.setDate(d.getDate() + days);
+    return getLAISODate(d);
+  }
+
+  function getCurrentPayPeriod() {
+    const baseISO = getPayPeriodBaseStartISO();
+    const base = new Date(baseISO + "T00:00:00");
+
+    const todayLA = new Date(getLAISODate() + "T00:00:00");
+    const diffDays = Math.floor((todayLA - base) / (1000*60*60*24));
+    const periodIndex = Math.floor(diffDays / 14);
+
+    const periodStart = new Date(base);
+    periodStart.setDate(base.getDate() + periodIndex * 14);
+
+    const start = getLAISODate(periodStart);
+    const end = addDaysISO(start, 13);
+
+    return { start, end, label: `Pay Period: ${start} – ${end}` };
+  }
+
+  function getPayPeriodForDate(dateObj) {
+    const baseISO = getPayPeriodBaseStartISO();
+    const base = new Date(baseISO + "T00:00:00");
+
+    const timeDiff = dateObj.getTime() - base.getTime();
+    const dayDiff = Math.floor(timeDiff / (1000*60*60*24));
+    const periodOffset = Math.floor(dayDiff / 14);
+
+    const periodStart = new Date(base);
+    periodStart.setDate(base.getDate() + periodOffset * 14);
+
+    const start = getLAISODate(periodStart);
+    const end = addDaysISO(start, 13);
+
+    return { start, end, label: `Pay Period: ${start} – ${end}` };
+  }
+
+  function renderPayPeriodLabel() {
+    const period = getCurrentPayPeriod();
+    const label = document.getElementById("payPeriodLabel");
+    if (!label) return;
+
+    label.innerHTML = `
+      Pay Period:
+      <input class="pp-inline-date" id="ppStartInput" type="date" value="${period.start}">
+      –
+      <input class="pp-inline-date" id="ppEndInput" type="date" value="${period.end}">
+    `;
+
+    const startEl = document.getElementById("ppStartInput");
+    const endEl = document.getElementById("ppEndInput");
+
+    if (startEl) {
+      startEl.addEventListener("change", () => {
+        const picked = startEl.value;
+        if (!picked) return;
+        setPayPeriodBaseStartISO(picked);
+        updateSessionTable();
+        renderPayPeriodLabel();
+      });
+    }
+
+    if (endEl) {
+      endEl.addEventListener("change", () => {
+        const pickedEnd = endEl.value;
+        if (!pickedEnd) return;
+        const endDate = new Date(pickedEnd + "T00:00:00");
+        endDate.setDate(endDate.getDate() - 13);
+        setPayPeriodBaseStartISO(getLAISODate(endDate));
+        updateSessionTable();
+        renderPayPeriodLabel();
+      });
+    }
+  }
+
+  function updateTrackerDailyTotal() {
+    const todayISO = getLAISODate();
+    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+    const el = document.getElementById('trackerDailyTotalDisplay');
+    if (!el) return;
+
+    el.textContent = trackerTotal
+      ? "Today's Trim Tracker total: " + trackerTotal + "g"
+      : "Today's Trim Tracker total: 0g";
+  }
+
+  function clearCurrentPayPeriod() {
+    const confirmMsg = "Are you sure you want to clear all entries for the current pay period?";
+    if (!confirm(confirmMsg)) return;
+
+    const period = getCurrentPayPeriod();
+    const periodStart = new Date(period.start + "T00:00:00");
+    const periodEnd = new Date(period.end + "T23:59:59");
+
+    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    history = history.filter(entry => {
+      const d = new Date(entry.date + "T00:00:00");
+      return d < periodStart || d > periodEnd;
+    });
+
+    localStorage.setItem('trimHistory', JSON.stringify(history));
+    updateSessionTable();
+  }
+
+  function clearAllPastPayPeriods() {
+    const confirmMsg = "Are you sure you want to clear ALL past pay periods? This cannot be undone.";
+    if (!confirm(confirmMsg)) return;
+
+    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+
+    const current = getCurrentPayPeriod();
+    const currentStart = new Date(current.start + "T00:00:00");
+    const currentEnd = new Date(current.end + "T23:59:59");
+
+    history = history.filter(entry => {
+      const d = new Date(entry.date + "T00:00:00");
+      return d >= currentStart && d <= currentEnd;
+    });
+
+    localStorage.setItem('trimHistory', JSON.stringify(history));
+    updateSessionTable();
+  }
+
+  function downloadCSV() {
+    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    if (history.length === 0) {
+      alert("No data to export.");
+      return;
+    }
+
+    const headers = ["Date", "Grams", "Bonus"];
+    const rows = history.map(entry => [
+      entry.date,
+      entry.grams,
+      parseFloat(entry.bonusPay || 0).toFixed(2)
+    ]);
+
+    let csvContent = "data:text/csv;charset=utf-8,"
+      + headers.join(",") + "\n"
+      + rows.map(e => e.join(",")).join("\n");
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "norcal_trim_data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  function importCSV(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const text = e.target.result;
+      const lines = text.split('\n').slice(1);
+      let imported = [];
+      let errorCount = 0;
+
+      for (let line of lines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
+
+        const columns = trimmedLine.split(',');
+        if (columns.length < 3) { errorCount++; continue; }
+
+        const date = columns[0].trim();
+        const grams = parseFloat(columns[1].trim());
+        const bonus = parseFloat(columns[2].trim());
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(date) && !isNaN(grams) && grams >= 0 && !isNaN(bonus) && bonus >= 0) {
+          imported.push({ date: date, grams: grams, bonusPay: bonus.toFixed(2) });
+        } else {
+          errorCount++;
+        }
+      }
+
+      if (imported.length === 0 && errorCount > 0) {
+        alert("Invalid or empty CSV file. No valid entries were imported.");
+        return;
+      }
+      if (imported.length === 0 && errorCount === 0) {
+        alert("Empty CSV file.");
+        return;
+      }
+
+      let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+      history = history.concat(imported);
+      localStorage.setItem('trimHistory', JSON.stringify(history));
+      updateSessionTable();
+
+      let successMsg = `Import completed. ${imported.length} entry(s) imported.`;
+      if (errorCount > 0) successMsg += ` ${errorCount} invalid row(s) skipped.`;
+      alert(successMsg);
+    };
+
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function groupByPayPeriod(history) {
+    const currentPeriod = getCurrentPayPeriod();
+    const currentStart = new Date(currentPeriod.start + "T00:00:00");
+    const currentEnd = new Date(currentPeriod.end + "T23:59:59");
+
+    const currentPeriodEntries = [];
+    const pastPeriodGroups = {};
+
+    history.forEach((entry, index) => {
+      const entryDate = new Date(entry.date + "T00:00:00");
+      if (entryDate >= currentStart && entryDate <= currentEnd) {
+        currentPeriodEntries.push([entry, index]);
+      } else if (entryDate < currentStart) {
+        const period = getPayPeriodForDate(entryDate);
+        const key = period.start;
+        if (!pastPeriodGroups[key]) pastPeriodGroups[key] = { label: period.label, entries: [] };
+        pastPeriodGroups[key].entries.push([entry, index]);
+      }
+    });
+
+    /* ✅ sort entries so edits move to correct spot */
+    currentPeriodEntries.sort((a,b) => a[0].date.localeCompare(b[0].date));
+    Object.keys(pastPeriodGroups).forEach(k => {
+      pastPeriodGroups[k].entries.sort((a,b) => a[0].date.localeCompare(b[0].date));
+    });
+
+    const grouped = {};
+    grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
+
+    Object.keys(pastPeriodGroups)
+      .sort((a, b) => new Date(b) - new Date(a))
+      .forEach(key => grouped[key] = pastPeriodGroups[key]);
+
+    return grouped;
+  }
+
+  function updateSessionTable() {
+    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    const tbody = document.querySelector('#sessionTable tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    let totalBonusPay = 0;
+
+    const grouped = groupByPayPeriod(history);
+    const currentPeriod = getCurrentPayPeriod();
+    const currentEntries = grouped[currentPeriod.start]?.entries || [];
+
+    currentEntries.forEach(([entry, index]) => {
+      const row = document.createElement('tr');
+
+      row.innerHTML = `
+        <td></td>
+        <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
+        <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
+        <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>
+      `;
+
+      const dateTd = row.children[0];
+      const badge = document.createElement('span');
+      badge.className = 'date-display';
+      badge.innerHTML = formatCompactDateHTML(entry.date);
+      badge.addEventListener('click', () => {
+        openDatePickerOnScreen(entry.date, (picked) => editDate(index, picked));
+      });
+      dateTd.appendChild(badge);
+
+      tbody.appendChild(row);
+      totalBonusPay += parseFloat(entry.bonusPay || 0);
+    });
+
+    document.getElementById('totalBonusPay').textContent = '$' + totalBonusPay.toFixed(2);
+
+    document.querySelectorAll('.past-period-header, .past-period-content').forEach(el => el.remove());
+
+    Object.keys(grouped).filter(key => key !== currentPeriod.start).forEach(key => {
+      const group = grouped[key];
+
+      const periodTotal = group.entries.reduce((sum, pair) => {
+        const entry = pair[0];
+        return sum + parseFloat(entry.bonusPay || 0);
+      }, 0);
+
+      const header = document.createElement('div');
+      header.className = 'past-period-header';
+      header.dataset.total = periodTotal.toFixed(2);
+
+      header.innerHTML = `
+        <span class="past-period-label">${group.label}</span>
+        <span class="past-period-total">$${header.dataset.total}</span>
+        <span class="toggle-indicator" style="float:right;">[+]</span>
+      `;
+
+      header.addEventListener('click', function () {
+        const content = this.nextElementSibling;
+        const open = content.classList.toggle('open');
+        const ind = this.querySelector('.toggle-indicator');
+        if (ind) ind.textContent = open ? '[-]' : '[+]';
+      });
+
+      const content = document.createElement('div');
+      content.className = 'past-period-content';
+
+      /* ✅ past period: real table (no broken layout) */
+      const pastTable = document.createElement('table');
+      pastTable.innerHTML = `
+        <thead>
+          <tr>
+            <th>Date</th><th>Grams</th><th>Bonus Pay</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const pastTbody = pastTable.querySelector("tbody");
+
+      group.entries.forEach(([entry, index]) => {
+        const r = document.createElement('tr');
+        r.innerHTML = `
+          <td></td>
+          <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
+          <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
+          <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>
+        `;
+
+        const dateTd = r.children[0];
+        const badge = document.createElement('span');
+        badge.className = 'date-display';
+        badge.innerHTML = formatCompactDateHTML(entry.date);
+        badge.addEventListener('click', () => {
+          openDatePickerOnScreen(entry.date, (picked) => editDate(index, picked));
+        });
+        dateTd.appendChild(badge);
+
+        pastTbody.appendChild(r);
+      });
+
+      content.appendChild(pastTable);
+
+      const table = document.getElementById('sessionTable');
+      table.parentNode.insertBefore(header, table.nextSibling);
+      table.parentNode.insertBefore(content, header.nextSibling);
+    });
+  }
+
+  function editGrams(index, td) {
+    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    const newGrams = parseFloat(td.textContent.trim());
+    if (!isNaN(newGrams)) {
+      history[index].grams = newGrams;
+      history[index].bonusPay = calculateBonus(newGrams).toFixed(2);
+      localStorage.setItem('trimHistory', JSON.stringify(history));
+      updateSessionTable();
+    }
+  }
+
+  function editDate(index, updatedDateISO) {
+    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDateISO)) {
+      history[index].date = updatedDateISO;
+      localStorage.setItem('trimHistory', JSON.stringify(history));
+      updateSessionTable();      // ✅ re-sorts so it moves to correct spot
+      renderPayPeriodLabel();    // ✅ pay period label stays correct
+    }
+  }
+
   window.addEventListener('load', () => {
     renderPayPeriodLabel();
 
+    /* normalize stored dates */
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
     let changed = false;
     history.forEach(entry => {
@@ -895,14 +967,29 @@
     });
     if (changed) localStorage.setItem('trimHistory', JSON.stringify(history));
 
-    updateSessionTable();
-
     restoreHourlyInputs();
     wireHourlyAutosave();
+    updateSessionTable();
+    updateTrackerDailyTotal();
 
     const section = document.getElementById("payCalcSection");
     const indicator = document.getElementById("payCalcIndicator");
     if (section && indicator) indicator.textContent = (section.style.display === "none") ? "[+]" : "[-]";
+
+    const importBtn = document.getElementById('import-tracker-total');
+    if (importBtn) {
+      importBtn.addEventListener('click', () => {
+        const todayISO = getLAISODate();
+        const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+        if (trackerTotal) {
+          document.getElementById('grams').value = trackerTotal;
+          alert("Imported " + trackerTotal + "g from Trim Tracker.");
+        } else {
+          alert("No Trim Tracker total found for today.");
+        }
+        updateTrackerDailyTotal();
+      });
+    }
   });
 </script>
 
