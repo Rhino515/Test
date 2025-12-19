@@ -137,14 +137,37 @@
     font-size: 1.08em;
   }
 
-  /* ✅ clickable pay period dates */
-  .pp-date {
-    color:#0f0;
-    text-decoration: underline;
-    cursor: pointer;
+  /* ✅ Pay period date inputs (clickable, iPhone-friendly) */
+  .pp-inline-date {
+    background: transparent;
+    border: none;
+    color: #0f0;
     font-weight: 900;
+    cursor: pointer;
+    padding: 0;
+    margin: 0 4px;
+    width: 140px;
   }
-  .pp-date:hover { opacity: 0.9; }
+
+  /* ✅ Compact date badge in table */
+  .date-display {
+    display: inline-block;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #222;
+    border: 1px solid #555;
+    font-size: 0.95em;
+  }
+
+  /* ✅ keep date column from being huge */
+  #sessionTable th:first-child,
+  #sessionTable td:first-child {
+    width: 155px;
+  }
 </style>
 </head>
 <body>
@@ -294,6 +317,42 @@
     return `${y}-${m}-${d}`;
   }
 
+  function formatMDY(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || "";
+    const [y, m, d] = iso.split("-");
+    return `${m}-${d}-${y}`;
+  }
+
+  function openDatePickerOnScreen(initialValue, onPick) {
+    const input = document.createElement("input");
+    input.type = "date";
+    input.value = initialValue || "";
+
+    // keep it on-screen (tiny + invisible) for iOS reliability
+    input.style.position = "fixed";
+    input.style.left = "10px";
+    input.style.top = "10px";
+    input.style.opacity = "0";
+    input.style.width = "1px";
+    input.style.height = "1px";
+    input.style.pointerEvents = "none";
+
+    document.body.appendChild(input);
+
+    input.addEventListener("change", () => {
+      const val = input.value;
+      document.body.removeChild(input);
+      if (val && typeof onPick === "function") onPick(val);
+    });
+
+    input.focus();
+    if (typeof input.showPicker === "function") {
+      try { input.showPicker(); } catch {}
+    } else {
+      input.click();
+    }
+  }
+
   function calculateBonus(grams) {
     let bonusPay = 0;
     if (grams > 1587) {
@@ -331,7 +390,7 @@
     }
 
     const now = new Date();
-    const dateStr = getLAISODate(now); // ✅ LA date
+    const dateStr = getLAISODate(now);
     const entry = { date: dateStr, grams: grams, bonusPay: bonusPay.toFixed(2) };
 
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
@@ -506,7 +565,7 @@
 </script>
 
 <script>
-  /* ✅ NEW: pay period base is editable + saved */
+  /* ✅ pay period base is editable + saved */
   const PAY_PERIOD_BASE_KEY = "payPeriodBaseStartISO";
   const DEFAULT_BASE_START = "2025-04-13";
 
@@ -525,29 +584,7 @@
     return getLAISODate(d);
   }
 
-  function openDatePicker(initialValue, onPick) {
-    const input = document.createElement("input");
-    input.type = "date";
-    input.value = initialValue || "";
-    input.style.position = "fixed";
-    input.style.left = "-9999px";
-    input.style.top = "-9999px";
-    document.body.appendChild(input);
-
-    input.addEventListener("change", () => {
-      const val = input.value;
-      document.body.removeChild(input);
-      if (val && typeof onPick === "function") onPick(val);
-    });
-
-    // iOS/Safari friendly
-    input.focus();
-    if (typeof input.showPicker === "function") {
-      try { input.showPicker(); } catch {}
-    }
-    input.click();
-  }
-
+  /* ✅ replaced old hidden picker with on-screen tiny picker */
   function renderPayPeriodLabel() {
     const period = getCurrentPayPeriod();
     const label = document.getElementById("payPeriodLabel");
@@ -555,36 +592,36 @@
 
     label.innerHTML = `
       Pay Period:
-      <span class="pp-date" id="ppStart">${period.start}</span>
+      <input class="pp-inline-date" id="ppStartInput" type="date" value="${period.start}">
       –
-      <span class="pp-date" id="ppEnd">${period.end}</span>
+      <input class="pp-inline-date" id="ppEndInput" type="date" value="${period.end}">
     `;
 
-    const startEl = document.getElementById("ppStart");
-    const endEl = document.getElementById("ppEnd");
+    const startEl = document.getElementById("ppStartInput");
+    const endEl = document.getElementById("ppEndInput");
 
     if (startEl) {
-      startEl.addEventListener("click", () => {
-        openDatePicker(period.start, (picked) => {
-          // setting base start directly shifts the whole 14-day cycle
-          setPayPeriodBaseStartISO(picked);
-          updateSessionTable();
-          renderPayPeriodLabel();
-        });
+      startEl.addEventListener("change", () => {
+        const picked = startEl.value;
+        if (!picked) return;
+        setPayPeriodBaseStartISO(picked);
+        updateSessionTable();
+        renderPayPeriodLabel();
       });
     }
 
     if (endEl) {
-      endEl.addEventListener("click", () => {
-        openDatePicker(period.end, (pickedEnd) => {
-          // end = start + 13, so baseStart = pickedEnd - 13
-          const endDate = new Date(pickedEnd + "T00:00:00");
-          endDate.setDate(endDate.getDate() - 13);
-          const newBase = getLAISODate(endDate);
-          setPayPeriodBaseStartISO(newBase);
-          updateSessionTable();
-          renderPayPeriodLabel();
-        });
+      endEl.addEventListener("change", () => {
+        const pickedEnd = endEl.value;
+        if (!pickedEnd) return;
+
+        const endDate = new Date(pickedEnd + "T00:00:00");
+        endDate.setDate(endDate.getDate() - 13);
+        const newBase = getLAISODate(endDate);
+
+        setPayPeriodBaseStartISO(newBase);
+        updateSessionTable();
+        renderPayPeriodLabel();
       });
     }
   }
@@ -624,7 +661,7 @@
   }
 
   function updateTrackerDailyTotal() {
-    const todayISO = getLAISODate(); // ✅ LA date
+    const todayISO = getLAISODate();
     const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
     const el = document.getElementById('trackerDailyTotalDisplay');
     if (!el) return;
@@ -780,7 +817,7 @@
     const grouped = {};
     grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
 
-    // keep past periods in newest-first order (your existing behavior)
+    // keep past periods newest-first (your existing behavior)
     Object.keys(pastPeriodGroups)
       .sort((a, b) => new Date(b) - new Date(a))
       .forEach(key => grouped[key] = pastPeriodGroups[key]);
@@ -809,17 +846,15 @@
         <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
         <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
 
-      // ✅ Date as calendar input (moves row after change because we re-render + sorted)
+      // ✅ compact date badge, click opens calendar
       const dateTd = row.children[0];
-      const dateInput = document.createElement('input');
-      dateInput.type = 'date';
-      dateInput.value = entry.date;
-      dateInput.style.width = '160px';
-      dateInput.style.marginTop = '0';
-      dateInput.addEventListener('change', () => {
-        editDate(index, dateInput.value);
+      const badge = document.createElement('span');
+      badge.className = 'date-display';
+      badge.textContent = formatMDY(entry.date);
+      badge.addEventListener('click', () => {
+        openDatePickerOnScreen(entry.date, (picked) => editDate(index, picked));
       });
-      dateTd.appendChild(dateInput);
+      dateTd.appendChild(badge);
 
       tbody.appendChild(row);
       totalBonusPay += parseFloat(entry.bonusPay || 0);
@@ -865,16 +900,15 @@
           <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
           <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
 
+        // ✅ compact date badge for past periods too
         const dateTd = row.children[0];
-        const dateInput = document.createElement('input');
-        dateInput.type = 'date';
-        dateInput.value = entry.date;
-        dateInput.style.width = '160px';
-        dateInput.style.marginTop = '0';
-        dateInput.addEventListener('change', () => {
-          editDate(index, dateInput.value);
+        const badge = document.createElement('span');
+        badge.className = 'date-display';
+        badge.textContent = formatMDY(entry.date);
+        badge.addEventListener('click', () => {
+          openDatePickerOnScreen(entry.date, (picked) => editDate(index, picked));
         });
-        dateTd.appendChild(dateInput);
+        dateTd.appendChild(badge);
 
         content.appendChild(row);
       });
@@ -896,14 +930,12 @@
     }
   }
 
-  // ✅ updated: accepts date string directly (from date input)
   function editDate(index, updatedDate) {
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-
     if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
       history[index].date = updatedDate;
       localStorage.setItem('trimHistory', JSON.stringify(history));
-      updateSessionTable(); // ✅ re-render + sorted, so it moves
+      updateSessionTable(); // re-render + sorted, so it moves
     } else {
       alert("Please enter a valid date format: YYYY-MM-DD");
       updateSessionTable();
@@ -913,7 +945,7 @@
   window.addEventListener('load', () => {
     renderPayPeriodLabel();
 
-    // ✅ normalize stored dates WITHOUT converting to UTC
+    // normalize stored dates
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
     let changed = false;
     history.forEach(entry => {
@@ -939,7 +971,7 @@
     const importBtn = document.getElementById('import-tracker-total');
     if (importBtn) {
       importBtn.addEventListener('click', () => {
-        const todayISO = getLAISODate(); // ✅ LA date
+        const todayISO = getLAISODate();
         const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
         if (trackerTotal) {
           document.getElementById('grams').value = trackerTotal;
