@@ -14,13 +14,6 @@
     text-align: center;
     padding: 2em;
   }
-
-  /* ✅ Light mode */
-  body.light {
-    background-color: #f7f7f7;
-    color: #111;
-  }
-
   input {
     font-size: 1.2em;
     padding: 0.5em;
@@ -31,12 +24,6 @@
     border: 1px solid #555;
     border-radius: 4px;
   }
-  body.light input{
-    background-color:#fff;
-    color:#111;
-    border:1px solid #bbb;
-  }
-
   button {
     background-color: green;
     color: white;
@@ -48,7 +35,6 @@
     cursor: pointer;
   }
   button:hover { background-color: darkgreen; }
-
   img { margin-top: 0.6em; width: 200px; }
   #result { margin-top: 0.6em; font-size: 1.2em; }
 
@@ -63,11 +49,6 @@
     border-radius: 4px;
   }
   .install-links a:hover { background-color: #666; }
-  body.light .install-links a{
-    color:#111;
-    background:#e6e6e6;
-  }
-  body.light .install-links a:hover{ background:#d8d8d8; }
 
   table {
     margin: 2em auto;
@@ -77,16 +58,6 @@
   th, td { border: 1px solid #555; padding: 0.5em; }
   th { background-color: #333; }
   td[contenteditable="true"] { background-color: #222; }
-
-  body.light th{
-    background:#e9e9e9;
-    color:#111;
-    border:1px solid #bbb;
-  }
-  body.light td{
-    border:1px solid #bbb;
-  }
-  body.light td[contenteditable="true"]{ background:#fff; }
 
   .delete-button {
     background-color: red;
@@ -110,12 +81,6 @@
     margin-left: auto;
     margin-right: auto;
   }
-  body.light .past-period-header{
-    background:#e6e6e6;
-    color:#111;
-    border:1px solid #bbb;
-  }
-
   .past-period-content {
     display: none;
     width: 80%;
@@ -153,36 +118,6 @@
   .secretBolt:hover { background:#0f0; color:#000; }
   .secretBolt:active { transform: scale(0.98); }
 
-  /* ✅ Theme toggle button */
-  .themeToggle{
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    width: 40px;
-    height: 40px;
-    border-radius: 999px;
-    border: 1px solid #0f0;
-    background: #111;
-    color: #0f0;
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index: 9999;
-  }
-  .themeToggle:hover{ background:#0f0; color:#000; }
-  body.light .themeToggle{
-    border:1px solid #111;
-    background:#fff;
-    color:#111;
-  }
-  body.light .themeToggle:hover{
-    background:#111;
-    color:#fff;
-  }
-
   .collapsible-header {
     display: inline-flex;
     align-items: center;
@@ -211,8 +146,6 @@
     font-size: 0.95em;
     line-height: 1.1;
   }
-  body.light #payPeriodLabel{ color:#0a7a0a; }
-
   .pp-date-badge{
     display:inline-block;
     font-weight: 900;
@@ -226,16 +159,6 @@
   }
   .pp-date-badge:hover{ background:#0f0; color:#000; }
 
-  body.light .pp-date-badge{
-    background:#fff;
-    border:1px solid #0a7a0a;
-    color:#0a7a0a;
-  }
-  body.light .pp-date-badge:hover{
-    background:#0a7a0a;
-    color:#fff;
-  }
-
   /* ✅ Compact date badge: shows YYYY- on first line, MM-DD on second */
   .date-display{
     display:inline-block;
@@ -248,17 +171,9 @@
     line-height: 1.05;
     white-space: normal;
   }
-  body.light .date-display{
-    background:#fff;
-    border:1px solid #bbb;
-    color:#111;
-  }
 </style>
 </head>
 <body>
-
-<!-- ✅ Light/Dark toggle -->
-<button id="themeToggle" class="themeToggle" type="button" aria-label="Toggle theme">💡</button>
 
 <img src="norcal_icon.png" alt="NorCal Logo"/>
 
@@ -339,6 +254,17 @@
     <p>Your entries stay saved until you clear them.</p>
 
     <label>Hourly pay: <input id="hourlyRate" type="number" step="0.01"/></label><br/>
+
+    <!-- ✅ NEW: Vacation + Sick -->
+    <label>
+      Vacation pay (NOT blended):
+      <input id="vacationPay" type="number" step="0.01" placeholder="0.00"/>
+    </label><br/>
+
+    <label>
+      Sick pay (BLENDED):
+      <input id="sickPay" type="number" step="0.01" placeholder="0.00"/>
+    </label><br/>
 
     <label>
       Regular hours:
@@ -520,11 +446,13 @@
 
 <script>
   /* ✅ Hourly autosave */
-  const HOURLY_INPUTS_KEY = "hourlyPayInputs_v1";
+  const HOURLY_INPUTS_KEY = "hourlyPayInputs_v2";
 
   function saveHourlyInputs() {
     const data = {
       hourlyRate: document.getElementById("hourlyRate")?.value ?? "",
+      vacationPay: document.getElementById("vacationPay")?.value ?? "",
+      sickPay: document.getElementById("sickPay")?.value ?? "",
       regularHours: document.getElementById("regularHours")?.value ?? "",
       regularMinutes: document.getElementById("regularMinutes")?.value ?? "",
       overtimeHours: document.getElementById("overtimeHours")?.value ?? "",
@@ -547,6 +475,8 @@
     };
 
     set("hourlyRate", data.hourlyRate);
+    set("vacationPay", data.vacationPay);
+    set("sickPay", data.sickPay);
     set("regularHours", data.regularHours);
     set("regularMinutes", data.regularMinutes);
     set("overtimeHours", data.overtimeHours);
@@ -560,6 +490,7 @@
   function wireHourlyAutosave() {
     const ids = [
       "hourlyRate",
+      "vacationPay","sickPay",
       "regularHours","regularMinutes",
       "overtimeHours","overtimeMinutes",
       "doubletimeHours","doubletimeMinutes",
@@ -579,6 +510,7 @@
 
     const ids = [
       "hourlyRate",
+      "vacationPay","sickPay",
       "regularHours","regularMinutes",
       "overtimeHours","overtimeMinutes",
       "doubletimeHours","doubletimeMinutes",
@@ -598,6 +530,9 @@
 
   function calculateAverages() {
     const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
+
+    const vacationPay = parseFloat(document.getElementById("vacationPay")?.value) || 0; // NOT blended
+    const sickPay = parseFloat(document.getElementById("sickPay")?.value) || 0;         // BLENDED
 
     const regularHours = parseFloat(document.getElementById("regularHours").value) || 0;
     const regularMinutes = parseFloat(document.getElementById("regularMinutes").value) || 0;
@@ -631,27 +566,49 @@
 
     const bonusTotal = filtered.reduce((sum, entry) => sum + parseFloat(entry.bonusPay || 0), 0);
 
-    const regularPay = hourlyRate * totalRegularHours;
-    const overtimePay = hourlyRate * 1.5 * totalOvertimeHours;
-    const doubletimePay = hourlyRate * 2.0 * totalDoubletimeHours;
+    // ✅ BLENDED POOL = commission/bonus + sick pay
+    const blendedPool = bonusTotal + sickPay;
 
-    const hourlyTotal = regularPay + overtimePay + doubletimePay;
-    const totalPay = bonusTotal + hourlyTotal;
+    // ✅ Your workplace method: divide by (regular + overtime hours)
+    const basisHours = totalRegularHours + totalOvertimeHours;
+    const blendedPerHourForOT = basisHours > 0 ? (blendedPool / basisHours) : 0;
+
+    // Base wages
+    const regularPay = hourlyRate * totalRegularHours;
+    const overtimeBasePay = hourlyRate * 1.5 * totalOvertimeHours;
+    const doubletimeBasePay = hourlyRate * 2.0 * totalDoubletimeHours;
+
+    const baseWagesTotal = regularPay + overtimeBasePay + doubletimeBasePay;
+
+    // ✅ Add blended premium ONLY to OT + DT hours (OT rate fix)
+    const blendedPremiumPay = blendedPerHourForOT * (totalOvertimeHours + totalDoubletimeHours);
+
+    const totalPay = baseWagesTotal + bonusTotal + sickPay + vacationPay + blendedPremiumPay;
 
     const dayDiff = Math.max(1, (endDate - startDate) / (1000*60*60*24) + 1);
 
     const results = `
-      <p><strong>Total bonus pay:</strong> $${bonusTotal.toFixed(2)}</p>
+      <p><strong>Total bonus pay (commission):</strong> $${bonusTotal.toFixed(2)}</p>
+      <p><strong>Sick pay (blended):</strong> $${sickPay.toFixed(2)}</p>
+      <p><strong>Vacation pay (NOT blended):</strong> $${vacationPay.toFixed(2)}</p>
+
+      <hr style="border:0;border-top:1px solid #444;margin:10px 0;"/>
+
       <p><strong>Regular pay:</strong> $${regularPay.toFixed(2)}</p>
-      <p><strong>Overtime pay (1.5x):</strong> $${overtimePay.toFixed(2)}</p>
-      <p><strong>Double time pay (2.0x):</strong> $${doubletimePay.toFixed(2)}</p>
-      <p><strong>Total hourly pay (wages only):</strong> $${hourlyTotal.toFixed(2)}</p>
-      <p class="important-green"><strong>Total pay (hourly + bonus):</strong> $${totalPay.toFixed(2)}</p>
+      <p><strong>Overtime pay (base 1.5x):</strong> $${overtimeBasePay.toFixed(2)}</p>
+      <p><strong>Double time pay (base 2.0x):</strong> $${doubletimeBasePay.toFixed(2)}</p>
+
+      <p><strong>Blended OT add-on rate:</strong> $${blendedPerHourForOT.toFixed(2)} /hr</p>
+      <p><strong>Blended OT premium (added to OT+DT):</strong> $${blendedPremiumPay.toFixed(2)}</p>
+
+      <p><strong>Total hourly pay (wages only):</strong> $${baseWagesTotal.toFixed(2)}</p>
+      <p class="important-green"><strong>Total pay (wages + bonus + sick + vacation + OT premium):</strong> $${totalPay.toFixed(2)}</p>
       <p><strong>Average daily pay:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
       <p><strong>Average weekly pay:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p>
       <p><strong>Average bi-weekly pay:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p>
-      <p><strong>Average hourly rate (with bonus):</strong> $${(totalHoursWorked > 0 ? (totalPay / totalHoursWorked) : 0).toFixed(2)}</p>
+      <p><strong>Average hourly rate (all-in):</strong> $${(totalHoursWorked > 0 ? (totalPay / totalHoursWorked) : 0).toFixed(2)}</p>
     `;
+
     document.getElementById("averageResults").innerHTML = results;
   }
 </script>
@@ -749,42 +706,19 @@
       });
     }
   }
-</script>
 
-<!-- ✅ Theme toggle logic (remembered) -->
-<script>
-  const THEME_KEY = "norcal_theme";
+  function updateTrackerDailyTotal() {
+    const todayISO = getLAISODate();
+    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+    const el = document.getElementById('trackerDailyTotalDisplay');
+    if (!el) return;
 
-  function updateThemeIcon(mode){
-    const btn = document.getElementById("themeToggle");
-    if (!btn) return;
-    btn.textContent = mode === "light" ? "🌙" : "💡";
+    el.textContent = trackerTotal
+      ? "Today's Trim Tracker total: " + trackerTotal + "g"
+      : "Today's Trim Tracker total: 0g";
   }
 
-  function applyTheme(mode){
-    document.body.classList.toggle("light", mode === "light");
-    localStorage.setItem(THEME_KEY, mode);
-    updateThemeIcon(mode);
-  }
-
-  function toggleTheme(){
-    const isLight = document.body.classList.contains("light");
-    applyTheme(isLight ? "dark" : "light");
-  }
-
-  window.addEventListener("load", () => {
-    const saved = localStorage.getItem(THEME_KEY);
-    const mode = (saved === "light" || saved === "dark") ? saved : "dark";
-    applyTheme(mode);
-
-    const btn = document.getElementById("themeToggle");
-    if (btn) btn.addEventListener("click", toggleTheme);
-  });
-</script>
-
-<script>
-  /* (your existing big script that updates the table, imports csv, clears pay periods, etc) */
-  /* ✅ IMPORTANT: Keep everything you already had below this exactly the same */
+  /* NOTE: Remaining functions unchanged from your snippet */
 </script>
 
 </body>
