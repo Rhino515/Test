@@ -128,7 +128,6 @@
 
     <label>Hourly pay: <input id="hourlyRate" type="number" step="0.01"/></label><br/>
 
-    <!-- ✅ HOURS (not dollars) -->
     <label>
       Vacation hours:
       <input id="vacationHours" type="number" step="0.01" placeholder="0"/>
@@ -406,12 +405,8 @@
   function calculateAverages() {
     const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
 
-    // ✅ HOURS -> DOLLARS (fixed)
     const vacationHours = parseFloat(document.getElementById("vacationHours")?.value) || 0;
     const sickHours = parseFloat(document.getElementById("sickHours")?.value) || 0;
-
-    const vacationPay = hourlyRate * vacationHours; // NOT included in blended pool
-    const sickPay = hourlyRate * sickHours;         // included in blended pool
 
     const regularHours = parseFloat(document.getElementById("regularHours").value) || 0;
     const regularMinutes = parseFloat(document.getElementById("regularMinutes").value) || 0;
@@ -445,33 +440,34 @@
 
     const bonusTotal = filtered.reduce((sum, entry) => sum + parseFloat(entry.bonusPay || 0), 0);
 
-    // ✅ BLENDED POOL = bonus/commission + sick pay dollars
-    const blendedPool = bonusTotal + sickPay;
-
-    // ✅ workplace method: divide by (regular + overtime hours)
+    // ✅ NEW: Blended add-on is based on COMMISSION ONLY (no sick in the pool),
+    // then sick hours are paid at (hourly + add-on) to match "sick is always blended".
     const basisHours = totalRegularHours + totalOvertimeHours;
-    const blendedAddOnPerHour = basisHours > 0 ? (blendedPool / basisHours) : 0;
+    const blendedAddOnPerHour = basisHours > 0 ? (bonusTotal / basisHours) : 0;
 
-    // Base wages
+    const vacationPay = hourlyRate * vacationHours; // not blended
+    const sickPay = (hourlyRate + blendedAddOnPerHour) * sickHours; // blended sick pay ✅
+
+    // Base wages for worked hours
     const regularPay = hourlyRate * totalRegularHours;
     const overtimeBasePay = hourlyRate * 1.5 * totalOvertimeHours;
     const doubletimeBasePay = hourlyRate * 2.0 * totalDoubletimeHours;
     const baseWagesTotal = regularPay + overtimeBasePay + doubletimeBasePay;
 
-    // ✅ blended premium added to OT + DT hours
+    // blended premium added to OT + DT hours
     const blendedPremiumPay = blendedAddOnPerHour * (totalOvertimeHours + totalDoubletimeHours);
 
-    // ✅ blended overtime rate per hour (what you asked for, e.g. $47/hr)
+    // per-hour rates shown
     const overtimeRatePerHour = (hourlyRate * 1.5) + blendedAddOnPerHour;
     const doubletimeRatePerHour = (hourlyRate * 2.0) + blendedAddOnPerHour;
 
-    // Total pay
+    const overtimeBlendedPay = overtimeBasePay + (blendedAddOnPerHour * totalOvertimeHours);
+    const doubletimeBlendedPay = doubletimeBasePay + (blendedAddOnPerHour * totalDoubletimeHours);
+
     const totalPay = baseWagesTotal + bonusTotal + sickPay + vacationPay + blendedPremiumPay;
 
     const dayDiff = Math.max(1, (endDate - startDate) / (1000*60*60*24) + 1);
 
-    // ✅ results: no “blended/non-blended” wording in the input area,
-    // and no “add-on rate / premium” lines — just “Overtime (blended)” + OT rate per hour.
     const results = `
       <p><strong>Total bonus pay (commission):</strong> $${bonusTotal.toFixed(2)}</p>
       <p><strong>Sick pay:</strong> $${sickPay.toFixed(2)} (${sickHours.toFixed(2)} hrs)</p>
@@ -480,8 +476,8 @@
       <hr style="border:0;border-top:1px solid #444;margin:10px 0;"/>
 
       <p><strong>Regular pay:</strong> $${regularPay.toFixed(2)}</p>
-      <p><strong>Overtime (blended):</strong> $${(overtimeBasePay + (blendedAddOnPerHour * totalOvertimeHours)).toFixed(2)}</p>
-      <p><strong>Double time (blended):</strong> $${(doubletimeBasePay + (blendedAddOnPerHour * totalDoubletimeHours)).toFixed(2)}</p>
+      <p><strong>Overtime (blended):</strong> $${overtimeBlendedPay.toFixed(2)}</p>
+      <p><strong>Double time (blended):</strong> $${doubletimeBlendedPay.toFixed(2)}</p>
 
       <hr style="border:0;border-top:1px solid #444;margin:10px 0;"/>
 
@@ -499,8 +495,7 @@
       <hr style="border:0;border-top:1px solid #444;margin:10px 0;"/>
 
       <p style="font-size:0.95em;color:#ddd;">
-        Note: This calculator treats <strong>sick pay</strong> as included in the blended calculation,
-        and <strong>vacation pay</strong> as not included in the blended calculation.
+        Note: This calculator treats <strong>sick pay</strong> as blended and <strong>vacation pay</strong> as not blended.
       </p>
     `;
     document.getElementById("averageResults").innerHTML = results;
@@ -728,7 +723,6 @@
 
     const grouped = {};
     grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
-
     Object.keys(pastPeriodGroups).sort((a, b) => new Date(b) - new Date(a)).forEach(key => grouped[key] = pastPeriodGroups[key]);
     return grouped;
   }
@@ -771,7 +765,6 @@
 
     Object.keys(grouped).filter(key => key !== currentPeriod.start).forEach(key => {
       const group = grouped[key];
-
       const periodTotal = group.entries.reduce((sum, pair) => sum + parseFloat(pair[0].bonusPay || 0), 0);
 
       const header = document.createElement('div');
