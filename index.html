@@ -184,7 +184,10 @@
 <p>Enter the total grams trimmed:</p>
 <input id="grams" type="number" placeholder="e.g. 1200"/>
 <br/>
-<button id="import-tracker-total">Add Today's Total from Trim Tracker</button>
+
+<!-- ✅ FIXED: inline onclick so it never depends on load/addEventListener -->
+<button type="button" onclick="importTodayFromTracker()">Add Today's Total from Trim Tracker</button>
+
 <br/>
 <button onclick="calculate()">Calculate</button>
 <br/>
@@ -329,6 +332,22 @@
     const m = parts.find(p => p.type === 'month').value;
     const d = parts.find(p => p.type === 'day').value;
     return `${y}-${m}-${d}`;
+  }
+
+  /* ✅ FIX: this button no longer depends on load/addEventListener */
+  function importTodayFromTracker() {
+    const todayISO = getLAISODate();
+    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+
+    if (trackerTotal && String(trackerTotal).trim() !== "") {
+      const gramsInput = document.getElementById('grams');
+      if (gramsInput) gramsInput.value = String(trackerTotal).trim();
+      alert("Imported " + trackerTotal + "g from Trim Tracker.");
+    } else {
+      alert("No Trim Tracker total found for today (" + todayISO + ").");
+    }
+
+    if (typeof updateTrackerDailyTotal === "function") updateTrackerDailyTotal();
   }
 
   /* ✅ display as:
@@ -1025,20 +1044,8 @@
     const indicator = document.getElementById("payCalcIndicator");
     if (section && indicator) indicator.textContent = (section.style.display === "none") ? "[+]" : "[-]";
 
-    const importBtn = document.getElementById('import-tracker-total');
-    if (importBtn) {
-      importBtn.addEventListener('click', () => {
-        const todayISO = getLAISODate();
-        const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
-        if (trackerTotal) {
-          document.getElementById('grams').value = trackerTotal;
-          alert("Imported " + trackerTotal + "g from Trim Tracker.");
-        } else {
-          alert("No Trim Tracker total found for today.");
-        }
-        updateTrackerDailyTotal();
-      });
-    }
+    // ✅ IMPORTANT: we removed addEventListener for the tracker button.
+    // It now uses inline onclick="importTodayFromTracker()"
   });
 </script>
 
