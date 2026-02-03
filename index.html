@@ -216,7 +216,7 @@
   </tfoot>
 </table>
 
-<!-- ✅ Past Pay Periods Controls -->
+<!-- ✅ Past Pay Periods Controls (no Default View) -->
 <div id="pastControls" style="width:80%; margin: 1em auto 0; text-align:left;">
   <button id="togglePastPanelBtn" type="button" style="background:#444;">
     View Past Pay Periods
@@ -234,11 +234,10 @@
 
       <button id="applyMonthBtn" type="button" style="background:green;">Show Month</button>
       <button id="viewAllBtn" type="button" style="background:#28a745;">View All</button>
-      <button id="defaultViewBtn" type="button" style="background:#666;">Default View</button>
     </div>
 
     <div style="margin-top:0.6em; color:#bbb; font-size:0.95em;">
-      Default View = current pay period + same-month past pay periods (collapsed).
+      Tip: "Show Month" filters the collapsed pay periods shown below. "View All" shows every past pay period.
     </div>
   </div>
 </div>
@@ -848,6 +847,7 @@
     const grouped = {};
     grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
 
+    /* ✅ IMPORTANT: keep pay periods sorted most-recent first */
     Object.keys(pastPeriodGroups)
       .sort((a, b) => new Date(b) - new Date(a))
       .forEach(key => grouped[key] = pastPeriodGroups[key]);
@@ -855,12 +855,13 @@
     return grouped;
   }
 
-  /* ✅ Past pay period view settings */
-  const PAST_VIEW_MODE_KEY = "pastPayPeriodsViewMode_v1"; // "default" | "month" | "all"
-  const PAST_VIEW_MONTH_KEY = "pastPayPeriodsViewMonth_v1"; // "YYYY-MM"
+  /* ✅ Past pay period view settings (no default mode) */
+  const PAST_VIEW_MODE_KEY = "pastPayPeriodsViewMode_v2"; // "month" | "all"
+  const PAST_VIEW_MONTH_KEY = "pastPayPeriodsViewMonth_v2"; // "YYYY-MM"
 
   function getPastViewMode() {
-    return localStorage.getItem(PAST_VIEW_MODE_KEY) || "default";
+    // default to "all" now (since you removed Default View)
+    return localStorage.getItem(PAST_VIEW_MODE_KEY) || "all";
   }
   function setPastViewMode(mode) {
     localStorage.setItem(PAST_VIEW_MODE_KEY, mode);
@@ -875,19 +876,16 @@
 
   /* ✅ Month helpers */
   function monthKeyFromISO(iso) {
-    // iso = "YYYY-MM-DD" => "YYYY-MM"
     if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
     return iso.slice(0, 7);
   }
 
   function getCurrentMonthKey() {
-    // LA-safe month key for "today"
     const todayISO = getLAISODate();
     return todayISO.slice(0, 7);
   }
 
   function monthLabelFromKey(monthKey) {
-    // "2026-02" -> "February 2026"
     if (!/^\d{4}-\d{2}$/.test(monthKey)) return monthKey;
     const [y, m] = monthKey.split("-");
     const d = new Date(`${y}-${m}-01T00:00:00`);
@@ -931,7 +929,6 @@
     const sel = document.getElementById("pastMonthSelect");
     const applyBtn = document.getElementById("applyMonthBtn");
     const allBtn = document.getElementById("viewAllBtn");
-    const defaultBtn = document.getElementById("defaultViewBtn");
 
     if (toggleBtn && panel) {
       toggleBtn.addEventListener("click", () => {
@@ -957,14 +954,6 @@
     if (allBtn) {
       allBtn.addEventListener("click", () => {
         setPastViewMode("all");
-        updateSessionTable();
-      });
-    }
-
-    if (defaultBtn) {
-      defaultBtn.addEventListener("click", () => {
-        setPastViewMode("default");
-        setPastViewMonth(getCurrentMonthKey());
         updateSessionTable();
       });
     }
@@ -1013,22 +1002,21 @@
     // ✅ rebuild month dropdown options
     buildPastMonthSelectOptions(grouped);
 
-    // ✅ determine which past pay periods to show
-    const viewMode = getPastViewMode();       // "default" | "month" | "all"
+    // ✅ determine which past pay periods to show (month or all)
+    const viewMode = getPastViewMode();       // "month" | "all"
     const selectedMonth = getPastViewMonth(); // "YYYY-MM"
-    const currentMonth = getCurrentMonthKey();// "YYYY-MM"
 
+    // ✅ past pay periods already sorted MOST-RECENT first by groupByPayPeriod()
     let pastKeys = Object.keys(grouped).filter(key => key !== currentPeriod.start);
 
-    if (viewMode === "default") {
-      // show ONLY past pay periods that start in the same month as today
-      pastKeys = pastKeys.filter(periodStartISO => monthKeyFromISO(periodStartISO) === currentMonth);
-    } else if (viewMode === "month") {
-      // show ONLY the selected month
+    if (viewMode === "month") {
       pastKeys = pastKeys.filter(periodStartISO => monthKeyFromISO(periodStartISO) === selectedMonth);
-    } else if (viewMode === "all") {
-      // show everything
     }
+    // if "all" -> no filter
+
+    // ✅ INSERT PAST PERIODS ABOVE the main table (recent first)
+    const table = document.getElementById('sessionTable');
+    const insertAnchor = table; // insertBefore(anchor) puts items ABOVE
 
     pastKeys.forEach(key => {
       const group = grouped[key];
@@ -1048,15 +1036,14 @@
         <span class="toggle-indicator" style="float:right;">[+]</span>
       `;
 
+      const content = document.createElement('div');
+      content.className = 'past-period-content'; // collapsed by default
+
       header.addEventListener('click', function () {
-        const content = this.nextElementSibling;
         const open = content.classList.toggle('open');
-        const ind = this.querySelector('.toggle-indicator');
+        const ind = header.querySelector('.toggle-indicator');
         if (ind) ind.textContent = open ? '[-]' : '[+]';
       });
-
-      const content = document.createElement('div');
-      content.className = 'past-period-content'; // stays collapsed by default
 
       const pastTable = document.createElement('table');
       pastTable.innerHTML = `
@@ -1092,9 +1079,9 @@
 
       content.appendChild(pastTable);
 
-      const table = document.getElementById('sessionTable');
-      table.parentNode.insertBefore(header, table.nextSibling);
-      table.parentNode.insertBefore(content, header.nextSibling);
+      // Insert header/content ABOVE the main sessionTable, keeping recent first.
+      table.parentNode.insertBefore(content, insertAnchor);
+      table.parentNode.insertBefore(header, content);
     });
   }
 
@@ -1114,8 +1101,8 @@
     if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDateISO)) {
       history[index].date = updatedDateISO;
       localStorage.setItem('trimHistory', JSON.stringify(history));
-      updateSessionTable();      // ✅ re-sorts so it moves to correct spot
-      renderPayPeriodLabel();    // ✅ pay period label stays correct
+      updateSessionTable();
+      renderPayPeriodLabel();
     }
   }
 
@@ -1141,7 +1128,6 @@
     updateSessionTable();
     updateTrackerDailyTotal();
 
-    // ✅ wire past-period filter panel
     wirePastControls();
 
     const section = document.getElementById("payCalcSection");
