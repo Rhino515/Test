@@ -1,3 +1,9 @@
+Yep — that’s happening because the script is currently inserting the past pay-period headers before the table. I updated it so:
+	1.	Past pay period collapsibles render BELOW the session table (and below the “View Past Pay Periods” controls, in a dedicated container).
+	2.	The “This panel only shows older months…” text is removed (clean/simple panel).
+
+Here’s the fully updated HTML (drop-in replacement):
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -138,7 +144,6 @@
     font-size: 1.08em;
   }
 
-  /* ✅ Pay Period: smaller + ISO badges (YYYY-MM-DD) */
   #payPeriodLabel{
     margin-top: 0.6em;
     color: #0f0;
@@ -159,7 +164,6 @@
   }
   .pp-date-badge:hover{ background:#0f0; color:#000; }
 
-  /* ✅ Compact date badge: shows YYYY- on first line, MM-DD on second */
   .date-display{
     display:inline-block;
     font-weight:bold;
@@ -216,7 +220,7 @@
   </tfoot>
 </table>
 
-<!-- ✅ Past Pay Periods Controls (month picker only) -->
+<!-- ✅ Past Pay Periods Controls (simple) -->
 <div id="pastControls" style="width:80%; margin: 1em auto 0; text-align:left;">
   <button id="togglePastPanelBtn" type="button" style="background:#444;">
     View Past Pay Periods
@@ -234,12 +238,11 @@
 
       <button id="applyMonthBtn" type="button" style="background:green;">Show Month</button>
     </div>
-
-    <div style="margin-top:0.6em; color:#bbb; font-size:0.95em;">
-      This panel only shows older months. The current month pay periods are always shown automatically.
-    </div>
   </div>
 </div>
+
+<!-- ✅ Past Pay Periods RENDER HERE (below session table + below controls) -->
+<div id="pastPeriodsContainer"></div>
 
 <div style="margin-top: 0.6em;">
   <input id="csvInput" type="file" accept=".csv" onchange="importCSV(event)" style="display:none"/>
@@ -330,7 +333,6 @@
 <script>
   let lastCalculated = null;
 
-  /* ✅ LA date (PST/PDT safe) */
   function getLAISODate(date = new Date()) {
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/Los_Angeles',
@@ -345,17 +347,12 @@
     return `${y}-${m}-${d}`;
   }
 
-  /* ✅ display as:
-     YYYY-
-     MM-DD
-  */
   function formatCompactDateHTML(iso) {
     if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || "";
     const [y,m,d] = iso.split("-");
     return `${y}-<br>${m}-${d}`;
   }
 
-  /* ✅ iPhone-friendly on-screen date picker */
   function openDatePickerOnScreen(initialValue, onPick) {
     const input = document.createElement("input");
     input.type = "date";
@@ -459,7 +456,6 @@
 </script>
 
 <script>
-  /* ✅ Hourly autosave */
   const HOURLY_INPUTS_KEY = "hourlyPayInputs_v1";
 
   function saveHourlyInputs() {
@@ -597,7 +593,6 @@
 </script>
 
 <script>
-  /* ✅ Editable pay period base (saved) */
   const PAY_PERIOD_BASE_KEY = "payPeriodBaseStartISO";
   const DEFAULT_BASE_START = "2025-04-13";
 
@@ -649,7 +644,6 @@
     return { start, end, label: `Pay Period: ${start} – ${end}` };
   }
 
-  /* ✅ Pay period shown as ISO (YYYY-MM-DD) badges (smaller + not bulky) */
   function renderPayPeriodLabel() {
     const period = getCurrentPayPeriod();
     const label = document.getElementById("payPeriodLabel");
@@ -817,7 +811,6 @@
     event.target.value = '';
   }
 
-  /* ✅ Month helpers */
   function monthKeyFromISO(iso) {
     if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
     return iso.slice(0, 7);
@@ -862,16 +855,15 @@
     grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
 
     Object.keys(pastPeriodGroups)
-      .sort((a, b) => new Date(b) - new Date(a))  // most recent first
+      .sort((a, b) => new Date(b) - new Date(a))
       .forEach(key => grouped[key] = pastPeriodGroups[key]);
 
     return grouped;
   }
 
-  /* ✅ Past view (ONLY month selection; current month auto-shown) */
-  const PAST_VIEW_MONTH_KEY = "pastPayPeriodsViewMonth_v3"; // "YYYY-MM"
+  const PAST_VIEW_MONTH_KEY = "pastPayPeriodsViewMonth_v3";
   function getPastViewMonth() {
-    return localStorage.getItem(PAST_VIEW_MONTH_KEY) || ""; // blank means "none selected"
+    return localStorage.getItem(PAST_VIEW_MONTH_KEY) || "";
   }
   function setPastViewMonth(monthKey) {
     if (!/^\d{4}-\d{2}$/.test(monthKey)) return;
@@ -886,7 +878,6 @@
     const currentPeriod = getCurrentPayPeriod();
     const months = new Set();
 
-    // only add months that are NOT current month
     Object.keys(grouped)
       .filter(k => k !== currentPeriod.start)
       .forEach(periodStartISO => {
@@ -898,7 +889,6 @@
 
     sel.innerHTML = "";
 
-    // placeholder option
     const placeholder = document.createElement("option");
     placeholder.value = "";
     placeholder.textContent = "Select a month...";
@@ -953,7 +943,6 @@
     const currentPeriod = getCurrentPayPeriod();
     const currentEntries = grouped[currentPeriod.start]?.entries || [];
 
-    // current period rows (main table)
     currentEntries.forEach(([entry, index]) => {
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -978,34 +967,26 @@
 
     document.getElementById('totalBonusPay').textContent = '$' + totalBonusPay.toFixed(2);
 
-    // remove old past sections
-    document.querySelectorAll('.past-period-header, .past-period-content').forEach(el => el.remove());
+    // ✅ render ALL past pay periods ONLY into this container (below session board)
+    const container = document.getElementById("pastPeriodsContainer");
+    if (container) container.innerHTML = "";
 
-    // rebuild month dropdown (older months only)
     buildPastMonthSelectOptions(grouped);
 
     const currentMonth = getCurrentMonthKey();
-    const selectedPastMonth = getPastViewMonth(); // "" = none
-    const table = document.getElementById('sessionTable');
-
-    // past keys sorted most recent first (already)
+    const selectedPastMonth = getPastViewMonth();
     let pastKeys = Object.keys(grouped).filter(k => k !== currentPeriod.start);
 
-    // ✅ ALWAYS show CURRENT MONTH pay periods (collapsed)
-    // (includes any past pay periods whose start date is in current month)
     const currentMonthPastKeys = pastKeys.filter(k => monthKeyFromISO(k) === currentMonth);
 
-    // ✅ ALSO show ONE selected older month (if chosen)
     let selectedMonthKeys = [];
     if (selectedPastMonth && selectedPastMonth !== currentMonth) {
       selectedMonthKeys = pastKeys.filter(k => monthKeyFromISO(k) === selectedPastMonth);
     }
 
-    // Combine: current month first (recent first), then selected month (recent first)
     const keysToShow = [...currentMonthPastKeys, ...selectedMonthKeys];
 
-    // Insert ABOVE the main table (so most recent collapsed sections appear on top)
-    const insertAnchor = table;
+    if (!container) return;
 
     keysToShow.forEach(key => {
       const group = grouped[key];
@@ -1019,14 +1000,14 @@
       header.className = 'past-period-header';
       header.dataset.total = periodTotal.toFixed(2);
 
+      const content = document.createElement('div');
+      content.className = 'past-period-content'; // collapsed by default
+
       header.innerHTML = `
         <span class="past-period-label">${group.label}</span>
         <span class="past-period-total">$${header.dataset.total}</span>
         <span class="toggle-indicator" style="float:right;">[+]</span>
       `;
-
-      const content = document.createElement('div');
-      content.className = 'past-period-content'; // collapsed by default
 
       header.addEventListener('click', function () {
         const open = content.classList.toggle('open');
@@ -1068,8 +1049,8 @@
 
       content.appendChild(pastTable);
 
-      table.parentNode.insertBefore(content, insertAnchor);
-      table.parentNode.insertBefore(header, content);
+      container.appendChild(header);
+      container.appendChild(content);
     });
   }
 
@@ -1097,7 +1078,6 @@
   window.addEventListener('load', () => {
     renderPayPeriodLabel();
 
-    /* normalize stored dates */
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
     let changed = false;
     history.forEach(entry => {
