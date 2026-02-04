@@ -12,16 +12,6 @@
     padding: 20px;
     text-align: center;
   }
-  .lang-toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background-color: #333;
-    color: #fff;
-    border: 1px solid #777;
-    padding: 6px 10px;
-    cursor: pointer;
-  }
   img.banner {
     width: 100%;
     max-width: 800px;
@@ -352,8 +342,8 @@
 
   /* ===================== Past view state ===================== */
 
-  const PAST_MONTH_KEY = "trimTrackerPastMonth_v1";
-  const PAST_WEEK_KEY  = "trimTrackerPastWeek_v1";
+  const PAST_MONTH_KEY = "trimTrackerPastMonth_v2";
+  const PAST_WEEK_KEY  = "trimTrackerPastWeek_v2";
 
   function getPastMonth(){ return localStorage.getItem(PAST_MONTH_KEY) || ""; }
   function setPastMonth(v){ localStorage.setItem(PAST_MONTH_KEY, v || ""); }
@@ -388,9 +378,13 @@
       sel.appendChild(opt);
     });
 
+    // ✅ if saved month doesn't exist anymore, clear it
     const saved = getPastMonth();
     if (saved && allMonths.includes(saved)) sel.value = saved;
-    else sel.value = "";
+    else {
+      if (saved) { setPastMonth(""); setPastWeek(""); }
+      sel.value = "";
+    }
   }
 
   function buildPastWeekOptions(weeksForMonth){
@@ -398,11 +392,14 @@
     if (!sel) return;
 
     sel.innerHTML = "";
+
     if (!weeksForMonth.length){
       const opt = document.createElement("option");
       opt.value = "";
       opt.textContent = "No weeks found";
       sel.appendChild(opt);
+      // ✅ also clear saved week if it no longer exists
+      if (getPastWeek()) setPastWeek("");
       return;
     }
 
@@ -418,11 +415,17 @@
       sel.appendChild(opt);
     });
 
+    // ✅ if saved week not in this list, clear it
     const saved = getPastWeek();
     if (saved && weeksForMonth.includes(saved)) sel.value = saved;
+    else {
+      if (saved) setPastWeek("");
+      sel.value = "";
+    }
   }
 
-  function wirePastControls(){
+  // ✅ Always rebuild week dropdown immediately when month changes
+  function wirePastControls(getWeeksForMonthFn){
     const toggleBtn = document.getElementById("togglePastPanelBtn");
     const panel = document.getElementById("pastPanel");
     const monthSel = document.getElementById("pastMonthSelect");
@@ -440,8 +443,17 @@
       monthSel.addEventListener("change", () => {
         setPastMonth(monthSel.value || "");
         setPastWeek("");
-        if (weekSel) weekSel.innerHTML = `<option value="">Select week...</option>`;
-        updateView(); // refresh week options
+        // Build weeks right away from fresh data
+        const weeks = (typeof getWeeksForMonthFn === "function")
+          ? getWeeksForMonthFn(monthSel.value || "")
+          : [];
+        buildPastWeekOptions(weeks);
+      });
+    }
+
+    if (weekSel){
+      weekSel.addEventListener("change", () => {
+        setPastWeek(weekSel.value || "");
       });
     }
 
@@ -451,10 +463,21 @@
         const wk = weekSel ? weekSel.value : "";
         if (!mk){ alert("Select a month."); return; }
         if (!wk){ alert("Select a week."); return; }
+
+        // ✅ verify the week exists for that month
+        const weeks = (typeof getWeeksForMonthFn === "function")
+          ? getWeeksForMonthFn(mk)
+          : [];
+        if (!weeks.includes(wk)){
+          alert("That week is not available for that month. Pick another week.");
+          setPastWeek("");
+          buildPastWeekOptions(weeks);
+          return;
+        }
+
         setPastMonth(mk);
         setPastWeek(wk);
         updateView();
-        // optional: scroll to the bottom where past section renders
         document.getElementById("sessionTable")?.scrollIntoView({behavior:"smooth"});
       });
     }
@@ -464,7 +487,7 @@
     }
   }
 
-  /* ===================== Collapsible renderer (Month -> Week) ===================== */
+  /* ===================== Collapsible renderer (Week headers) ===================== */
 
   function makeHeaderRow(kind, labelHTML, colspan=5){
     const tr = document.createElement("tr");
@@ -480,16 +503,18 @@
     rows.forEach(r => r.style.display = show ? "" : "none");
   }
 
+  /* ===================== Main renderer ===================== */
+
   function updateView() {
     const tbody = document.getElementById('tableBody');
 
-    // Collect ONLY real rows (not headers we create)
+    // Grab ONLY real data rows
     const allRows = Array.from(tbody.querySelectorAll('tr'))
       .filter(r => !r.classList.contains('group-header') &&
                    !r.classList.contains('sub-header') &&
                    !r.classList.contains('divider-row'));
 
-    // Build a map of row data
+    // Build date->rows map
     const todayISO = getLAISODate();
     const currentMonth = getCurrentMonthKey();
 
@@ -501,24 +526,24 @@
       rowsByDate[date].push(row);
     });
 
-    // Helper: compute total grams for a set of rows
+    // Total helper
     const rowsTotal = (rows) => rows.reduce((sum, r) => {
       const totalCell = r.querySelector('td:nth-child(4)');
       const grams = parseFloat(totalCell?.innerText || 0);
       return sum + (isNaN(grams) ? 0 : grams);
     }, 0);
 
-    // Build group structure: current month by week, and past selectable month/week
-    const currentMonthWeeks = {}; // weekStart -> dates -> rows
-    const pastMonths = new Set(); // months available (excluding current month)
+    // Build current-month weeks + past months/weeks
+    const currentMonthWeeks = {}; // weekStart -> rows
+    const pastMonths = new Set();
     const weeksByPastMonth = {};  // month -> Set(weekStart)
 
     Object.keys(rowsByDate).forEach(dateISO => {
       const mk = monthKeyFromISO(dateISO);
-      const ws = weekStartISO(dateISO, 0); // Sunday start
+      const ws = weekStartISO(dateISO, 0);
       if (mk === currentMonth){
-        if (!currentMonthWeeks[ws]) currentMonthWeeks[ws] = {};
-        currentMonthWeeks[ws][dateISO] = rowsByDate[dateISO];
+        if (!currentMonthWeeks[ws]) currentMonthWeeks[ws] = [];
+        rowsByDate[dateISO].forEach(r => currentMonthWeeks[ws].push(r));
       } else if (mk) {
         pastMonths.add(mk);
         if (!weeksByPastMonth[mk]) weeksByPastMonth[mk] = new Set();
@@ -526,10 +551,27 @@
       }
     });
 
-    // Rebuild tbody in the order we want
+    // Helper so month change can rebuild weeks immediately
+    window.__getWeeksForMonth = (mk) => {
+      if (!mk || !weeksByPastMonth[mk]) return [];
+      return Array.from(weeksByPastMonth[mk]).sort((a,b) => (a < b ? 1 : -1));
+    };
+
+    // Rebuild dropdowns from data
+    const pastMonthList = Array.from(pastMonths).sort((a,b) => (a < b ? 1 : -1));
+    buildPastMonthOptions(pastMonthList);
+
+    const selectedMonth = getPastMonth();
+    const weeksForSelectedMonth = window.__getWeeksForMonth(selectedMonth);
+    buildPastWeekOptions(weeksForSelectedMonth);
+
+    // ✅ If saved week is invalid after rebuilding options, it will be cleared above
+    const selectedWeek = getPastWeek();
+
+    // Now rebuild table display
     tbody.innerHTML = "";
 
-    // 1) Today's rows first (always visible)
+    // 1) Today rows (always visible)
     if (rowsByDate[todayISO]) {
       rowsByDate[todayISO].forEach(r => {
         r.style.display = "";
@@ -537,21 +579,14 @@
       });
     }
 
-    // 2) Current month (excluding today) grouped by week (collapsed by default)
+    // 2) Current month grouped by week, excluding today
     const currentWeekStart = weekStartISO(todayISO, 0);
+    const weekKeys = Object.keys(currentMonthWeeks).sort((a,b) => (a < b ? 1 : -1));
 
-    const currentWeekKeys = Object.keys(currentMonthWeeks)
-      .sort((a,b) => b.localeCompare(a));
-
-    currentWeekKeys.forEach(ws => {
-      // Gather rows for this week excluding today
-      const datesObj = currentMonthWeeks[ws];
-      const dateKeys = Object.keys(datesObj).sort((a,b) => b.localeCompare(a));
-
-      const weekRows = [];
-      dateKeys.forEach(d => {
-        if (d === todayISO) return;
-        datesObj[d].forEach(r => weekRows.push(r));
+    weekKeys.forEach(ws => {
+      const weekRows = currentMonthWeeks[ws].filter(r => {
+        const d = r.querySelector('input[type="date"]')?.value;
+        return d && d !== todayISO;
       });
 
       if (!weekRows.length) return;
@@ -566,7 +601,7 @@
          <span style="float:right;">[+]</span>`
       );
 
-      let open = false; // start collapsed
+      let open = false;
       toggleRows(weekRows, false);
 
       weekHeader.addEventListener("click", () => {
@@ -579,30 +614,25 @@
       });
 
       tbody.appendChild(weekHeader);
-      weekRows.forEach(r => {
-        r.style.display = "none";
-        tbody.appendChild(r);
-      });
+      weekRows.forEach(r => { r.style.display = "none"; tbody.appendChild(r); });
     });
 
-    // 3) Build past month dropdown options
-    const pastMonthList = Array.from(pastMonths).sort((a,b) => (a < b ? 1 : -1));
-    buildPastMonthOptions(pastMonthList);
-
-    // 4) Build week dropdown for currently selected month
-    const selectedMonth = getPastMonth();
-    let weeksForSelectedMonth = [];
-    if (selectedMonth && weeksByPastMonth[selectedMonth]) {
-      weeksForSelectedMonth = Array.from(weeksByPastMonth[selectedMonth])
-        .sort((a,b) => (a < b ? 1 : -1));
-    }
-    buildPastWeekOptions(weeksForSelectedMonth);
-
-    // 5) Render selected past month + week (below current month section)
-    const selectedWeek = getPastWeek();
-
+    // 3) Past month/week view (ONLY if valid AND has rows)
     if (selectedMonth && selectedWeek) {
-      // divider
+      const matchingDates = Object.keys(rowsByDate)
+        .filter(d => monthKeyFromISO(d) === selectedMonth && weekStartISO(d,0) === selectedWeek)
+        .sort((a,b) => (a < b ? 1 : -1));
+
+      const pastRows = [];
+      matchingDates.forEach(d => rowsByDate[d].forEach(r => pastRows.push(r)));
+
+      // ✅ If selection exists but yields no rows, don't render the dead block
+      if (!pastRows.length) {
+        // Clear invalid week selection silently
+        setPastWeek("");
+        return;
+      }
+
       const divider = document.createElement("tr");
       divider.className = "divider-row";
       const td = document.createElement("td");
@@ -611,52 +641,29 @@
       divider.appendChild(td);
       tbody.appendChild(divider);
 
-      // Gather rows for that month+week
-      const matchingDates = Object.keys(rowsByDate)
-        .filter(d => monthKeyFromISO(d) === selectedMonth && weekStartISO(d,0) === selectedWeek)
-        .sort((a,b) => b.localeCompare(a));
+      const pastTotal = rowsTotal(pastRows);
 
-      const pastRows = [];
-      matchingDates.forEach(d => rowsByDate[d].forEach(r => pastRows.push(r)));
+      const { tr: pastWeekHeader, td: pastWeekTd } = makeHeaderRow(
+        "week",
+        `<span class="tag">WEEK</span>
+         ${weekRangeLabel(selectedWeek)} — Total: ${pastTotal.toFixed(2)}g
+         <span style="float:right;">[+]</span>`
+      );
 
-      if (!pastRows.length){
-        const none = document.createElement("tr");
-        const td2 = document.createElement("td");
-        td2.colSpan = 5;
-        td2.style.textAlign = "left";
-        td2.style.color = "#bbb";
-        td2.textContent = "No rows found for that week.";
-        none.appendChild(td2);
-        tbody.appendChild(none);
-      } else {
-        // Week header (collapsed by default)
-        const pastTotal = rowsTotal(pastRows);
+      let open = false;
+      toggleRows(pastRows, false);
 
-        const { tr: pastWeekHeader, td: pastWeekTd } = makeHeaderRow(
-          "week",
+      pastWeekHeader.addEventListener("click", () => {
+        open = !open;
+        toggleRows(pastRows, open);
+        pastWeekTd.innerHTML =
           `<span class="tag">WEEK</span>
            ${weekRangeLabel(selectedWeek)} — Total: ${pastTotal.toFixed(2)}g
-           <span style="float:right;">[+]</span>`
-        );
+           <span style="float:right;">[${open ? "-" : "+"}]</span>`;
+      });
 
-        let open = false;
-        toggleRows(pastRows, false);
-
-        pastWeekHeader.addEventListener("click", () => {
-          open = !open;
-          toggleRows(pastRows, open);
-          pastWeekTd.innerHTML =
-            `<span class="tag">WEEK</span>
-             ${weekRangeLabel(selectedWeek)} — Total: ${pastTotal.toFixed(2)}g
-             <span style="float:right;">[${open ? "-" : "+"}]</span>`;
-        });
-
-        tbody.appendChild(pastWeekHeader);
-        pastRows.forEach(r => {
-          r.style.display = "none";
-          tbody.appendChild(r);
-        });
-      }
+      tbody.appendChild(pastWeekHeader);
+      pastRows.forEach(r => { r.style.display = "none"; tbody.appendChild(r); });
     }
   }
 
@@ -757,11 +764,8 @@
     if (stored) {
       try {
         const data = JSON.parse(stored);
-        if (Array.isArray(data)) {
-          data.forEach(entry => addRow(entry, true));
-        } else {
-          addRow({}, true);
-        }
+        if (Array.isArray(data)) data.forEach(entry => addRow(entry, true));
+        else addRow({}, true);
       } catch (e) {
         addRow({}, true);
       }
@@ -849,9 +853,7 @@
         alert('Error importing CSV file.');
       }
     };
-    reader.onerror = function () {
-      alert('Error reading file.');
-    };
+    reader.onerror = function () { alert('Error reading file.'); };
     reader.readAsText(file);
     event.target.value = '';
   }
@@ -860,12 +862,16 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     loadData();
-    wirePastControls();
+
+    // wire the panel using the weeks function updateView defines every time it runs
+    wirePastControls((mk) => (window.__getWeeksForMonth ? window.__getWeeksForMonth(mk) : []));
+
     requestAnimationFrame(() => {
       updateDailyTotals();
       updateView();
     });
   });
 </script>
+
 </body>
 </html>
