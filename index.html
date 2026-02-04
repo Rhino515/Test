@@ -216,7 +216,7 @@
   </tfoot>
 </table>
 
-<!-- ✅ Past Pay Periods Controls (no Default View) -->
+<!-- ✅ Past Pay Periods Controls (month picker only) -->
 <div id="pastControls" style="width:80%; margin: 1em auto 0; text-align:left;">
   <button id="togglePastPanelBtn" type="button" style="background:#444;">
     View Past Pay Periods
@@ -233,11 +233,10 @@
       </label>
 
       <button id="applyMonthBtn" type="button" style="background:green;">Show Month</button>
-      <button id="viewAllBtn" type="button" style="background:#28a745;">View All</button>
     </div>
 
     <div style="margin-top:0.6em; color:#bbb; font-size:0.95em;">
-      Tip: "Show Month" filters the collapsed pay periods shown below. "View All" shows every past pay period.
+      This panel only shows older months. The current month pay periods are always shown automatically.
     </div>
   </div>
 </div>
@@ -818,6 +817,22 @@
     event.target.value = '';
   }
 
+  /* ✅ Month helpers */
+  function monthKeyFromISO(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+    return iso.slice(0, 7);
+  }
+  function getCurrentMonthKey() {
+    const todayISO = getLAISODate();
+    return todayISO.slice(0, 7);
+  }
+  function monthLabelFromKey(monthKey) {
+    if (!/^\d{4}-\d{2}$/.test(monthKey)) return monthKey;
+    const [y, m] = monthKey.split("-");
+    const d = new Date(`${y}-${m}-01T00:00:00`);
+    return d.toLocaleString("en-US", { month: "long", year: "numeric" });
+  }
+
   function groupByPayPeriod(history) {
     const currentPeriod = getCurrentPayPeriod();
     const currentStart = new Date(currentPeriod.start + "T00:00:00");
@@ -838,7 +853,6 @@
       }
     });
 
-    /* ✅ sort entries so edits move to correct spot */
     currentPeriodEntries.sort((a,b) => a[0].date.localeCompare(b[0].date));
     Object.keys(pastPeriodGroups).forEach(k => {
       pastPeriodGroups[k].entries.sort((a,b) => a[0].date.localeCompare(b[0].date));
@@ -847,70 +861,49 @@
     const grouped = {};
     grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
 
-    /* ✅ IMPORTANT: keep pay periods sorted most-recent first */
     Object.keys(pastPeriodGroups)
-      .sort((a, b) => new Date(b) - new Date(a))
+      .sort((a, b) => new Date(b) - new Date(a))  // most recent first
       .forEach(key => grouped[key] = pastPeriodGroups[key]);
 
     return grouped;
   }
 
-  /* ✅ Past pay period view settings (no default mode) */
-  const PAST_VIEW_MODE_KEY = "pastPayPeriodsViewMode_v2"; // "month" | "all"
-  const PAST_VIEW_MONTH_KEY = "pastPayPeriodsViewMonth_v2"; // "YYYY-MM"
-
-  function getPastViewMode() {
-    // default to "all" now (since you removed Default View)
-    return localStorage.getItem(PAST_VIEW_MODE_KEY) || "all";
-  }
-  function setPastViewMode(mode) {
-    localStorage.setItem(PAST_VIEW_MODE_KEY, mode);
-  }
+  /* ✅ Past view (ONLY month selection; current month auto-shown) */
+  const PAST_VIEW_MONTH_KEY = "pastPayPeriodsViewMonth_v3"; // "YYYY-MM"
   function getPastViewMonth() {
-    return localStorage.getItem(PAST_VIEW_MONTH_KEY) || getCurrentMonthKey();
+    return localStorage.getItem(PAST_VIEW_MONTH_KEY) || ""; // blank means "none selected"
   }
   function setPastViewMonth(monthKey) {
     if (!/^\d{4}-\d{2}$/.test(monthKey)) return;
     localStorage.setItem(PAST_VIEW_MONTH_KEY, monthKey);
   }
 
-  /* ✅ Month helpers */
-  function monthKeyFromISO(iso) {
-    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
-    return iso.slice(0, 7);
-  }
-
-  function getCurrentMonthKey() {
-    const todayISO = getLAISODate();
-    return todayISO.slice(0, 7);
-  }
-
-  function monthLabelFromKey(monthKey) {
-    if (!/^\d{4}-\d{2}$/.test(monthKey)) return monthKey;
-    const [y, m] = monthKey.split("-");
-    const d = new Date(`${y}-${m}-01T00:00:00`);
-    return d.toLocaleString("en-US", { month: "long", year: "numeric" });
-  }
-
   function buildPastMonthSelectOptions(grouped) {
     const sel = document.getElementById("pastMonthSelect");
     if (!sel) return;
 
+    const currentMonth = getCurrentMonthKey();
     const currentPeriod = getCurrentPayPeriod();
     const months = new Set();
 
+    // only add months that are NOT current month
     Object.keys(grouped)
       .filter(k => k !== currentPeriod.start)
       .forEach(periodStartISO => {
         const mk = monthKeyFromISO(periodStartISO);
-        if (mk) months.add(mk);
+        if (mk && mk !== currentMonth) months.add(mk);
       });
-
-    months.add(getCurrentMonthKey());
 
     const sorted = Array.from(months).sort((a,b) => (a < b ? 1 : -1));
 
     sel.innerHTML = "";
+
+    // placeholder option
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a month...";
+    sel.appendChild(placeholder);
+
     sorted.forEach(mk => {
       const opt = document.createElement("option");
       opt.value = mk;
@@ -919,8 +912,8 @@
     });
 
     const saved = getPastViewMonth();
-    if (sorted.includes(saved)) sel.value = saved;
-    else sel.value = getCurrentMonthKey();
+    if (saved && sorted.includes(saved)) sel.value = saved;
+    else sel.value = "";
   }
 
   function wirePastControls() {
@@ -928,7 +921,6 @@
     const panel = document.getElementById("pastPanel");
     const sel = document.getElementById("pastMonthSelect");
     const applyBtn = document.getElementById("applyMonthBtn");
-    const allBtn = document.getElementById("viewAllBtn");
 
     if (toggleBtn && panel) {
       toggleBtn.addEventListener("click", () => {
@@ -936,24 +928,14 @@
       });
     }
 
-    if (sel) {
-      sel.addEventListener("change", () => {
-        setPastViewMonth(sel.value);
-      });
-    }
-
     if (applyBtn) {
       applyBtn.addEventListener("click", () => {
-        const monthKey = sel ? sel.value : getCurrentMonthKey();
+        const monthKey = sel ? sel.value : "";
+        if (!monthKey) {
+          alert("Pick a month first.");
+          return;
+        }
         setPastViewMonth(monthKey);
-        setPastViewMode("month");
-        updateSessionTable();
-      });
-    }
-
-    if (allBtn) {
-      allBtn.addEventListener("click", () => {
-        setPastViewMode("all");
         updateSessionTable();
       });
     }
@@ -971,9 +953,9 @@
     const currentPeriod = getCurrentPayPeriod();
     const currentEntries = grouped[currentPeriod.start]?.entries || [];
 
+    // current period rows (main table)
     currentEntries.forEach(([entry, index]) => {
       const row = document.createElement('tr');
-
       row.innerHTML = `
         <td></td>
         <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
@@ -999,26 +981,33 @@
     // remove old past sections
     document.querySelectorAll('.past-period-header, .past-period-content').forEach(el => el.remove());
 
-    // ✅ rebuild month dropdown options
+    // rebuild month dropdown (older months only)
     buildPastMonthSelectOptions(grouped);
 
-    // ✅ determine which past pay periods to show (month or all)
-    const viewMode = getPastViewMode();       // "month" | "all"
-    const selectedMonth = getPastViewMonth(); // "YYYY-MM"
-
-    // ✅ past pay periods already sorted MOST-RECENT first by groupByPayPeriod()
-    let pastKeys = Object.keys(grouped).filter(key => key !== currentPeriod.start);
-
-    if (viewMode === "month") {
-      pastKeys = pastKeys.filter(periodStartISO => monthKeyFromISO(periodStartISO) === selectedMonth);
-    }
-    // if "all" -> no filter
-
-    // ✅ INSERT PAST PERIODS ABOVE the main table (recent first)
+    const currentMonth = getCurrentMonthKey();
+    const selectedPastMonth = getPastViewMonth(); // "" = none
     const table = document.getElementById('sessionTable');
-    const insertAnchor = table; // insertBefore(anchor) puts items ABOVE
 
-    pastKeys.forEach(key => {
+    // past keys sorted most recent first (already)
+    let pastKeys = Object.keys(grouped).filter(k => k !== currentPeriod.start);
+
+    // ✅ ALWAYS show CURRENT MONTH pay periods (collapsed)
+    // (includes any past pay periods whose start date is in current month)
+    const currentMonthPastKeys = pastKeys.filter(k => monthKeyFromISO(k) === currentMonth);
+
+    // ✅ ALSO show ONE selected older month (if chosen)
+    let selectedMonthKeys = [];
+    if (selectedPastMonth && selectedPastMonth !== currentMonth) {
+      selectedMonthKeys = pastKeys.filter(k => monthKeyFromISO(k) === selectedPastMonth);
+    }
+
+    // Combine: current month first (recent first), then selected month (recent first)
+    const keysToShow = [...currentMonthPastKeys, ...selectedMonthKeys];
+
+    // Insert ABOVE the main table (so most recent collapsed sections appear on top)
+    const insertAnchor = table;
+
+    keysToShow.forEach(key => {
       const group = grouped[key];
 
       const periodTotal = group.entries.reduce((sum, pair) => {
@@ -1079,7 +1068,6 @@
 
       content.appendChild(pastTable);
 
-      // Insert header/content ABOVE the main sessionTable, keeping recent first.
       table.parentNode.insertBefore(content, insertAnchor);
       table.parentNode.insertBefore(header, content);
     });
