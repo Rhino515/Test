@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <title>NorCal Trim Calculator</title>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
-<link href="manifest.json" rel="manifest"/>
-<meta content="#000000" name="theme-color"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#000000"/>
 <style>
   body {
     background-color: black;
@@ -14,7 +14,7 @@
     text-align: center;
     padding: 2em;
   }
-  input {
+  input, select {
     font-size: 1.2em;
     padding: 0.5em;
     margin-top: 0.6em;
@@ -34,20 +34,11 @@
     border-radius: 4px;
     cursor: pointer;
   }
-  button:hover {
-    background-color: darkgreen;
-  }
-  img {
-    margin-top: 0.6em;
-    width: 200px;
-  }
-  #result {
-    margin-top: 0.6em;
-    font-size: 1.2em;
-  }
-  .install-links {
-    margin-top: 0.6em;
-  }
+  button:hover { background-color: darkgreen; }
+  img { margin-top: 0.6em; width: 200px; }
+  #result { margin-top: 0.6em; font-size: 1.2em; }
+
+  .install-links { margin-top: 0.6em; }
   .install-links a {
     display: inline-block;
     margin: 0.5em;
@@ -57,24 +48,17 @@
     text-decoration: none;
     border-radius: 4px;
   }
-  .install-links a:hover {
-    background-color: #666;
-  }
+  .install-links a:hover { background-color: #666; }
+
   table {
     margin: 2em auto;
     border-collapse: collapse;
     width: 80%;
   }
-  th, td {
-    border: 1px solid #555;
-    padding: 0.5em;
-  }
-  th {
-    background-color: #333;
-  }
-  td[contenteditable="true"] {
-    background-color: #222;
-  }
+  th, td { border: 1px solid #555; padding: 0.5em; }
+  th { background-color: #333; }
+  td[contenteditable="true"] { background-color: #222; }
+
   .delete-button {
     background-color: red;
     color: white;
@@ -83,20 +67,19 @@
     cursor: pointer;
     border-radius: 4px;
   }
-  .delete-button:hover {
-    background-color: darkred;
-  }
-  .clear-all-button {
-    background-color: orange;
-    color: black;
+  .delete-button:hover { background-color: darkred; }
+
+  .adjust-button {
+    background-color: #cc8400;
+    color: white;
     border: none;
-    padding: 0.5em 1em;
-    border-radius: 4px;
+    padding: 0.3em 0.6em;
     cursor: pointer;
+    border-radius: 4px;
+    margin-right: 6px;
   }
-  .clear-all-button:hover {
-    background-color: darkorange;
-  }
+  .adjust-button:hover { background-color: #a66b00; }
+
   .past-period-header {
     background-color: #444;
     color: white;
@@ -105,58 +88,160 @@
     margin-top: 1em;
     border-radius: 4px;
     text-align: left;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
   }
   .past-period-content {
     display: none;
-    margin-left: 1em;
-    padding: 0.5em;
-    border: 1px solid #555;
-    border-top: none;
+    width: 80%;
+    margin: 0 auto;
   }
-  .past-period-content.open {
-    display: block;
+  .past-period-content.open { display: block; }
+  .past-period-total {
+    color: #0f0;
+    font-weight: bold;
+    margin-left: 8px;
+  }
+
+  .creatorTitle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .secretBolt {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: #111;
+    border: 1px solid #0f0;
+    color: #0f0;
+    text-decoration: none;
+    font-size: 16px;
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+  }
+  .secretBolt:hover { background:#0f0; color:#000; }
+  .secretBolt:active { transform: scale(0.98); }
+
+  .collapsible-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+    padding: 0.2em 0.2em;
+  }
+  .collapse-indicator {
+    color: #0f0;
+    font-weight: bold;
+    min-width: 34px;
+    text-align: center;
+  }
+
+  .important-green {
+    color: #0f0;
+    font-weight: 800;
+    font-size: 1.08em;
+  }
+
+  #payPeriodLabel{
+    margin-top: 0.6em;
+    color: #0f0;
+    font-weight: bold;
+    font-size: 0.95em;
+    line-height: 1.1;
+  }
+  .pp-date-badge{
+    display:inline-block;
+    font-weight: 900;
+    background:#111;
+    border:1px solid #0f0;
+    border-radius:6px;
+    padding: 2px 8px;
+    cursor:pointer;
+    color:#0f0;
+    white-space: nowrap;
+  }
+  .pp-date-badge:hover{ background:#0f0; color:#000; }
+
+  .date-display{
+    display:inline-block;
+    font-weight:bold;
+    background:#222;
+    border:1px solid #555;
+    border-radius:4px;
+    padding: 2px 6px;
+    cursor:pointer;
+    line-height: 1.05;
+    white-space: normal;
+  }
+
+  .weight-meta {
+    font-size: 0.82em;
+    color: #bbb;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  .adjust-negative {
+    color: #ff8080;
+    font-weight: bold;
+  }
+
+  .adjust-positive {
+    color: #7dff7d;
+    font-weight: bold;
+  }
+
+  .duff-summary {
+    margin-top: 0.25em;
+    font-size: 0.95em;
+    color: #ffb366;
+    font-weight: bold;
   }
 </style>
 </head>
 <body>
 
-<img alt="NorCal Logo" src="norcal_icon.png"/>
+<img src="norcal_icon.png" alt="NorCal Logo"/>
 
-<!-- 🔹 New Trim Tracker daily total display (Mexican Spanish) -->
-<div id="trackerSummary" style="margin-top:0.4em;font-size:0.95em;color:#0f0;">
-  <strong>Total de hoy en Trim Tracker:</strong>
-  <span id="trackerTotalDisplay">0g</span>
+<div id="trackerDailyTotalDisplay"
+     style="margin-top:0.4em;font-size:0.95em;color:#0f0;font-weight:bold;">
 </div>
 
-<p>Ingresa el total de gramos cortados:</p>
-<input id="grams" placeholder="e.g. 1200" type="number"/>
+<div id="duffAverageDisplay" class="duff-summary">
+  Average Duff This Pay Period: 0g
+</div>
+
+<p>Enter the total grams trimmed:</p>
+<input id="grams" type="number" placeholder="e.g. 1200"/>
 <br/>
-<button id="import-tracker-total">Agregar el Total de Hoy del Trim Tracker</button>
+<button id="import-tracker-total">Add Today's Total from Trim Tracker</button>
 <br/>
-<button onclick="calculate()">Calcular</button>
-<!-- 🔥 New button: only this will save into the table -->
+<button onclick="calculate()">Calculate</button>
 <br/>
-<button onclick="saveToHistory()">Guardar en el historial</button>
+<button onclick="saveToHistory()">Save to history</button>
 <p id="result"></p>
 
 <div class="install-links">
-  <a href="trim-tracker.html">Ir al Trim Tracker</a>
-  <a class="nav-button" href="help.html">Cómo Usar la App</a>
+  <a href="trim-tracker.html">Go to Trim Tracker</a>
+  <a class="nav-button" href="help.html">How to Use the App</a>
 </div>
 
-<div style="margin-top: 0.6em; color: #ccc; font-size: 0.95em; max-width: 600px; margin-left: auto; margin-right: auto;">
-  <strong>Nota:</strong> Para que la función de importar desde el Trim Tracker funcione correctamente, usa el calculador y el rastreador solo en el idioma que prefieras. Mezclar idiomas puede causar problemas con la sincronización de datos.
-</div>
-
-<div id="payPeriodLabel" style="margin-top: 0.6em; color: #0f0; font-weight: bold;"></div>
+<div id="payPeriodLabel"></div>
 
 <table id="sessionTable">
   <thead>
     <tr>
-      <th>Fecha y Día</th>
-      <th>Gramos</th>
-      <th>Pago de Bono</th>
-      <th>Acción</th>
+      <th>Date</th>
+      <th>Weight</th>
+      <th>Bonus Pay</th>
+      <th>Action</th>
     </tr>
   </thead>
   <tbody></tbody>
@@ -164,82 +249,170 @@
     <tr>
       <td colspan="2"><strong>Total</strong></td>
       <td id="totalBonusPay">$0.00</td>
+      <td></td>
     </tr>
   </tfoot>
 </table>
 
-<div style="margin-top: 0.6em;">
-  <input accept=".csv" id="csvInput" onchange="importCSV(event)" style="display:none" type="file"/>
-  <button onclick="document.getElementById('csvInput').click()" style="background-color:#28a745;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Importar CSV</button>
+<div id="pastControls" style="width:80%; margin: 1em auto 0; text-align:left;">
+  <button id="togglePastPanelBtn" type="button" style="background:#444;">
+    View Past Pay Periods
+  </button>
+
+  <div id="pastPanel"
+       style="display:none; margin-top:0.8em; padding:0.8em; border:1px solid #555; border-radius:6px; background:#111;">
+    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+      <label style="white-space:nowrap;">
+        Month:
+        <select id="pastMonthSelect"
+                style="font-size:1em; padding:0.4em; background:#222; color:#fff; border:1px solid #555; border-radius:4px;">
+        </select>
+      </label>
+
+      <button id="applyMonthBtn" type="button" style="background:green;">Show Month</button>
+    </div>
+  </div>
 </div>
 
-<div style="margin-top: 0.6em;">
-  <button onclick="downloadCSV()" style="background-color:green;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">Exportar CSV</button>
-</div>
+<div id="pastPeriodsContainer"></div>
 
 <div style="margin-top: 0.6em;">
-  <button onclick="clearCurrentPayPeriod()" style="background-color:red;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;">Borrar el período de pago actual</button>
-</div>
-<div style="margin-top: 0.6em;">
-  <button onclick="clearAllPastPayPeriods()" 
-    style="background-color:#b30000;color:white;padding: 0.5em 1em;
-    border:none;border-radius:4px;cursor:pointer;">
-    Borrar Todos los Períodos de Pago Pasados
+  <input id="csvInput" type="file" accept=".csv" onchange="importCSV(event)" style="display:none"/>
+  <button style="background-color:#28a745;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;"
+          onclick="document.getElementById('csvInput').click()">
+    Import CSV
   </button>
 </div>
 
-<script>
-  function clearAllPastPayPeriods() {
-    const confirmMsg = "¿Estás seguro de que quieres borrar TODOS los períodos de pago pasados? Esto no se puede deshacer.";
-    if (!confirm(confirmMsg)) return;
+<div style="margin-top: 0.6em;">
+  <button style="background-color:green;color:white;padding: 0.45em 1em;border:none;border-radius:4px;cursor:pointer;font-weight:bold;"
+          onclick="downloadCSV()">
+    Export CSV
+  </button>
+</div>
 
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-
-    const current = getCurrentPayPeriod();
-    const currentStart = new Date(current.start);
-    const currentEnd = new Date(current.end);
-    currentEnd.setHours(23, 59, 59, 999);
-
-    history = history.filter(entry => {
-      const d = new Date(entry.date);
-      d.setHours(0, 0, 0, 0);
-      return d >= currentStart && d <= currentEnd;
-    });
-
-    localStorage.setItem('trimHistory', JSON.stringify(history));
-    updateSessionTable();
-  }
-</script>
+<div style="margin-top: 0.6em;">
+  <button style="background-color:red;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;"
+          onclick="clearCurrentPayPeriod()">
+    Clear Current Pay Period
+  </button>
+</div>
+<div style="margin-top: 0.6em;">
+  <button style="background-color:#b30000;color:white;padding: 0.5em 1em;border:none;border-radius:4px;cursor:pointer;"
+          onclick="clearAllPastPayPeriods()">
+    Clear All Past Pay Periods
+  </button>
+</div>
 
 <div style="margin-top: 1.2em; border-top: 1px solid #444; padding-top: 1em;">
-  <h2 onclick="togglePayCalc()" style="color:#0f0; cursor:pointer;">Promedios de Pago por Hora ▼</h2>
+  <h2 class="collapsible-header" style="color:#0f0; cursor:pointer;" onclick="togglePayCalc()">
+    <span id="payCalcIndicator" class="collapse-indicator">[+]</span>
+    Hourly Pay Averages
+  </h2>
+
   <div id="payCalcSection" style="display:none;">
-    <p>Ingresa tu pago por hora y las horas trabajadas, luego elige un rango de fechas:</p>
-    <label>Pago por hora: <input id="hourlyRate" step="0.01" type="number"/></label><br/>
-    <label>Horas extra: <input id="overtimeHours" step="0.1" type="number"/></label><br/>
-    <label>Horas trabajadas en total: <input id="totalHours" step="0.1" type="number"/></label><br/>
-    <label>Fecha de inicio: <input id="startDate" type="date"/></label><br/>
-    <label>Fecha de fin: <input id="endDate" type="date"/></label><br/>
-    <button onclick="calculateAverages()">Calcular promedios</button>
+    <p>Your entries stay saved until you clear them.</p>
+
+    <label>Hourly pay: <input id="hourlyRate" type="number" step="0.01"/></label><br/>
+
+    <label>
+      Regular hours:
+      <input id="regularHours" type="number" min="0" step="1" placeholder="Hours"/>
+      <input id="regularMinutes" type="number" min="0" max="59" step="1" placeholder="Minutes"/>
+    </label><br/>
+
+    <label>
+      Overtime hours:
+      <input id="overtimeHours" type="number" min="0" step="1" placeholder="Hours"/>
+      <input id="overtimeMinutes" type="number" min="0" max="59" step="1" placeholder="Minutes"/>
+    </label><br/>
+
+    <label>
+      Double time hours:
+      <input id="doubletimeHours" type="number" min="0" step="1" placeholder="Hours"/>
+      <input id="doubletimeMinutes" type="number" min="0" max="59" step="1" placeholder="Minutes"/>
+    </label><br/>
+
+    <label>Start date: <input id="startDate" type="date"/></label><br/>
+    <label>End date: <input id="endDate" type="date"/></label><br/>
+
+    <button onclick="calculateAverages()">Calculate averages</button>
+
+    <button type="button" onclick="clearHourlyInputs()" style="background:#b30000; margin-left:8px;">
+      Clear Entries
+    </button>
+
     <div id="averageResults" style="margin-top: 0.6em; text-align: left;"></div>
   </div>
 </div>
 
 <div style="margin-top: 4em; padding-top: 2em; border-top: 1px solid #444;">
-  <h2 style="color: #0f0;">Acerca del Creador</h2>
+  <h2 class="creatorTitle" style="color: #0f0;">
+    About the Creator
+    <a class="secretBolt" href="shift-tools.html" title="Shift Tools">⚡</a>
+  </h2>
   <p style="max-width: 600px; margin: 0 auto; font-size: 1em; line-height: 1.6;">
-    Hola, mi nombre es Andrew y trabajo como recortador profesional en NorCal Cannabis.
-    Creé la Calculadora de Trim de NorCal para ayudar a simplificar los cálculos del bono y facilitarles a los recortadores
-    el seguimiento de su progreso diario.
+    Hi, my name is Andrew and I work as a professional trimmer at NorCal Cannabis.
+    I created the NorCal Trim Calculator to help simplify bonus calculations and make it easier
+    for trimmers to track their daily progress.
     <br/><br/>
-    Esta herramienta fue diseñada para ser práctica, fácil de usar y eficiente — ayudando a los trabajadores a mantenerse organizados e informados.
-    Mi objetivo es apoyar a la comunidad de trimming con soluciones tecnológicas simples que realmente hagan la diferencia en el trabajo.
+    This tool is designed to be practical, easy to use, and efficient — helping workers stay
+    organized and informed. My goal is to support the trimming community with simple tech tools
+    that really make a difference on the job.
   </p>
 </div>
 
 <script>
-  // store last calculated result so we can save it later if user wants
   let lastCalculated = null;
+
+  function getLAISODate(date = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(date);
+
+    const y = parts.find(p => p.type === 'year').value;
+    const m = parts.find(p => p.type === 'month').value;
+    const d = parts.find(p => p.type === 'day').value;
+    return `${y}-${m}-${d}`;
+  }
+
+  function formatCompactDateHTML(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || "";
+    const [y,m,d] = iso.split("-");
+    return `${y}-<br>${m}-${d}`;
+  }
+
+  function openDatePickerOnScreen(initialValue, onPick) {
+    const input = document.createElement("input");
+    input.type = "date";
+    input.value = initialValue || "";
+
+    input.style.position = "fixed";
+    input.style.left = "10px";
+    input.style.top = "10px";
+    input.style.opacity = "0";
+    input.style.width = "1px";
+    input.style.height = "1px";
+    input.style.pointerEvents = "none";
+
+    document.body.appendChild(input);
+
+    input.addEventListener("change", () => {
+      const val = input.value;
+      document.body.removeChild(input);
+      if (val && typeof onPick === "function") onPick(val);
+    });
+
+    input.focus();
+    if (typeof input.showPicker === "function") {
+      try { input.showPicker(); } catch {}
+    } else {
+      input.click();
+    }
+  }
 
   function calculateBonus(grams) {
     let bonusPay = 0;
@@ -252,17 +425,39 @@
     return bonusPay;
   }
 
+  function getAdjustmentValue(entry) {
+    return parseFloat(entry.adjustment || 0) || 0;
+  }
+
+  function getFinalGrams(entry) {
+    const baseGrams = parseFloat(entry.grams || 0) || 0;
+    return Math.max(0, baseGrams + getAdjustmentValue(entry));
+  }
+
+  function getDuffGrams(entry) {
+    const adjustment = getAdjustmentValue(entry);
+    return adjustment < 0 ? Math.abs(adjustment) : 0;
+  }
+
+  function formatAdjustment(value) {
+    const num = parseFloat(value || 0) || 0;
+    if (num > 0) return `+${num}`;
+    return `${num}`;
+  }
+
+  function recalculateEntryBonus(entry) {
+    const finalGrams = getFinalGrams(entry);
+    entry.bonusPay = calculateBonus(finalGrams).toFixed(2);
+  }
+
   function calculate() {
     const grams = parseFloat(document.getElementById('grams').value);
     if (isNaN(grams) || grams <= 0) {
-      document.getElementById('result').innerText = 'Por favor ingresa una cantidad válida de gramos.';
+      document.getElementById('result').innerText = 'Please enter a valid amount of grams.';
       return;
     }
-
     const bonusPay = calculateBonus(grams);
     document.getElementById('result').innerText = 'Bonus Pay: $' + bonusPay.toFixed(2);
-
-    // remember the last valid calculation, but do NOT save to history
     lastCalculated = { grams: grams, bonusPay: bonusPay };
   }
 
@@ -271,20 +466,22 @@
     let bonusPay;
 
     if (!isNaN(grams) && grams > 0) {
-      // use current input
       bonusPay = calculateBonus(grams);
     } else if (lastCalculated) {
-      // fall back to last calculated result if input is empty
       grams = lastCalculated.grams;
       bonusPay = lastCalculated.bonusPay;
     } else {
-      alert("Primero calcula un bono válido antes de guardar en el historial.");
+      alert("Please calculate a valid bonus before saving to history.");
       return;
     }
 
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const entry = { date: dateStr, grams: grams, bonusPay: bonusPay.toFixed(2) };
+    const dateStr = getLAISODate(new Date());
+    const entry = {
+      date: dateStr,
+      grams: grams,
+      adjustment: 0,
+      bonusPay: bonusPay.toFixed(2)
+    };
 
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
     history.push(entry);
@@ -295,63 +492,22 @@
     const scrollTarget = document.getElementById('sessionTable');
     if (scrollTarget) scrollTarget.scrollIntoView({ behavior: 'smooth' });
 
-    // clear input after saving
     document.getElementById('grams').value = '';
     lastCalculated = null;
   }
 
-  function calculateAverages() {
-    const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
-    const totalHours = parseFloat(document.getElementById("totalHours").value);
-    const overtimeHours = parseFloat(document.getElementById("overtimeHours").value) || 0;
-    const startDate = new Date(document.getElementById("startDate").value);
-    const endDate = new Date(document.getElementById("endDate").value);
-
-    if (isNaN(hourlyRate) || isNaN(totalHours) || isNaN(startDate) || isNaN(endDate)) {
-      alert("Por favor llena todos los campos.");
-      return;
-    }
-
-    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    const filtered = history.filter(entry => {
-      const entryDate = new Date(entry.date);
-      entryDate.setHours(0, 0, 0, 0);
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(0, 0, 0, 0);
-      return entryDate >= startDate && entryDate <= endDate;
-    });
-
-    let bonusTotal = filtered.reduce((sum, entry) => sum + parseFloat(entry.bonusPay || 0), 0);
-    let regularPay = hourlyRate * totalHours;
-    let overtimePay = hourlyRate * 1.5 * overtimeHours;
-    let hourlyTotal = regularPay + overtimePay;
-    let totalPay = bonusTotal + hourlyTotal;
-
-    let dayDiff = Math.max(1, (endDate - startDate) / (1000 * 60 * 60 * 24) + 1);
-
-    let results = `
-      <p><strong>Pago de bono total:</strong> $${bonusTotal.toFixed(2)}</p>
-      <p><strong>Pago regular:</strong> $${regularPay.toFixed(2)}</p>
-      <p><strong>Pago de horas extra:</strong> $${overtimePay.toFixed(2)}</p>
-      <p><strong>Pago total por hora:</strong> $${hourlyTotal.toFixed(2)}</p>
-      <p><strong>Pago total:</strong> $${totalPay.toFixed(2)}</p>
-      <p><strong>Promedio diario:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
-      <p><strong>Promedio semanal:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p>
-      <p><strong>Promedio quincenal:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p>
-      <p><strong>Promedio por hora (con bono):</strong> $${(totalHours + overtimeHours > 0 ? (totalPay / (totalHours + overtimeHours)) : 0).toFixed(2)}</p>
-    `;
-    document.getElementById("averageResults").innerHTML = results;
-  }
-
   function togglePayCalc() {
     const section = document.getElementById("payCalcSection");
-    if (section) {
-      section.style.display = section.style.display === "none" ? "block" : "none";
-    }
+    const indicator = document.getElementById("payCalcIndicator");
+    if (!section) return;
+
+    const willOpen = section.style.display === "none";
+    section.style.display = willOpen ? "block" : "none";
+    if (indicator) indicator.textContent = willOpen ? "[-]" : "[+]";
   }
 
   function deleteEntry(index) {
-    const confirmMsg = "¿Estás seguro de que deseas eliminar esta entrada?";
+    const confirmMsg = "Are you sure you want to delete this entry?";
     if (!confirm(confirmMsg)) return;
 
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
@@ -359,137 +515,361 @@
     localStorage.setItem('trimHistory', JSON.stringify(history));
     updateSessionTable();
   }
-</script>
 
-<!-- 🔹 New helper: update Trim Tracker total display -->
-<script>
-  function updateTrackerTotalDisplay() {
-    const todayISO = new Date().toISOString().split('T')[0];
-    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
-    const displayEl = document.getElementById('trackerTotalDisplay');
-    if (!displayEl) return;
-
-    if (trackerTotal) {
-      displayEl.textContent = trackerTotal + 'g';
-    } else {
-      displayEl.textContent = '0g';
-    }
-  }
-</script>
-
-<script>
-  // Auto pay period starting from April 14, 2025 (Monday)
-  function getCurrentPayPeriod() {
-    const base = new Date("2025-04-13T00:00:00");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const diffDays = Math.floor((today - base) / (1000 * 60 * 60 * 24));
-    const periodIndex = Math.floor(diffDays / 14);
-    const periodStart = new Date(base);
-    periodStart.setDate(base.getDate() + periodIndex * 14);
-    const periodEnd = new Date(periodStart);
-    periodEnd.setDate(periodStart.getDate() + 13);
-    return {
-      start: periodStart.toISOString().split('T')[0],
-      end: periodEnd.toISOString().split('T')[0],
-      label: 'Pay Period: ' +
-             periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
-    };
-  }
-
-  function getPayPeriodForDate(date) {
-    const base = new Date("2025-04-13T00:00:00");
-    const timeDiff = date.getTime() - base.getTime();
-    const dayDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
-    const periodOffset = Math.floor(dayDiff / 14);
-
-    const periodStart = new Date(base);
-    periodStart.setDate(base.getDate() + periodOffset * 14);
-    const periodEnd = new Date(periodStart);
-    periodEnd.setDate(periodStart.getDate() + 13);
-
-    return {
-      start: periodStart.toISOString().split('T')[0],
-      end: periodEnd.toISOString().split('T')[0],
-      label: 'Pay Period: ' +
-             periodStart.toISOString().split('T')[0] + ' – ' + periodEnd.toISOString().split('T')[0]
-    };
-  }
-
-  window.addEventListener('load', () => {
-    const period = getCurrentPayPeriod();
-    const label = document.getElementById("payPeriodLabel");
-    if (label) label.textContent = period.label;
-
+  function setAdjustment(index) {
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    let changed = false;
-    history.forEach(entry => {
-      const parsed = new Date(entry.date);
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date) && !isNaN(parsed.getTime())) {
-        const iso = parsed.toISOString().split('T')[0];
-        entry.date = iso;
-        changed = true;
-      }
-    });
-    if (changed) {
-      localStorage.setItem('trimHistory', JSON.stringify(history));
+    if (!history[index]) return;
+
+    const entry = history[index];
+    const currentAdjustment = parseFloat(entry.adjustment || 0) || 0;
+    const submitted = parseFloat(entry.grams || 0) || 0;
+
+    const response = prompt(
+      `Enter weight adjustment for this entry.\n\nUse a negative number for duff/shake loss.\nExample: -32.5\n\nSubmitted weight: ${submitted}g`,
+      currentAdjustment
+    );
+
+    if (response === null) return;
+
+    const newAdjustment = parseFloat(response);
+    if (isNaN(newAdjustment)) {
+      alert("Please enter a valid number.");
+      return;
     }
-    updateSessionTable();
-    // 🔹 Refresh tracker total display on load
-    updateTrackerTotalDisplay();
-  });
-</script>
 
-<script>
-  document.getElementById('import-tracker-total').addEventListener('click', () => {
-    const todayISO = new Date().toISOString().split('T')[0];
-    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
-    if (trackerTotal) {
-      document.getElementById('grams').value = trackerTotal;
-      alert("Imported " + trackerTotal + "g from Trim Tracker.");
-    } else {
-      alert("No se encontró un total del Trim Tracker para hoy.");
+    const newFinal = submitted + newAdjustment;
+    if (newFinal < 0) {
+      alert("Final weight cannot be below 0.");
+      return;
     }
-    // 🔹 Also update the display whenever this button is used
-    updateTrackerTotalDisplay();
-  });
-</script>
 
-<script>
-  function clearCurrentPayPeriod() {
-    const confirmMsg = "¿Estás seguro de que deseas borrar todas las entradas del período de pago actual?";
-    if (!confirm(confirmMsg)) return;
+    history[index].adjustment = newAdjustment;
+    recalculateEntryBonus(history[index]);
 
-    const period = getCurrentPayPeriod();
-    const periodStart = new Date(period.start);
-    const periodEnd = new Date(period.end);
-    periodEnd.setHours(23, 59, 59, 999);
-
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    history = history.filter(entry => {
-      const d = new Date(entry.date);
-      d.setHours(0, 0, 0, 0);
-      return d < periodStart || d > periodEnd;
-    });
     localStorage.setItem('trimHistory', JSON.stringify(history));
     updateSessionTable();
   }
 </script>
 
 <script>
-  function downloadCSV() {
-    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    if (history.length === 0) {
-      alert("No hay datos para exportar.");
+  const HOURLY_INPUTS_KEY = "hourlyPayInputs_v1";
+
+  function saveHourlyInputs() {
+    const data = {
+      hourlyRate: document.getElementById("hourlyRate")?.value ?? "",
+      regularHours: document.getElementById("regularHours")?.value ?? "",
+      regularMinutes: document.getElementById("regularMinutes")?.value ?? "",
+      overtimeHours: document.getElementById("overtimeHours")?.value ?? "",
+      overtimeMinutes: document.getElementById("overtimeMinutes")?.value ?? "",
+      doubletimeHours: document.getElementById("doubletimeHours")?.value ?? "",
+      doubletimeMinutes: document.getElementById("doubletimeMinutes")?.value ?? "",
+      startDate: document.getElementById("startDate")?.value ?? "",
+      endDate: document.getElementById("endDate")?.value ?? ""
+    };
+    localStorage.setItem(HOURLY_INPUTS_KEY, JSON.stringify(data));
+  }
+
+  function restoreHourlyInputs() {
+    let data = {};
+    try { data = JSON.parse(localStorage.getItem(HOURLY_INPUTS_KEY)) || {}; } catch { data = {}; }
+
+    const set = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== null) el.value = val;
+    };
+
+    set("hourlyRate", data.hourlyRate);
+    set("regularHours", data.regularHours);
+    set("regularMinutes", data.regularMinutes);
+    set("overtimeHours", data.overtimeHours);
+    set("overtimeMinutes", data.overtimeMinutes);
+    set("doubletimeHours", data.doubletimeHours);
+    set("doubletimeMinutes", data.doubletimeMinutes);
+    set("startDate", data.startDate);
+    set("endDate", data.endDate);
+  }
+
+  function wireHourlyAutosave() {
+    const ids = [
+      "hourlyRate",
+      "regularHours","regularMinutes",
+      "overtimeHours","overtimeMinutes",
+      "doubletimeHours","doubletimeMinutes",
+      "startDate","endDate"
+    ];
+
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", saveHourlyInputs);
+      el.addEventListener("change", saveHourlyInputs);
+    });
+  }
+
+  function clearHourlyInputs() {
+    if (!confirm("Clear the Hourly Pay Averages fields?")) return;
+
+    const ids = [
+      "hourlyRate",
+      "regularHours","regularMinutes",
+      "overtimeHours","overtimeMinutes",
+      "doubletimeHours","doubletimeMinutes",
+      "startDate","endDate"
+    ];
+
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+
+    localStorage.removeItem(HOURLY_INPUTS_KEY);
+
+    const results = document.getElementById("averageResults");
+    if (results) results.innerHTML = "";
+  }
+
+  function calculateAverages() {
+    const hourlyRate = parseFloat(document.getElementById("hourlyRate").value);
+
+    const regularHours = parseFloat(document.getElementById("regularHours").value) || 0;
+    const regularMinutes = parseFloat(document.getElementById("regularMinutes").value) || 0;
+
+    const overtimeHours = parseFloat(document.getElementById("overtimeHours").value) || 0;
+    const overtimeMinutes = parseFloat(document.getElementById("overtimeMinutes").value) || 0;
+
+    const doubletimeHours = parseFloat(document.getElementById("doubletimeHours").value) || 0;
+    const doubletimeMinutes = parseFloat(document.getElementById("doubletimeMinutes").value) || 0;
+
+    const startDate = new Date(document.getElementById("startDate").value);
+    const endDate = new Date(document.getElementById("endDate").value);
+
+    const totalRegularHours = regularHours + (regularMinutes / 60);
+    const totalOvertimeHours = overtimeHours + (overtimeMinutes / 60);
+    const totalDoubletimeHours = doubletimeHours + (doubletimeMinutes / 60);
+    const totalHoursWorked = totalRegularHours + totalOvertimeHours + totalDoubletimeHours;
+
+    if (isNaN(hourlyRate) || isNaN(startDate) || isNaN(endDate) || totalHoursWorked <= 0) {
+      alert("Please fill out all fields, including regular/overtime/double time hours.");
       return;
     }
 
-    const headers = ["Date", "Grams", "Bonus"];
-    const rows = history.map(entry => [
-      entry.date,
-      entry.grams,
-      parseFloat(entry.bonusPay || 0).toFixed(2)
-    ]);
+    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    const filtered = history.filter(entry => {
+      const entryDate = new Date(entry.date); entryDate.setHours(0,0,0,0);
+      const s = new Date(startDate); s.setHours(0,0,0,0);
+      const e = new Date(endDate);   e.setHours(0,0,0,0);
+      return entryDate >= s && entryDate <= e;
+    });
+
+    const bonusTotal = filtered.reduce((sum, entry) => {
+      return sum + calculateBonus(getFinalGrams(entry));
+    }, 0);
+
+    const regularPay = hourlyRate * totalRegularHours;
+    const overtimePay = hourlyRate * 1.5 * totalOvertimeHours;
+    const doubletimePay = hourlyRate * 2.0 * totalDoubletimeHours;
+
+    const hourlyTotal = regularPay + overtimePay + doubletimePay;
+    const totalPay = bonusTotal + hourlyTotal;
+
+    const dayDiff = Math.max(1, (endDate - startDate) / (1000*60*60*24) + 1);
+
+    const results = `
+      <p><strong>Total bonus pay:</strong> $${bonusTotal.toFixed(2)}</p>
+      <p><strong>Regular pay:</strong> $${regularPay.toFixed(2)}</p>
+      <p><strong>Overtime pay (1.5x):</strong> $${overtimePay.toFixed(2)}</p>
+      <p><strong>Double time pay (2.0x):</strong> $${doubletimePay.toFixed(2)}</p>
+      <p><strong>Total hourly pay (wages only):</strong> $${hourlyTotal.toFixed(2)}</p>
+      <p class="important-green"><strong>Total pay (hourly + bonus):</strong> $${totalPay.toFixed(2)}</p>
+      <p><strong>Average daily pay:</strong> $${(totalPay / dayDiff).toFixed(2)}</p>
+      <p><strong>Average weekly pay:</strong> $${(totalPay / dayDiff * 7).toFixed(2)}</p>
+      <p><strong>Average bi-weekly pay:</strong> $${(totalPay / dayDiff * 14).toFixed(2)}</p>
+      <p><strong>Average hourly rate (with bonus):</strong> $${(totalHoursWorked > 0 ? (totalPay / totalHoursWorked) : 0).toFixed(2)}</p>
+    `;
+    document.getElementById("averageResults").innerHTML = results;
+  }
+</script>
+
+<script>
+  const PAY_PERIOD_BASE_KEY = "payPeriodBaseStartISO";
+  const DEFAULT_BASE_START = "2025-04-13";
+
+  function getPayPeriodBaseStartISO() {
+    return localStorage.getItem(PAY_PERIOD_BASE_KEY) || DEFAULT_BASE_START;
+  }
+  function setPayPeriodBaseStartISO(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+    localStorage.setItem(PAY_PERIOD_BASE_KEY, iso);
+  }
+
+  function addDaysISO(iso, days) {
+    const d = new Date(iso + "T00:00:00");
+    d.setDate(d.getDate() + days);
+    return getLAISODate(d);
+  }
+
+  function getCurrentPayPeriod() {
+    const baseISO = getPayPeriodBaseStartISO();
+    const base = new Date(baseISO + "T00:00:00");
+
+    const todayLA = new Date(getLAISODate() + "T00:00:00");
+    const diffDays = Math.floor((todayLA - base) / (1000*60*60*24));
+    const periodIndex = Math.floor(diffDays / 14);
+
+    const periodStart = new Date(base);
+    periodStart.setDate(base.getDate() + periodIndex * 14);
+
+    const start = getLAISODate(periodStart);
+    const end = addDaysISO(start, 13);
+
+    return { start, end, label: `Pay Period: ${start} – ${end}` };
+  }
+
+  function getPayPeriodForDate(dateObj) {
+    const baseISO = getPayPeriodBaseStartISO();
+    const base = new Date(baseISO + "T00:00:00");
+
+    const timeDiff = dateObj.getTime() - base.getTime();
+    const dayDiff = Math.floor(timeDiff / (1000*60*60*24));
+    const periodOffset = Math.floor(dayDiff / 14);
+
+    const periodStart = new Date(base);
+    periodStart.setDate(base.getDate() + periodOffset * 14);
+
+    const start = getLAISODate(periodStart);
+    const end = addDaysISO(start, 13);
+
+    return { start, end, label: `Pay Period: ${start} – ${end}` };
+  }
+
+  function renderPayPeriodLabel() {
+    const period = getCurrentPayPeriod();
+    const label = document.getElementById("payPeriodLabel");
+    if (!label) return;
+
+    label.innerHTML = `
+      Pay Period:
+      <span class="pp-date-badge" id="ppStartBadge">${period.start}</span>
+      –
+      <span class="pp-date-badge" id="ppEndBadge">${period.end}</span>
+    `;
+
+    const startBadge = document.getElementById("ppStartBadge");
+    const endBadge = document.getElementById("ppEndBadge");
+
+    if (startBadge) {
+      startBadge.addEventListener("click", () => {
+        openDatePickerOnScreen(period.start, (picked) => {
+          if (!picked) return;
+          setPayPeriodBaseStartISO(picked);
+          updateSessionTable();
+          renderPayPeriodLabel();
+        });
+      });
+    }
+
+    if (endBadge) {
+      endBadge.addEventListener("click", () => {
+        openDatePickerOnScreen(period.end, (pickedEnd) => {
+          if (!pickedEnd) return;
+          const endDate = new Date(pickedEnd + "T00:00:00");
+          endDate.setDate(endDate.getDate() - 13);
+          setPayPeriodBaseStartISO(getLAISODate(endDate));
+          updateSessionTable();
+          renderPayPeriodLabel();
+        });
+      });
+    }
+  }
+
+  function updateTrackerDailyTotal() {
+    const todayISO = getLAISODate();
+    const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+    const el = document.getElementById('trackerDailyTotalDisplay');
+    if (!el) return;
+
+    el.textContent = trackerTotal
+      ? "Today's Trim Tracker total: " + trackerTotal + "g"
+      : "Today's Trim Tracker total: 0g";
+  }
+
+  function updateDuffAverageDisplay(currentEntries) {
+    const el = document.getElementById("duffAverageDisplay");
+    if (!el) return;
+
+    const entries = currentEntries || [];
+    const entriesWithDuff = entries.filter(([entry]) => getDuffGrams(entry) > 0);
+
+    if (entriesWithDuff.length === 0) {
+      el.textContent = "Average Duff This Pay Period: 0g";
+      return;
+    }
+
+    const totalDuff = entriesWithDuff.reduce((sum, [entry]) => sum + getDuffGrams(entry), 0);
+    const avgDuff = totalDuff / entriesWithDuff.length;
+
+    el.textContent = `Average Duff This Pay Period: ${avgDuff.toFixed(2)}g`;
+  }
+
+  function clearCurrentPayPeriod() {
+    const confirmMsg = "Are you sure you want to clear all entries for the current pay period?";
+    if (!confirm(confirmMsg)) return;
+
+    const period = getCurrentPayPeriod();
+    const periodStart = new Date(period.start + "T00:00:00");
+    const periodEnd = new Date(period.end + "T23:59:59");
+
+    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    history = history.filter(entry => {
+      const d = new Date(entry.date + "T00:00:00");
+      return d < periodStart || d > periodEnd;
+    });
+
+    localStorage.setItem('trimHistory', JSON.stringify(history));
+    updateSessionTable();
+  }
+
+  function clearAllPastPayPeriods() {
+    const confirmMsg = "Are you sure you want to clear ALL past pay periods? This cannot be undone.";
+    if (!confirm(confirmMsg)) return;
+
+    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+
+    const current = getCurrentPayPeriod();
+    const currentStart = new Date(current.start + "T00:00:00");
+    const currentEnd = new Date(current.end + "T23:59:59");
+
+    history = history.filter(entry => {
+      const d = new Date(entry.date + "T00:00:00");
+      return d >= currentStart && d <= currentEnd;
+    });
+
+    localStorage.setItem('trimHistory', JSON.stringify(history));
+    updateSessionTable();
+  }
+
+  function downloadCSV() {
+    const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    if (history.length === 0) {
+      alert("No data to export.");
+      return;
+    }
+
+    const headers = ["Date", "Submitted Grams", "Adjustment", "Final Grams", "Bonus"];
+    const rows = history.map(entry => {
+      const submitted = parseFloat(entry.grams || 0) || 0;
+      const adjustment = getAdjustmentValue(entry);
+      const finalGrams = getFinalGrams(entry);
+      const bonus = calculateBonus(finalGrams);
+
+      return [
+        entry.date,
+        submitted,
+        adjustment,
+        finalGrams,
+        bonus.toFixed(2)
+      ];
+    });
 
     let csvContent = "data:text/csv;charset=utf-8,"
       + headers.join(",") + "\n"
@@ -503,9 +883,7 @@
     link.click();
     document.body.removeChild(link);
   }
-</script>
 
-<script>
   function importCSV(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -522,28 +900,53 @@
         if (!trimmedLine) continue;
 
         const columns = trimmedLine.split(',');
-        if (columns.length < 3) {
+        const date = columns[0]?.trim();
+
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
           errorCount++;
           continue;
         }
 
-        const date = columns[0].trim();
-        const grams = parseFloat(columns[1].trim());
-        const bonus = parseFloat(columns[2].trim());
+        if (columns.length >= 5) {
+          const grams = parseFloat(columns[1].trim());
+          const adjustment = parseFloat(columns[2].trim());
 
-        if (/^\d{4}-\d{2}-\d2$/.test(date) && !isNaN(grams) && grams >= 0 && !isNaN(bonus) && bonus >= 0) {
-          imported.push({ date: date, grams: grams, bonusPay: bonus.toFixed(2) });
+          if (!isNaN(grams) && grams >= 0 && !isNaN(adjustment)) {
+            const entry = {
+              date: date,
+              grams: grams,
+              adjustment: adjustment,
+              bonusPay: calculateBonus(Math.max(0, grams + adjustment)).toFixed(2)
+            };
+            imported.push(entry);
+          } else {
+            errorCount++;
+          }
+        } else if (columns.length >= 3) {
+          const grams = parseFloat(columns[1].trim());
+          const bonus = parseFloat(columns[2].trim());
+
+          if (!isNaN(grams) && grams >= 0 && !isNaN(bonus) && bonus >= 0) {
+            imported.push({
+              date: date,
+              grams: grams,
+              adjustment: 0,
+              bonusPay: bonus.toFixed(2)
+            });
+          } else {
+            errorCount++;
+          }
         } else {
           errorCount++;
         }
       }
 
       if (imported.length === 0 && errorCount > 0) {
-        alert("Archivo CSV inválido o vacío. No se importaron entradas válidas.");
+        alert("Invalid or empty CSV file. No valid entries were imported.");
         return;
       }
       if (imported.length === 0 && errorCount === 0) {
-        alert("Archivo CSV vacío.");
+        alert("Empty CSV file.");
         return;
       }
 
@@ -553,137 +956,378 @@
       updateSessionTable();
 
       let successMsg = `Import completed. ${imported.length} entry(s) imported.`;
-      if (errorCount > 0) {
-        successMsg += ` ${errorCount} invalid row(s) skipped.`;
-      }
+      if (errorCount > 0) successMsg += ` ${errorCount} invalid row(s) skipped.`;
       alert(successMsg);
     };
+
     reader.readAsText(file);
     event.target.value = '';
   }
-</script>
 
-<script>
+  function monthKeyFromISO(iso) {
+    if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+    return iso.slice(0, 7);
+  }
+  function getCurrentMonthKey() {
+    const todayISO = getLAISODate();
+    return todayISO.slice(0, 7);
+  }
+  function monthLabelFromKey(monthKey) {
+    if (!/^\d{4}-\d{2}$/.test(monthKey)) return monthKey;
+    const [y, m] = monthKey.split("-");
+    const d = new Date(`${y}-${m}-01T00:00:00`);
+    return d.toLocaleString("en-US", { month: "long", year: "numeric" });
+  }
+
   function groupByPayPeriod(history) {
     const currentPeriod = getCurrentPayPeriod();
-    const currentStart = new Date(currentPeriod.start);
-    const currentEnd = new Date(currentPeriod.end);
-    currentEnd.setHours(23, 59, 59, 999);
+    const currentStart = new Date(currentPeriod.start + "T00:00:00");
+    const currentEnd = new Date(currentPeriod.end + "T23:59:59");
 
     const currentPeriodEntries = [];
     const pastPeriodGroups = {};
 
     history.forEach((entry, index) => {
-      const entryDate = new Date(entry.date);
-      entryDate.setHours(0, 0, 0, 0);
-
+      const entryDate = new Date(entry.date + "T00:00:00");
       if (entryDate >= currentStart && entryDate <= currentEnd) {
         currentPeriodEntries.push([entry, index]);
       } else if (entryDate < currentStart) {
         const period = getPayPeriodForDate(entryDate);
         const key = period.start;
-        if (!pastPeriodGroups[key]) {
-          pastPeriodGroups[key] = { label: period.label, entries: [] };
-        }
+        if (!pastPeriodGroups[key]) pastPeriodGroups[key] = { label: period.label, entries: [] };
         pastPeriodGroups[key].entries.push([entry, index]);
       }
+    });
+
+    currentPeriodEntries.sort((a,b) => a[0].date.localeCompare(b[0].date));
+    Object.keys(pastPeriodGroups).forEach(k => {
+      pastPeriodGroups[k].entries.sort((a,b) => a[0].date.localeCompare(b[0].date));
     });
 
     const grouped = {};
     grouped[currentPeriod.start] = { label: currentPeriod.label, entries: currentPeriodEntries };
 
-    const sortedPastKeys = Object.keys(pastPeriodGroups).sort((a, b) => new Date(b) - new Date(a));
-    sortedPastKeys.forEach(key => {
-      grouped[key] = pastPeriodGroups[key];
-    });
+    Object.keys(pastPeriodGroups)
+      .sort((a, b) => new Date(b) - new Date(a))
+      .forEach(key => grouped[key] = pastPeriodGroups[key]);
 
     return grouped;
   }
-</script>
 
-<script>
+  const PAST_VIEW_MONTH_KEY = "pastPayPeriodsViewMonth_v3";
+  function getPastViewMonth() {
+    return localStorage.getItem(PAST_VIEW_MONTH_KEY) || "";
+  }
+  function setPastViewMonth(monthKey) {
+    if (!/^\d{4}-\d{2}$/.test(monthKey)) return;
+    localStorage.setItem(PAST_VIEW_MONTH_KEY, monthKey);
+  }
+
+  function buildPastMonthSelectOptions(grouped) {
+    const sel = document.getElementById("pastMonthSelect");
+    if (!sel) return;
+
+    const currentMonth = getCurrentMonthKey();
+    const currentPeriod = getCurrentPayPeriod();
+    const months = new Set();
+
+    Object.keys(grouped)
+      .filter(k => k !== currentPeriod.start)
+      .forEach(periodStartISO => {
+        const mk = monthKeyFromISO(periodStartISO);
+        if (mk && mk !== currentMonth) months.add(mk);
+      });
+
+    const sorted = Array.from(months).sort((a,b) => (a < b ? 1 : -1));
+
+    sel.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a month...";
+    sel.appendChild(placeholder);
+
+    sorted.forEach(mk => {
+      const opt = document.createElement("option");
+      opt.value = mk;
+      opt.textContent = monthLabelFromKey(mk);
+      sel.appendChild(opt);
+    });
+
+    const saved = getPastViewMonth();
+    if (saved && sorted.includes(saved)) sel.value = saved;
+    else sel.value = "";
+  }
+
+  function wirePastControls() {
+    const toggleBtn = document.getElementById("togglePastPanelBtn");
+    const panel = document.getElementById("pastPanel");
+    const sel = document.getElementById("pastMonthSelect");
+    const applyBtn = document.getElementById("applyMonthBtn");
+
+    if (toggleBtn && panel) {
+      toggleBtn.addEventListener("click", () => {
+        panel.style.display = (panel.style.display === "none") ? "block" : "none";
+      });
+    }
+
+    if (applyBtn) {
+      applyBtn.addEventListener("click", () => {
+        const monthKey = sel ? sel.value : "";
+        if (!monthKey) {
+          alert("Pick a month first.");
+          return;
+        }
+        setPastViewMonth(monthKey);
+        updateSessionTable();
+      });
+    }
+  }
+
   function updateSessionTable() {
     const history = JSON.parse(localStorage.getItem('trimHistory')) || [];
     const tbody = document.querySelector('#sessionTable tbody');
     if (!tbody) return;
+
     tbody.innerHTML = '';
     let totalBonusPay = 0;
 
     const grouped = groupByPayPeriod(history);
     const currentPeriod = getCurrentPayPeriod();
-
     const currentEntries = grouped[currentPeriod.start]?.entries || [];
 
+    updateDuffAverageDisplay(currentEntries);
+
     currentEntries.forEach(([entry, index]) => {
+      const submitted = parseFloat(entry.grams || 0) || 0;
+      const adjustment = getAdjustmentValue(entry);
+      const finalGrams = getFinalGrams(entry);
+      const bonus = calculateBonus(finalGrams);
+
+      const adjustmentClass = adjustment < 0 ? 'adjust-negative' : (adjustment > 0 ? 'adjust-positive' : '');
+
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td contenteditable="true" onblur="editDate(${index}, this)">${entry.date}</td>
-        <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
-        <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
-        <td><button onclick="deleteEntry(${index})" class="delete-button">Eliminar</button></td>`;
+        <td></td>
+        <td contenteditable="true" onblur="editGrams(${index}, this)">
+          ${submitted}
+          <div class="weight-meta">
+            Final: ${finalGrams}g
+            ${adjustment !== 0 ? `<br><span class="${adjustmentClass}">Adjustment: ${formatAdjustment(adjustment)}g</span>` : ""}
+          </div>
+        </td>
+        <td>$${bonus.toFixed(2)}</td>
+        <td>
+          <button onclick="setAdjustment(${index})" class="adjust-button">Adjust</button>
+          <button onclick="deleteEntry(${index})" class="delete-button">Delete</button>
+        </td>
+      `;
+
+      const dateTd = row.children[0];
+      const badge = document.createElement('span');
+      badge.className = 'date-display';
+      badge.innerHTML = formatCompactDateHTML(entry.date);
+      badge.addEventListener('click', () => {
+        openDatePickerOnScreen(entry.date, (picked) => editDate(index, picked));
+      });
+      dateTd.appendChild(badge);
+
       tbody.appendChild(row);
-      totalBonusPay += parseFloat(entry.bonusPay || 0);
+      totalBonusPay += bonus;
     });
 
     document.getElementById('totalBonusPay').textContent = '$' + totalBonusPay.toFixed(2);
 
-    document.querySelectorAll('.past-period-header, .past-period-content').forEach(el => el.remove());
+    const container = document.getElementById("pastPeriodsContainer");
+    if (container) container.innerHTML = "";
 
-    Object.keys(grouped).filter(key => key !== currentPeriod.start).forEach(key => {
+    buildPastMonthSelectOptions(grouped);
+
+    const currentMonth = getCurrentMonthKey();
+    const selectedPastMonth = getPastViewMonth();
+    let pastKeys = Object.keys(grouped).filter(k => k !== currentPeriod.start);
+
+    const currentMonthPastKeys = pastKeys.filter(k => monthKeyFromISO(k) === currentMonth);
+
+    let selectedMonthKeys = [];
+    if (selectedPastMonth && selectedPastMonth !== currentMonth) {
+      selectedMonthKeys = pastKeys.filter(k => monthKeyFromISO(k) === selectedPastMonth);
+    }
+
+    const keysToShow = [...currentMonthPastKeys, ...selectedMonthKeys];
+
+    if (!container) return;
+
+    keysToShow.forEach(key => {
       const group = grouped[key];
+
+      const periodTotal = group.entries.reduce((sum, pair) => {
+        const entry = pair[0];
+        return sum + calculateBonus(getFinalGrams(entry));
+      }, 0);
+
       const header = document.createElement('div');
       header.className = 'past-period-header';
-      header.textContent = group.label + ' [+]';
-      header.addEventListener('click', function () {
-        const content = this.nextElementSibling;
-        const open = content.classList.toggle('open');
-        this.textContent = group.label + (open ? ' [-]' : ' [+]');
-      });
+      header.dataset.total = periodTotal.toFixed(2);
 
       const content = document.createElement('div');
       content.className = 'past-period-content';
-      group.entries.forEach(([entry, index]) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td contenteditable="true" onblur="editDate(${index}, this)">${entry.date}</td>
-          <td contenteditable="true" onblur="editGrams(${index}, this)">${entry.grams}</td>
-          <td>$${parseFloat(entry.bonusPay).toFixed(2)}</td>
-          <td><button onclick="deleteEntry(${index})" class="delete-button">Delete</button></td>`;
-        content.appendChild(row);
+
+      header.innerHTML = `
+        <span class="past-period-label">${group.label}</span>
+        <span class="past-period-total">$${header.dataset.total}</span>
+        <span class="toggle-indicator" style="float:right;">[+]</span>
+      `;
+
+      header.addEventListener('click', function () {
+        const open = content.classList.toggle('open');
+        const ind = header.querySelector('.toggle-indicator');
+        if (ind) ind.textContent = open ? '[-]' : '[+]';
       });
 
-      const table = document.getElementById('sessionTable');
-      table.parentNode.insertBefore(header, table.nextSibling);
-      table.parentNode.insertBefore(content, header.nextSibling);
+      const pastTable = document.createElement('table');
+      pastTable.innerHTML = `
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Weight</th>
+            <th>Bonus Pay</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+      const pastTbody = pastTable.querySelector("tbody");
+
+      group.entries.forEach(([entry, index]) => {
+        const submitted = parseFloat(entry.grams || 0) || 0;
+        const adjustment = getAdjustmentValue(entry);
+        const finalGrams = getFinalGrams(entry);
+        const bonus = calculateBonus(finalGrams);
+        const adjustmentClass = adjustment < 0 ? 'adjust-negative' : (adjustment > 0 ? 'adjust-positive' : '');
+
+        const r = document.createElement('tr');
+        r.innerHTML = `
+          <td></td>
+          <td contenteditable="true" onblur="editGrams(${index}, this)">
+            ${submitted}
+            <div class="weight-meta">
+              Final: ${finalGrams}g
+              ${adjustment !== 0 ? `<br><span class="${adjustmentClass}">Adjustment: ${formatAdjustment(adjustment)}g</span>` : ""}
+            </div>
+          </td>
+          <td>$${bonus.toFixed(2)}</td>
+          <td>
+            <button onclick="setAdjustment(${index})" class="adjust-button">Adjust</button>
+            <button onclick="deleteEntry(${index})" class="delete-button">Delete</button>
+          </td>
+        `;
+
+        const dateTd = r.children[0];
+        const badge = document.createElement('span');
+        badge.className = 'date-display';
+        badge.innerHTML = formatCompactDateHTML(entry.date);
+        badge.addEventListener('click', () => {
+          openDatePickerOnScreen(entry.date, (picked) => editDate(index, picked));
+        });
+        dateTd.appendChild(badge);
+
+        pastTbody.appendChild(r);
+      });
+
+      content.appendChild(pastTable);
+
+      container.appendChild(header);
+      container.appendChild(content);
     });
   }
 
   function editGrams(index, td) {
     let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
     const newGrams = parseFloat(td.textContent.trim());
-    if (!isNaN(newGrams)) {
+
+    if (!isNaN(newGrams) && newGrams >= 0) {
       history[index].grams = newGrams;
-      history[index].bonusPay = calculateBonus(newGrams).toFixed(2);
-      localStorage.setItem('trimHistory', JSON.stringify(history));
-      updateSessionTable();
-    }
-  }
-</script>
 
-<script>
-  function editDate(index, td) {
-    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
-    const updatedDate = td.textContent.trim();
+      if (history[index].adjustment === undefined || history[index].adjustment === null || history[index].adjustment === "") {
+        history[index].adjustment = 0;
+      }
 
-    if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDate)) {
-      history[index].date = updatedDate;
+      recalculateEntryBonus(history[index]);
       localStorage.setItem('trimHistory', JSON.stringify(history));
       updateSessionTable();
     } else {
-      alert("Please enter a valid date format: YYYY-MM-DD");
-      td.textContent = history[index].date;
+      updateSessionTable();
     }
   }
+
+  function editDate(index, updatedDateISO) {
+    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    if (/^\d{4}-\d{2}-\d{2}$/.test(updatedDateISO)) {
+      history[index].date = updatedDateISO;
+      localStorage.setItem('trimHistory', JSON.stringify(history));
+      updateSessionTable();
+      renderPayPeriodLabel();
+    }
+  }
+
+  window.addEventListener('load', () => {
+    renderPayPeriodLabel();
+
+    let history = JSON.parse(localStorage.getItem('trimHistory')) || [];
+    let changed = false;
+
+    history.forEach(entry => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) {
+        const parsed = new Date(entry.date);
+        if (!isNaN(parsed.getTime())) {
+          entry.date = getLAISODate(parsed);
+          changed = true;
+        }
+      }
+
+      if (entry.adjustment === undefined || entry.adjustment === null || entry.adjustment === "") {
+        entry.adjustment = 0;
+        changed = true;
+      }
+
+      if (entry.grams !== undefined) {
+        const correctBonus = calculateBonus(getFinalGrams(entry)).toFixed(2);
+        if (entry.bonusPay !== correctBonus) {
+          entry.bonusPay = correctBonus;
+          changed = true;
+        }
+      }
+    });
+
+    if (changed) localStorage.setItem('trimHistory', JSON.stringify(history));
+
+    restoreHourlyInputs();
+    wireHourlyAutosave();
+    updateSessionTable();
+    updateTrackerDailyTotal();
+
+    wirePastControls();
+
+    const section = document.getElementById("payCalcSection");
+    const indicator = document.getElementById("payCalcIndicator");
+    if (section && indicator) indicator.textContent = (section.style.display === "none") ? "[+]" : "[-]";
+
+    const importBtn = document.getElementById('import-tracker-total');
+    if (importBtn) {
+      importBtn.addEventListener('click', () => {
+        const todayISO = getLAISODate();
+        const trackerTotal = localStorage.getItem('trimTrackerDailyTotal-' + todayISO);
+        if (trackerTotal) {
+          document.getElementById('grams').value = trackerTotal;
+          alert("Imported " + trackerTotal + "g from Trim Tracker.");
+        } else {
+          alert("No Trim Tracker total found for today.");
+        }
+        updateTrackerDailyTotal();
+      });
+    }
+  });
 </script>
 
 </body>
